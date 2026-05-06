@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Upload, Loader } from 'lucide-react';
+import { Upload, Loader, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
-import { saveCase } from '../utils/storage';
+import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 
@@ -11,6 +11,36 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const fileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState(null);
+  const [clientHistory, setClientHistory] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const suggestionsRef = useRef(null);
+
+  // Cargar clientes únicos del historial
+  useEffect(() => {
+    const loadClientHistory = async () => {
+      const cases = await getAllCases();
+      const uniqueClients = new Map();
+      cases.forEach(c => {
+        if (c.datos?.cedula && !uniqueClients.has(c.datos.cedula)) {
+          uniqueClients.set(c.datos.cedula, c.datos);
+        }
+      });
+      setClientHistory(Array.from(uniqueClients.values()));
+    };
+    loadClientHistory();
+  }, []);
+
+  // Cerrar sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -32,6 +62,36 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Autocompletar: buscar sugerencias al escribir en cliente o cédula
+    if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2 && clientHistory.length > 0) {
+      const term = value.toLowerCase();
+      const matches = clientHistory.filter(c =>
+        (c.cliente || '').toLowerCase().includes(term) ||
+        (c.cedula || '').toLowerCase().includes(term)
+      ).slice(0, 5);
+      setSuggestions(matches);
+      setShowSuggestions(matches.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectClient = (clientData) => {
+    setDatos(prev => ({
+      ...prev,
+      cliente: clientData.cliente || prev.cliente,
+      cedula: clientData.cedula || prev.cedula,
+      actividad: clientData.actividad || prev.actividad,
+      esPep: clientData.esPep || false,
+      detallePep: clientData.detallePep || '',
+      apoderado: clientData.apoderado || false,
+      reportesPrevios: clientData.reportesPrevios || false,
+      origen: clientData.origen || prev.origen,
+      medioPago: clientData.medioPago || prev.medioPago,
+    }));
+    setShowSuggestions(false);
+    toast.success(`Cliente ${clientData.cliente} cargado desde historial`, { icon: '👤' });
   };
 
   const isComplete = 
@@ -147,14 +207,41 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           <input type="text" className="input-field" name="notario" value={datos.notario} onChange={handleChange} placeholder="Nombre del notario" />
         </div>
         
-        <div className="form-group">
+        <div className="form-group" style={{ position: 'relative' }} ref={suggestionsRef}>
           <label>Cliente (o Razón Social)</label>
-          <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} />
+          <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} placeholder="Empiece a escribir para buscar en el historial..." />
+          {showSuggestions && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+              background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '8px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              maxHeight: '200px', overflowY: 'auto'
+            }}>
+              {suggestions.map((client, i) => (
+                <div
+                  key={i}
+                  onClick={() => handleSelectClient(client)}
+                  style={{
+                    padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    transition: 'background 0.15s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <UserCheck size={16} color="var(--accent)" />
+                  <div>
+                    <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{client.cliente}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{client.cedula} {client.actividad ? `• ${client.actividad}` : ''}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="form-group">
           <label>Cédula / RUC / Pasaporte</label>
            <input type="text" className="input-field" name="cedula" value={datos.cedula} onChange={handleChange} placeholder="Ej: 1712345678001" />
-
         </div>
 
         <div className="form-group">

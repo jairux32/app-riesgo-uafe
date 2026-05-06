@@ -1,4 +1,5 @@
 import { FACTORES_RIESGO, CONTROLES_INTERNOS, NIVELES_RIESGO } from '../data/constants';
+import { calculateInherentRisk } from './calculations';
 
 const setCols = (ws, widths) => {
   ws['!cols'] = widths.map(w => ({ wch: w }));
@@ -340,9 +341,47 @@ export const generatePDFSignatureBlock = (doc, y, profile) => {
 
   doc.line(20, y, 90, y);
   doc.line(120, y, 190, y);
-  
+
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(profile?.oficialCumplimiento || "Firma del Analista / Oficial de Cumplimiento", 55, y + 5, { align: "center" });
   doc.text(profile?.notario || "Firma y Sello del Notario Público", 155, y + 5, { align: "center" });
+};
+
+// ==================== EXPORTACIÓN MÚLTIPLE ====================
+export const exportMultipleToExcel = async (cases) => {
+  const XLSX = await import('xlsx');
+  const wb = XLSX.utils.book_new();
+
+  const data = cases.map((c, i) => {
+    const riskScore = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
+    let nivel = 'Sin evaluar';
+    if (riskScore <= 8) nivel = 'Bajo';
+    else if (riskScore <= 14) nivel = 'Medio';
+    else if (riskScore <= 19) nivel = 'Medio-Alto';
+    else if (riskScore > 19) nivel = 'Alto';
+
+    return {
+      '#': i + 1,
+      'Cliente': c.datos?.cliente || 'Sin nombre',
+      'Cédula/RUC': c.datos?.cedula || '—',
+      'Acto Notarial': c.datos?.acto || '—',
+      'Valor (USD)': c.datos?.valor || 0,
+      'Riesgo Inherente': riskScore,
+      'Nivel': nivel,
+      'Fecha': new Date(c.createdAt).toLocaleDateString('es-EC'),
+      'PEP': c.datos?.esPep ? 'Sí' : 'No',
+      'Apoderado': c.datos?.apoderado ? 'Sí' : 'No',
+    };
+  });
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  setCols(ws, [5, 30, 15, 25, 15, 15, 12, 12, 8, 10]);
+
+  addStyle(ws['A1'], { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: '1F6FEB' } } });
+
+  XLSX.utils.book_append_sheet(wb, ws, "Resumen de Casos");
+
+  const fileName = `Resumen_Casos_${cases.length}_${new Date().getTime()}.xlsx`;
+  XLSX.writeFile(wb, fileName);
 };

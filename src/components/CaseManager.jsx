@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield } from 'lucide-react';
+import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download } from 'lucide-react';
 import { getAllCases, saveCase, deleteCase } from '../utils/storage';
+import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
 
 export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProgress }) => {
@@ -85,6 +86,31 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
     }
   };
 
+  const handleBatchDelete = async () => {
+    if (!window.confirm(`¿Eliminar ${selectedIds.length} casos seleccionados? Esta acción no se puede deshacer.`)) return;
+    try {
+      for (const id of selectedIds) {
+        await deleteCase(id);
+      }
+      setSelectedIds([]);
+      await loadHistory();
+      toast.success(`${selectedIds.length} casos eliminados`);
+    } catch (err) {
+      toast.error('Error al eliminar casos: ' + err.message);
+    }
+  };
+
+  const handleBatchExport = async () => {
+    const selectedCases = cases.filter(c => selectedIds.includes(c.id));
+    if (selectedCases.length === 0) return;
+    try {
+      await exportMultipleToExcel(selectedCases);
+      toast.success(`${selectedCases.length} casos exportados a Excel`);
+    } catch (err) {
+      toast.error('Error al exportar: ' + err.message);
+    }
+  };
+
   return (
     <>
       <button className="btn btn-secondary" onClick={() => setIsOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -137,6 +163,42 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 <PlayCircle size={16} /> {batchProgress.active ? 'Analizando...' : `Analizar ${selectedIds.length}`}
               </button>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedIds.length > 0 && (
+              <div style={{
+                display: 'flex', gap: '10px', marginBottom: '15px', padding: '10px 14px',
+                background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px',
+                border: '1px solid rgba(59, 130, 246, 0.2)', alignItems: 'center', flexShrink: 0
+              }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>
+                  {selectedIds.length} seleccionado{selectedIds.length > 1 ? 's' : ''}
+                </span>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleBatchExport}
+                  disabled={selectedIds.length === 0}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 14px' }}
+                >
+                  <Download size={14} /> Exportar Excel
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleBatchDelete}
+                  disabled={selectedIds.length === 0}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 14px', color: 'var(--rojo)' }}
+                >
+                  <Trash2 size={14} /> Eliminar
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setSelectedIds([])}
+                  style={{ marginLeft: 'auto', fontSize: '0.8rem', padding: '8px 14px' }}
+                >
+                  Cancelar selección
+                </button>
+              </div>
+            )}
 
             {/* Batch progress */}
             {batchProgress.active && (

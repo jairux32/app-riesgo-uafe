@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { Bot, FileText, Download, Save, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle } from 'lucide-react';
 import { marked } from 'marked';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
@@ -40,6 +40,10 @@ export const Step4Analisis = ({
       toast.error('Error al generar PDF: ' + err.message);
       console.error("Error exportando PDF:", err);
     }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleExportExcel = async () => {
@@ -181,6 +185,9 @@ export const Step4Analisis = ({
         </button>
         <button className="btn" onClick={handleExportExcel} style={{ background: 'var(--verde)' }}>
           <Download size={18} /> Exportar Excel
+        </button>
+        <button className="btn btn-secondary" onClick={handlePrint}>
+          <Printer size={18} /> Imprimir
         </button>
         <button className="btn btn-secondary" onClick={onReset} style={{ marginLeft: 'auto' }}>
           <RefreshCw size={18} /> Nueva Evaluación

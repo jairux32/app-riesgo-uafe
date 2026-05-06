@@ -249,6 +249,75 @@ h1 {
   min-height: 800px;
 }
 
+/* ==================== PRINT STYLES ==================== */
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Ocultar todo excepto el documento legal */
+  header,
+  .card:not(:has(.legal-document)),
+  .btn,
+  aside,
+  nav,
+  .spin,
+  [class*="modal"],
+  [class*="toast"] {
+    display: none !important;
+  }
+
+  /* Mostrar solo el documento legal */
+  .legal-document {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+  }
+
+  .legal-document h2 {
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
+    background: none !important;
+  }
+
+  .legal-document h3 {
+    color: #333 !important;
+    -webkit-text-fill-color: #333 !important;
+  }
+
+  /* Evitar saltos de página en elementos críticos */
+  .legal-document p,
+  .legal-document li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .legal-document h2,
+  .legal-document h3 {
+    page-break-after: avoid;
+  }
+
+  /* Mostrar URL de links */
+  .legal-document a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
 .legal-document h2 {
   color: #000;
   text-align: center;
