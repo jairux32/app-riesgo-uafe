@@ -7,23 +7,18 @@ import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 
 export const Step4Analisis = ({ 
   datos, scores, controlesResult, factoresResult, 
-  apiKey, setApiKey, onReset 
+  onReset 
 }) => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleGenerateIA = async () => {
-    if (!apiKey) {
-      setApiKey(''); // triggers modal logic in App if empty and tried
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
     try {
       const promptText = buildPrompt(datos, scores, factoresResult, controlesResult);
-      const res = await analizarConGemini(apiKey, promptText);
+      const res = await analizarConGemini(promptText);
       setAnalysisResult(res);
     } catch (err) {
       setError(err.message);

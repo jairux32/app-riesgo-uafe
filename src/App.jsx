@@ -4,7 +4,6 @@ import { useAuth } from './context/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { WizardHeader } from './components/WizardHeader';
 import { ScoreSidebar } from './components/ScoreSidebar';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { CaseManager } from './components/CaseManager';
 import { HelpModal } from './components/HelpModal';
 import { Step1Datos } from './views/Step1Datos';
@@ -22,8 +21,6 @@ import { generateMonthlyReport } from './utils/monthlyReport';
 
 function AppContent() {
   const { user, logout } = useAuth();
-  const [apiKey, setApiKey] = useState(sessionStorage.getItem('gemini_api_key') || '');
-  const [showApiModal, setShowApiModal] = useState(!sessionStorage.getItem('gemini_api_key'));
   const [step, setStep] = useState(1);
   const [view, setView] = useState('wizard');
 
@@ -88,7 +85,7 @@ function AppContent() {
   };
 
   const handleBatchAnalyze = async (selectedIds) => {
-    if (!apiKey) { alert('Configure la API Key primero'); setShowApiModal(true); return; }
+    // API Key gestionada por Cloud Function — no se requiere en el cliente
     const allCases = await getAllCases();
     const targets = allCases.filter(c => selectedIds.includes(c.id));
     setBatchProgress({ active: true, current: 0, total: targets.length });
@@ -99,7 +96,7 @@ function AppContent() {
         const ri = calculateInherentRisk(c.evaluaciones || {});
         const rr = calculateResidualRisk(ri.inherente, c.controlesEval || {});
         const prompt = buildPrompt(c.datos, ri, ri.factores, rr);
-        const analysis = await analizarConGemini(apiKey, prompt);
+        const analysis = await analizarConGemini(prompt);
         await updateCaseAnalysis(c.id, analysis);
       }
       alert(`Análisis completado para ${targets.length} casos.`);
@@ -117,6 +114,7 @@ function AppContent() {
   return (
     <div className="container">
       {showApiModal && <ApiKeyModal setApiKey={(key) => { setApiKey(key); setShowApiModal(false); }} />}
+      {showApiModal && <ApiKeyModal setApiKey={(key) => { setApiKey(key); setShowApiModal(false); }} />}
       <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ color: 'var(--accent)', fontSize: '1.8rem', marginBottom: '5px' }}>Sistema de Análisis de Riesgo LA/FD</h1>
@@ -132,7 +130,6 @@ function AppContent() {
           <button className="btn btn-secondary" onClick={() => setView('profile')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Building2 size={16} /> Perfil
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowApiModal(true)}>Config API</button>
           <button className="btn btn-secondary" onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <LogOut size={16} /> {user?.email?.split('@')[0]}
           </button>
@@ -169,7 +166,7 @@ function AppContent() {
               {step === 1 && <Step1Datos datos={datos} setDatos={setDatos} onNext={() => setStep(2)} />}
               {step === 2 && <Step2Factores evaluaciones={evaluaciones} setEvaluaciones={setEvaluaciones} onNext={() => setStep(3)} onPrev={() => setStep(1)} />}
               {step === 3 && <Step3Controles controlesEval={controlesEval} setControlesEval={setControlesEval} onNext={() => setStep(4)} onPrev={() => setStep(2)} />}
-              {step === 4 && <Step4Analisis datos={datos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} apiKey={apiKey} setApiKey={setApiKey} onReset={handleReset} />}
+              {step === 4 && <Step4Analisis datos={datos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} onReset={handleReset} />}
             </main>
             <aside><ScoreSidebar scores={scores} /></aside>
           </div>

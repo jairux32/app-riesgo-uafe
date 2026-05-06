@@ -85,7 +85,7 @@ proporcionados. Usa lenguaje formal apropiado para un documento legal notarial.
 `;
 };
 
-export const analizarConGemini = async (apiKey, promptText) => {
+export const analizarConGemini = async (promptText) => {
   const result = await analyzeCaseFn({ prompt: promptText });
   return result.data.text;
 };
