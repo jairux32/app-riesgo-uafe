@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserCases } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { calculateInherentRisk } from '../utils/calculations';
 import { TrendingUp, AlertTriangle, FileCheck, Activity } from 'lucide-react';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
@@ -47,17 +48,13 @@ export const Dashboard = () => {
   const getRiskDistribution = () => {
     const dist = [0, 0, 0, 0];
     cases.forEach(c => {
-      const score = c.evaluaciones ? calculateScore(c.evaluaciones) : 5;
+      const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
       if (score <= 8) dist[0]++;
       else if (score <= 14) dist[1]++;
       else if (score <= 19) dist[2]++;
       else dist[3]++;
     });
     return RISK_LABELS.map((label, i) => ({ name: label, value: dist[i] })).filter(d => d.value > 0);
-  };
-
-  const calculateScore = (evaluaciones) => {
-    return Object.values(evaluaciones).reduce((sum, e) => sum + (e.prob * e.imp), 0);
   };
 
   const getFactorAnalysis = () => {
@@ -84,13 +81,13 @@ export const Dashboard = () => {
   const getAlertCases = () => {
     return cases.filter(c => {
       if (!c.evaluaciones) return false;
-      const score = calculateScore(c.evaluaciones);
+      const score = calculateInherentRisk(c.evaluaciones).inherente;
       return score >= 15;
     }).slice(0, 5);
   };
 
   const avgScore = cases.length > 0
-    ? Math.round(cases.reduce((sum, c) => sum + (c.evaluaciones ? calculateScore(c.evaluaciones) : 0), 0) / cases.length)
+    ? Math.round(cases.reduce((sum, c) => sum + (c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0), 0) / cases.length)
     : 0;
 
   const riskDist = getRiskDistribution();
@@ -175,7 +172,7 @@ export const Dashboard = () => {
                   <p style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{c.datos?.acto} | {new Date(c.createdAt).toLocaleDateString()}</p>
                 </div>
                 <span style={{ fontWeight: 'bold', color: 'var(--rojo)' }}>
-                  {calculateScore(c.evaluaciones)}/25
+                  {calculateInherentRisk(c.evaluaciones).inherente}/25
                 </span>
               </div>
             ))}

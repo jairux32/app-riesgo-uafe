@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { LogOut, LayoutDashboard, FileText, Building2, FileDown } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { LoginForm } from './components/LoginForm';
@@ -62,7 +64,7 @@ function AppContent() {
     const handleKeyDown = (e) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
-          case 's': e.preventDefault(); break;
+          case 's': e.preventDefault(); if (view === 'wizard') toast('Use el botón "Guardar" en el Historial', { icon: '💡' }); break;
           case 'enter': e.preventDefault(); if (step < 4 && view === 'wizard') setStep(step + 1); break;
           case 'p': e.preventDefault(); break;
         }
@@ -75,7 +77,7 @@ function AppContent() {
   const handleDemoMode = () => { setDatos(DEMO_CASE); setView('wizard'); };
 
   const handleExpressAnalyze = () => {
-    if (!datos.cliente || !datos.cedula) { alert('Complete los datos básicos del cliente primero'); setStep(1); setView('wizard'); return; }
+    if (!datos.cliente || !datos.cedula) { toast.error('Complete los datos básicos del cliente primero'); setStep(1); setView('wizard'); return; }
     setEvaluaciones({}); setControlesEval({}); setStep(4); setView('wizard');
   };
 
@@ -99,22 +101,20 @@ function AppContent() {
         const analysis = await analizarConGemini(prompt);
         await updateCaseAnalysis(c.id, analysis);
       }
-      alert(`Análisis completado para ${targets.length} casos.`);
-    } catch (err) { alert('Error: ' + err.message); }
+      toast.success(`Análisis completado para ${targets.length} casos.`);
+    } catch (err) { toast.error('Error: ' + err.message); }
     finally { setBatchProgress({ active: false, current: 0, total: 0 }); }
   };
 
   const handleMonthlyReport = async () => {
     const allCases = await getAllCases();
     const profile = await getNotaryProfile(user.uid);
-    if (allCases.length === 0) { alert('No hay casos para generar el reporte'); return; }
+    if (allCases.length === 0) { toast.error('No hay casos para generar el reporte'); return; }
     await generateMonthlyReport(allCases, profile);
   };
 
   return (
     <div className="container">
-      {showApiModal && <ApiKeyModal setApiKey={(key) => { setApiKey(key); setShowApiModal(false); }} />}
-      {showApiModal && <ApiKeyModal setApiKey={(key) => { setApiKey(key); setShowApiModal(false); }} />}
       <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ color: 'var(--accent)', fontSize: '1.8rem', marginBottom: '5px' }}>Sistema de Análisis de Riesgo LA/FD</h1>
@@ -190,4 +190,13 @@ function App() {
   return <AppContent />;
 }
 
-export default App;
+function AppWithToast() {
+  return (
+    <>
+      <Toaster position="top-right" toastOptions={{ style: { background: '#141E38', color: '#f8fafc', border: '1px solid #30363d' } }} />
+      <App />
+    </>
+  );
+}
+
+export default AppWithToast;

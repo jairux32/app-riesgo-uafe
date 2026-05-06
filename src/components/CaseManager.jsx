@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Save, FolderOpen, Trash2, X, PlayCircle } from 'lucide-react';
 import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 
@@ -28,9 +29,9 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
     try {
       await saveCase(currentCase);
       await loadHistory();
-      alert('Caso guardado exitosamente en el historial local');
+      toast.success('Caso guardado en la nube');
     } catch (err) {
-      alert('Error al guardar el caso');
+      toast.error('Error al guardar el caso');
     } finally {
       setIsSaving(false);
     }

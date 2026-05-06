@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { Bot, FileText, Download, Save, RefreshCw, AlertTriangle } from 'lucide-react';
 import { marked } from 'marked';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
+import { useAuth } from '../context/AuthContext';
+import { getNotaryProfile } from '../firebase/profileStore';
 
 export const Step4Analisis = ({ 
   datos, scores, controlesResult, factoresResult, 
   onReset 
 }) => {
+  const { user } = useAuth();
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,7 +32,8 @@ export const Step4Analisis = ({
 
   const handleExportPDF = async () => {
     try {
-      await exportToPDF(datos, scores, factoresResult, controlesResult, analysisResult);
+      const profile = await getNotaryProfile(user.uid);
+      await exportToPDF(datos, scores, factoresResult, controlesResult, analysisResult, profile);
     } catch (err) {
       console.error("Error exportando PDF:", err);
     }

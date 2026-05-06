@@ -39,8 +39,8 @@ export const ScoreSidebar = ({ scores }) => {
 
         <div style={{
           padding: '15px', borderRadius: '8px', textAlign: 'center',
-          border: '1px solid',
-        }} className={`border ${scores.colorClass}`}>
+          border: '1px solid currentColor',
+        }} className={scores.colorClass}>
 
         <p style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '5px' }}>{scores.nivel}</p>
         <p style={{ fontSize: '0.85rem' }}>{scores.diligencia}</p>

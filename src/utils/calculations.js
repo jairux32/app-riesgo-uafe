@@ -8,7 +8,7 @@ export const calculateInherentRisk = (evaluaciones) => {
   FACTORES_RIESGO.forEach(factor => {
     let factorSuma = 0;
     factor.subcriterios.forEach(sub => {
-      const evalSub = evaluaciones[sub.id] || { prob: 1, imp: 1 };
+      const evalSub = evaluaciones[sub.id] || { prob: 0, imp: 0 };
       factorSuma += (evalSub.prob * evalSub.imp);
     });
 

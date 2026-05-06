@@ -213,7 +213,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
 };
 
 // ==================== PDF ====================
-export const exportToPDF = async (datos, scores, factoresResult, controlesResult, geminiAnalysis) => {
+export const exportToPDF = async (datos, scores, factoresResult, controlesResult, geminiAnalysis, profile) => {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const doc = new jsPDF();
@@ -318,7 +318,7 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   }
 
   addPageIfNeeded(60);
-  generatePDFSignatureBlock(doc, y);
+  generatePDFSignatureBlock(doc, y, profile);
 
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -332,7 +332,7 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   doc.save(`Reporte_Riesgo_${datos.cedula || 'Caso'}_${new Date().getTime()}.pdf`);
 };
 
-export const generatePDFSignatureBlock = (doc, y) => {
+export const generatePDFSignatureBlock = (doc, y, profile) => {
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text("FIRMAS DE VALIDACIÓN", 105, y, { align: "center" });
@@ -343,6 +343,6 @@ export const generatePDFSignatureBlock = (doc, y) => {
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Firma del Analista / Oficial de Cumplimiento", 55, y + 5, { align: "center" });
-  doc.text("Firma y Sello del Notario Público", 155, y + 5, { align: "center" });
+  doc.text(profile?.oficialCumplimiento || "Firma del Analista / Oficial de Cumplimiento", 55, y + 5, { align: "center" });
+  doc.text(profile?.notario || "Firma y Sello del Notario Público", 155, y + 5, { align: "center" });
 };
