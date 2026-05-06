@@ -1,0 +1,20 @@
+export const DEMO_CASE = {
+  notaria: "Notaría Primera del Cantón Guayaquil",
+  notario: "Dr. Juan Pérez",
+  numeroCanton: "Cantón Guayaquil",
+  cliente: "Inmobiliaria El Sol S.A. (Representada por Carlos Méndez)",
+  cedula: "0991234567001",
+  acto: "Compraventa inmueble",
+  valor: "150000",
+  origen: "Préstamo privado del exterior e inversión propia",
+  medioPago: "transferencia",
+  actividad: "Construcción y venta de inmuebles",
+  esPep: true,
+  detallePep: "Ex-Director de Obras Públicas (dejó el cargo hace 14 meses)",
+  apoderado: true,
+  ofac: false,
+  onu: false,
+  pepUafe: true,
+  reportesPrevios: false,
+  observaciones: "El valor comercial del inmueble parece ser superior al declarado. Los fondos provienen parcialmente de una cuenta en Panamá."
+};
