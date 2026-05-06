@@ -1,13 +1,16 @@
-import React, { useRef, useEffect } from 'react';
-import { Upload } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Upload, Loader } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 
-export const Step1Datos = ({ datos, setDatos, onNext }) => {
+export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importStats, setImportStats] = useState(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -44,29 +47,64 @@ export const Step1Datos = ({ datos, setDatos, onNext }) => {
     const file = e.target.files[0];
     if (!file) return;
     
+    setImporting(true);
+    setImportStats(null);
+    
     try {
       const cases = await parseUAFEExcel(file);
-      if (cases.length > 0) {
-        // Guardar todos los casos en el historial
-        for (const caso of cases) {
-          await saveCase({
-            datos: caso,
-            evaluaciones: {}, // Vacío, se llenará al analizar
-            controlesEval: {} // Vacío, se llenará al analizar
-          });
-        }
-        
-        // Cargar el primer caso al wizard para análisis inmediato
-        setDatos(cases[0]);
-        
-        alert(`Se importaron ${cases.length} casos al historial. El primer caso está listo para analizar.`);
-      } else {
-        alert('No se encontraron registros válidos en el archivo Excel.');
+      if (cases.length === 0) {
+        toast.error('No se encontraron registros válidos en el archivo Excel.');
+        setImporting(false);
+        return;
       }
+
+      const imported = [];
+      const skipped = { invalid: 0, duplicate: 0, error: 0 };
+
+      for (let i = 0; i < cases.length; i++) {
+        const caso = cases[i];
+        
+        // Validar datos mínimos por caso
+        if (!caso.datos.cedula || !caso.datos.cliente) {
+          skipped.invalid++;
+          continue;
+        }
+
+        try {
+          await saveCase({
+            datos: caso.datos,
+            evaluaciones: caso.evaluaciones,
+            controlesEval: caso.controlesEval
+          });
+          imported.push(caso);
+        } catch (err) {
+          skipped.error++;
+        }
+      }
+
+      if (imported.length > 0) {
+        setDatos(imported[0].datos);
+        setEvaluaciones(imported[0].evaluaciones || {});
+        setControlesEval(imported[0].controlesEval || {});
+      }
+
+      setImportStats({
+        total: cases.length,
+        imported: imported.length,
+        invalid: skipped.invalid,
+        error: skipped.error
+      });
+
+      toast.success(
+        `Importados: ${imported.length} | Inválidos: ${skipped.invalid} | Errores: ${skipped.error}`,
+        { duration: 5000 }
+      );
     } catch (err) {
-      alert('Error al procesar el archivo Excel: ' + err.message);
+      toast.error('Error al procesar el archivo Excel: ' + err.message);
+    } finally {
+      setImporting(false);
     }
-    e.target.value = ''; // Reset input
+    e.target.value = '';
   };
 
   return (
@@ -76,9 +114,10 @@ export const Step1Datos = ({ datos, setDatos, onNext }) => {
         <button 
           className="btn btn-secondary" 
           onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
           style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <Upload size={16} /> Importar Excel
+          {importing ? <><Loader size={16} className="spin" /> Importando...</> : <><Upload size={16} /> Importar Excel</>}
         </button>
         <input
           type="file"
@@ -88,6 +127,15 @@ export const Step1Datos = ({ datos, setDatos, onNext }) => {
           style={{ display: 'none' }}
         />
       </div>
+
+      {importStats && (
+        <div style={{ marginBottom: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', gap: '20px', justifyContent: 'center', fontSize: '0.9rem' }}>
+          <span style={{ color: 'var(--verde)' }}>✅ Importados: {importStats.imported}</span>
+          <span style={{ color: 'var(--amarillo)' }}>⚠️ Inválidos: {importStats.invalid}</span>
+          <span style={{ color: 'var(--rojo)' }}>❌ Errores: {importStats.error}</span>
+        </div>
+      )}
+      <style>{`.spin { animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
 
       <div className="grid-2">
         <div className="form-group">

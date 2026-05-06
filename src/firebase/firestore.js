@@ -46,4 +46,22 @@ export const deleteCaseFromFirestore = async (caseId) => {
   await deleteDoc(docRef);
 };
 
+export const saveCasesBatch = async (cases, userId) => {
+  const batch = writeBatch(db);
+  const colRef = collection(db, CASES_COLLECTION);
+  const now = new Date().toISOString();
+  
+  cases.forEach(caseData => {
+    const docRef = doc(colRef);
+    batch.set(docRef, {
+      ...caseData,
+      userId,
+      createdAt: now,
+      updatedAt: now
+    });
+  });
+  
+  await batch.commit();
+};
+
 export { db };
