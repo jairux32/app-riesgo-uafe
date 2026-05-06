@@ -56,12 +56,39 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     };
     loadProfile();
   }, [user]);
+  // Plantillas por tipo de acto
+  const applyTemplate = (acto) => {
+    const templates = {
+      'Compraventa inmueble': { valor: 50000, medioPago: 'Transferencia', origen: 'Venta de bienes / Ahorro', actividad: 'Comerciante / Profesional' },
+      'Constitución compañía': { valor: 25000, medioPago: 'Transferencia', origen: 'Capital inicial / Inversión', actividad: 'Empresario' },
+      'Poder especial': { valor: 0, medioPago: 'N/A', origen: 'N/A', actividad: 'Varía según cliente' },
+      'Fideicomiso': { valor: 100000, medioPago: 'Transferencia', origen: 'Patrimonio / Inversión', actividad: 'Inversionista' },
+      'Declaración juramentada': { valor: 0, medioPago: 'N/A', origen: 'N/A', actividad: 'Varía según cliente' },
+      'Otro': { valor: 0, medioPago: '', origen: '', actividad: '' }
+    };
+    return templates[acto] || {};
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setDatos(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    // Plantilla: si cambia el acto, pre-llenar datos típicos
+    if (name === 'acto' && value) {
+      const template = applyTemplate(value);
+      setDatos(prev => ({
+        ...prev,
+        acto: value,
+        valor: template.valor || prev.valor,
+        medioPago: template.medioPago || prev.medioPago,
+        origen: template.origen || prev.origen,
+        actividad: template.actividad || prev.actividad,
+      }));
+      toast('Plantilla cargada para ' + value, { icon: '📋', duration: 2000 });
+    }
 
     // Autocompletar: buscar sugerencias al escribir en cliente o cédula
     if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2 && clientHistory.length > 0) {

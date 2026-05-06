@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
-import { LogOut, LayoutDashboard, FileText, Building2, FileDown, HelpCircle } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Building2, FileDown, HelpCircle, Sun, Moon } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { WizardHeader } from './components/WizardHeader';
@@ -26,6 +26,15 @@ function AppContent() {
   const { user, logout } = useAuth();
   const [step, setStep] = useState(1);
   const [view, setView] = useState('wizard');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('app_theme');
+    return saved ? saved === 'dark' : true;
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('app_theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   const [datos, setDatos] = useState({
     notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '',
@@ -123,6 +132,14 @@ function AppContent() {
           </button>
           <button className="btn btn-secondary" onClick={() => setView('profile')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Building2 size={16} /> Perfil
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          >
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <HelpModal />
           <button className="btn btn-secondary" onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>

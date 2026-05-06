@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download } from 'lucide-react';
+import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download, GitCompare } from 'lucide-react';
 import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
@@ -12,6 +12,7 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCompare, setShowCompare] = useState(false);
 
   useEffect(() => {
     if (isOpen) loadHistory();
@@ -176,6 +177,14 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 </span>
                 <button
                   className="btn btn-secondary"
+                  onClick={() => setShowCompare(true)}
+                  disabled={selectedIds.length < 2 || selectedIds.length > 3}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 14px' }}
+                >
+                  <GitCompare size={14} /> Comparar {selectedIds.length}
+                </button>
+                <button
+                  className="btn btn-secondary"
                   onClick={handleBatchExport}
                   disabled={selectedIds.length === 0}
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 14px' }}
@@ -309,6 +318,58 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 </table>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comparison Modal */}
+      {showCompare && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, padding: '20px'
+        }}>
+          <div className="card" style={{ width: '1000px', maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <GitCompare size={24} /> Comparativa de Casos
+              </h2>
+              <button className="btn btn-secondary" onClick={() => setShowCompare(false)}><X size={20} /></button>
+            </div>
+
+            {(() => {
+              const compareCases = cases.filter(c => selectedIds.includes(c.id)).slice(0, 3);
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${compareCases.length}, 1fr)`, gap: '20px' }}>
+                  {compareCases.map(c => {
+                    const risk = getRiskInfo(c.evaluaciones);
+                    return (
+                      <div key={c.id} style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px' }}>
+                        <h3 style={{ fontSize: '1rem', marginBottom: '10px', color: 'var(--accent)' }}>
+                          {c.datos?.cliente || 'Sin nombre'}
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginBottom: '15px' }}>
+                          {c.datos?.cedula} | {c.datos?.acto}
+                        </p>
+
+                        <div style={{ marginBottom: '15px', padding: '10px', background: 'var(--bg-panel)', borderRadius: '6px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: risk.color }}>{risk.score}</span>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--txt2)', display: 'block' }}>/ 25 — {risk.label}</span>
+                        </div>
+
+                        <div style={{ fontSize: '0.85rem', lineHeight: '1.6' }}>
+                          <p><strong>Valor:</strong> ${c.datos?.valor?.toLocaleString() || '0'}</p>
+                          <p><strong>PEP:</strong> {c.datos?.esPep ? 'Sí' : 'No'}</p>
+                          <p><strong>Apoderado:</strong> {c.datos?.apoderado ? 'Sí' : 'No'}</p>
+                          <p><strong>OFAC:</strong> {c.datos?.ofac ? 'Verificado' : 'No'}</p>
+                          <p><strong>Fecha:</strong> {new Date(c.createdAt).toLocaleDateString('es-EC')}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

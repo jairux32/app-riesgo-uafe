@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, AlertTriangle } from 'lucide-react';
 
 export const ScoreSidebar = ({ scores }) => {
   // Función para determinar el color del anillo del gauge (aprox.)
@@ -45,6 +45,22 @@ export const ScoreSidebar = ({ scores }) => {
         <p style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '5px' }}>{scores.nivel}</p>
         <p style={{ fontSize: '0.85rem' }}>{scores.diligencia}</p>
       </div>
+
+      {scores.inherente >= 20 && (
+        <div style={{
+          marginTop: '15px', padding: '12px', background: 'rgba(239, 68, 68, 0.15)',
+          border: '1px solid var(--rojo)', borderRadius: '8px', textAlign: 'center',
+          animation: 'pulse 2s infinite'
+        }}>
+          <AlertTriangle size={20} color="var(--rojo)" style={{ marginBottom: '6px' }} />
+          <p style={{ color: 'var(--rojo)', fontWeight: 'bold', fontSize: '0.9rem' }}>
+            Riesgo ALTO
+          </p>
+          <p style={{ color: 'var(--rojo)', fontSize: '0.8rem', marginTop: '4px' }}>
+            Requiere evaluación de ROS
+          </p>
+        </div>
+      )}
 
       {scores.factores && scores.factores.length > 0 && (
         <div style={{ marginTop: '20px' }}>

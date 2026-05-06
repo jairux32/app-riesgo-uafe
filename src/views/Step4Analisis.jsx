@@ -65,6 +65,24 @@ export const Step4Analisis = ({
 
   return (
     <div>
+      {scores.inherente >= 20 && (
+        <div style={{
+          marginBottom: '20px', padding: '16px', background: 'rgba(239, 68, 68, 0.15)',
+          border: '2px solid var(--rojo)', borderRadius: '8px', display: 'flex',
+          alignItems: 'center', gap: '12px', animation: 'pulse 2s infinite'
+        }}>
+          <AlertTriangle size={28} color="var(--rojo)" />
+          <div>
+            <p style={{ color: 'var(--rojo)', fontWeight: 'bold', fontSize: '1.1rem' }}>
+              CASO DE RIESGO ALTO — Requiere evaluación inmediata de ROS
+            </p>
+            <p style={{ color: 'var(--rojo)', fontSize: '0.9rem', marginTop: '4px' }}>
+              Score: {scores.inherente}/25 | Este caso amerita análisis para reporte de operación sospechosa a la UAFE
+            </p>
+          </div>
+        </div>
+      )}
+
         <div className="card">
           <h2 style={{ marginBottom: '20px', color: 'var(--accent)' }}>Resumen de Riesgo</h2>
           
