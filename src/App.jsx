@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { LogOut } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { LoginForm } from './components/LoginForm';
 import { WizardHeader } from './components/WizardHeader';
 import { ScoreSidebar } from './components/ScoreSidebar';
 import { ApiKeyModal } from './components/ApiKeyModal';
@@ -13,9 +16,10 @@ import { buildPrompt, analizarConGemini } from './utils/geminiApi';
 import { DEMO_CASE } from './data/demoCase';
 import { getAllCases, updateCaseAnalysis } from './utils/storage';
 
-function App() {
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-  const [showApiModal, setShowApiModal] = useState(!localStorage.getItem('gemini_api_key'));
+function AppContent() {
+  const { user, logout } = useAuth();
+  const [apiKey, setApiKey] = useState(sessionStorage.getItem('gemini_api_key') || '');
+  const [showApiModal, setShowApiModal] = useState(!sessionStorage.getItem('gemini_api_key'));
   const [step, setStep] = useState(1);
   const [isExpressMode, setIsExpressMode] = useState(false);
 
@@ -90,7 +94,7 @@ function App() {
       return;
     }
     setIsExpressMode(true);
-    setEvaluaciones({}); 
+    setEvaluaciones({});
     setControlesEval({});
     setStep(4);
   };
@@ -116,7 +120,7 @@ function App() {
 
     const allCases = await getAllCases();
     const targets = allCases.filter(c => selectedIds.includes(c.id));
-    
+
     setBatchProgress({ active: true, current: 0, total: targets.length });
 
     try {
@@ -150,18 +154,21 @@ function App() {
           <button className="btn" onClick={handleExpressAnalyze} style={{ background: 'var(--naranja)' }}>
             🚀 Análisis Rápido
           </button>
-          <CaseManager 
-            currentCase={{ datos, evaluaciones, controlesEval }} 
+          <CaseManager
+            currentCase={{ datos, evaluaciones, controlesEval }}
             onLoadCase={(savedCase) => {
               setDatos(savedCase.datos);
               setEvaluaciones(savedCase.evaluaciones);
               setControlesEval(savedCase.controlesEval);
-            }} 
+            }}
             onBatchAnalyze={handleBatchAnalyze}
             batchProgress={batchProgress}
           />
           <HelpModal />
           <button className="btn btn-secondary" onClick={() => setShowApiModal(true)}>Config API</button>
+          <button className="btn btn-secondary" onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <LogOut size={16} /> {user?.email?.split('@')[0]}
+          </button>
         </div>
       </header>
       <WizardHeader currentStep={step} setStep={setStep} />
@@ -178,6 +185,32 @@ function App() {
       </div>
     </div>
   );
+}
+
+function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(135deg, var(--bg-app-1) 0%, var(--bg-app-2) 100%)'
+      }}>
+        <div style={{
+          width: '40px', height: '40px', border: '4px solid var(--bg-input)',
+          borderTop: '4px solid var(--accent)', borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm />;
+  }
+
+  return <AppContent />;
 }
 
 export default App;
