@@ -1,10 +1,28 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase } from '../utils/storage';
+import { useAuth } from '../context/AuthContext';
+import { getNotaryProfile } from '../firebase/profileStore';
 
 export const Step1Datos = ({ datos, setDatos, onNext }) => {
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user || datos.notaria) return;
+      const profile = await getNotaryProfile(user.uid);
+      if (profile) {
+        setDatos(prev => ({
+          ...prev,
+          notaria: profile.notaria || '',
+          notario: profile.notario || ''
+        }));
+      }
+    };
+    loadProfile();
+  }, [user]);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setDatos(prev => ({
