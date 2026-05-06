@@ -15,7 +15,7 @@ export const WizardHeader = ({ currentStep, setStep }) => {
         {/* Liena de fondo conectora */}
         <div style={{
           position: 'absolute', top: '15px', left: '10%', right: '10%', height: '2px',
-          background: 'var(--bg-input)', zIndex: 0
+          background: 'rgba(255,255,255,0.15)', zIndex: 0
         }}></div>
 
         {steps.map((step) => {

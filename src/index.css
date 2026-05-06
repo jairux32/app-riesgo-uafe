@@ -68,7 +68,6 @@ body {
 }
 
 .card:hover {
-  transform: translateY(-2px);
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
   border-color: rgba(255, 255, 255, 0.15);
 }
@@ -93,7 +92,7 @@ body {
 }
 
 .input-field::placeholder {
-  color: rgba(148, 163, 184, 0.5);
+  color: rgba(148, 163, 184, 0.7);
 }
 
 .btn {
@@ -111,7 +110,6 @@ body {
   justify-content: center;
   gap: 10px;
   box-shadow: 0 4px 15px var(--accent-glow);
-  text-transform: uppercase;
   font-size: 0.85rem;
 }
 
@@ -195,9 +193,9 @@ input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 6px;
   cursor: pointer;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.15);
   border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Checkboxes */
@@ -212,6 +210,15 @@ input[type="checkbox"] {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }
 
 main > div {

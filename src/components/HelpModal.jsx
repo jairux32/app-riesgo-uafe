@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, X, FileSpreadsheet, PlayCircle, Download } from 'lucide-react';
+import { HelpCircle, X, FileSpreadsheet, PlayCircle, Download } from 'lucide-react';
 
 export const HelpModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -7,7 +7,7 @@ export const HelpModal = () => {
   return (
     <>
       <button className="btn btn-secondary" onClick={() => setIsOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <BookOpen size={16} /> Ayuda
+        <HelpCircle size={16} /> Ayuda
       </button>
 
       {isOpen && (

@@ -31,18 +31,24 @@ export const Step4Analisis = ({
   };
 
   const handleExportPDF = async () => {
+    toast('Generando PDF...', { icon: '📄' });
     try {
       const profile = await getNotaryProfile(user.uid);
       await exportToPDF(datos, scores, factoresResult, controlesResult, analysisResult, profile);
+      toast.success('PDF descargado correctamente');
     } catch (err) {
+      toast.error('Error al generar PDF: ' + err.message);
       console.error("Error exportando PDF:", err);
     }
   };
 
   const handleExportExcel = async () => {
+    toast('Generando Excel...', { icon: '📊' });
     try {
       await exportToExcel(datos, scores, factoresResult, controlesResult, analysisResult);
+      toast.success('Excel descargado correctamente');
     } catch (err) {
+      toast.error('Error al generar Excel: ' + err.message);
       console.error("Error exportando Excel:", err);
     }
   };
@@ -126,7 +132,7 @@ export const Step4Analisis = ({
               animation: 'spin 1s linear infinite', margin: '0 auto 20px'
             }}></div>
             <p>Gemini está analizando el caso bajo la normativa ecuatoriana...</p>
-            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+
           </div>
         )}
 

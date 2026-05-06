@@ -10,6 +10,20 @@ export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
 
+  const getErrorMessage = (code) => {
+    const map = {
+      'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+      'auth/user-not-found': 'No existe una cuenta con este correo.',
+      'auth/wrong-password': 'Contraseña incorrecta.',
+      'auth/invalid-email': 'El correo electrónico no es válido.',
+      'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+      'auth/email-already-in-use': 'Ya existe una cuenta con este correo.',
+      'auth/too-many-requests': 'Demasiados intentos fallidos. Intente más tarde.',
+      'auth/network-request-failed': 'Error de conexión. Verifique su internet.'
+    };
+    return map[code] || 'Ocurrió un error. Intente nuevamente.';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -21,7 +35,7 @@ export const LoginForm = () => {
         await login(email, password);
       }
     } catch (err) {
-      setError(err.message);
+      setError(getErrorMessage(err.code));
     } finally {
       setLoading(false);
     }

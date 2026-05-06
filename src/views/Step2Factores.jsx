@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FACTORES_RIESGO, ESCALA_VALORACION } from '../data/constants';
-import { Info } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) => {
-  
+  const [expandedFactor, setExpandedFactor] = useState(null);
+
   const applyTemplate = (profile) => {
     const templates = {
       bajo: { prob: 1, imp: 2 },
@@ -21,7 +22,8 @@ export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev })
 
   const evaluatedCount = Object.keys(evaluaciones).length;
   const totalFactors = FACTORES_RIESGO.flatMap(f => f.subcriterios).length;
-  const isAllEvaluated = evaluatedCount > 0; // Permitir avanzar si al menos evaluó un factor
+  const isAllEvaluated = evaluatedCount === totalFactors;
+  const progressPercent = Math.round((evaluatedCount / totalFactors) * 100);
 
   const handleSliderChange = (subId, tipo, valor) => {
 
@@ -49,17 +51,54 @@ export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev })
 
   return (
     <div>
-      {FACTORES_RIESGO.map((factor, fIndex) => (
-        <div key={factor.id} className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #30363d', paddingBottom: '10px', marginBottom: '15px' }}>
-            <h2 style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>Factor {fIndex + 1}: {factor.nombre}</h2>
-            <span style={{ background: 'var(--bg-panel)', padding: '5px 10px', borderRadius: '4px', fontSize: '0.9rem' }}>
-              Peso: {factor.peso * 100}%
-            </span>
-          </div>
-          <p style={{ color: 'var(--txt2)', fontSize: '0.95rem', marginBottom: '20px' }}>{factor.descripcion}</p>
+      <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--txt2)' }}>Progreso de evaluación</span>
+          <span style={{ fontWeight: 'bold', color: isAllEvaluated ? 'var(--verde)' : 'var(--accent)' }}>
+            {evaluatedCount} / {totalFactors}
+          </span>
+        </div>
+        <div style={{ width: '100%', height: '8px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ width: `${progressPercent}%`, height: '100%', background: isAllEvaluated ? 'var(--verde)' : 'var(--accent)', transition: 'width 0.3s ease', borderRadius: '4px' }} />
+        </div>
+        {!isAllEvaluated && (
+          <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginTop: '8px' }}>
+            Debe evaluar todos los {totalFactors} subcriterios para continuar al siguiente paso.
+          </p>
+        )}
+      </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {FACTORES_RIESGO.map((factor, fIndex) => {
+        const isExpanded = expandedFactor === factor.id;
+        const evaluatedInFactor = factor.subcriterios.filter(sub => evaluaciones[sub.id]).length;
+        const totalInFactor = factor.subcriterios.length;
+
+        return (
+        <div key={factor.id} className="card" style={{ cursor: 'pointer' }} onClick={() => setExpandedFactor(isExpanded ? null : factor.id)}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {isExpanded ? <ChevronUp size={20} color="var(--accent)" /> : <ChevronDown size={20} color="var(--txt2)" />}
+              <div>
+                <h2 style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>Factor {fIndex + 1}: {factor.nombre}</h2>
+                <p style={{ color: 'var(--txt2)', fontSize: '0.85rem', marginTop: '4px' }}>{factor.descripcion}</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{
+                background: evaluatedInFactor === totalInFactor ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-panel)',
+                color: evaluatedInFactor === totalInFactor ? 'var(--verde)' : 'var(--txt2)',
+                padding: '5px 10px', borderRadius: '4px', fontSize: '0.85rem', fontWeight: '500'
+              }}>
+                {evaluatedInFactor}/{totalInFactor}
+              </span>
+              <span style={{ background: 'var(--bg-panel)', padding: '5px 10px', borderRadius: '4px', fontSize: '0.9rem' }}>
+                Peso: {factor.peso * 100}%
+              </span>
+            </div>
+          </div>
+
+          {isExpanded && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             {factor.subcriterios.map(sub => {
               const e = evaluaciones[sub.id] || { prob: 1, imp: 1 };
               const pxI = e.prob * e.imp;
@@ -76,8 +115,9 @@ export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev })
                       </div>
                       <input 
                         type="range" min="1" max="5" step="1" 
-                        value={e.prob} 
-                        onChange={(ev) => handleSliderChange(sub.id, 'prob', ev.target.value)} 
+                        value={e.prob}
+                        onChange={(ev) => handleSliderChange(sub.id, 'prob', ev.target.value)}
+                        onClick={(e) => e.stopPropagation()}
                         title="1: Raro, 5: Casi Certero"
                       />
                     </div>
@@ -89,8 +129,9 @@ export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev })
                       </div>
                       <input 
                         type="range" min="1" max="5" step="1" 
-                        value={e.imp} 
-                        onChange={(ev) => handleSliderChange(sub.id, 'imp', ev.target.value)} 
+                        value={e.imp}
+                        onChange={(ev) => handleSliderChange(sub.id, 'imp', ev.target.value)}
+                        onClick={(e) => e.stopPropagation()}
                         title="1: Insignificante, 5: Catastrófico"
                       />
                     </div>
@@ -108,8 +149,10 @@ export const Step2Factores = ({ evaluaciones, setEvaluaciones, onNext, onPrev })
               );
             })}
           </div>
+          )}
         </div>
-      ))}
+        );
+      })}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>

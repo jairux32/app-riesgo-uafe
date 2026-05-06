@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { saveNotaryProfile, getNotaryProfile } from '../firebase/profileStore';
 import { Building2, UserCheck, Save, RefreshCw } from 'lucide-react';
@@ -40,16 +41,17 @@ export const NotaryProfile = ({ onClose }) => {
 
   const handleSave = async () => {
     if (!profile.notaria || !profile.notario || !profile.oficialCumplimiento) {
-      alert('Complete al menos: Nombre de Notaría, Notario y Oficial de Cumplimiento');
+      toast.error('Complete al menos: Nombre de Notaría, Notario y Oficial de Cumplimiento');
       return;
     }
     setLoading(true);
     try {
       await saveNotaryProfile(user.uid, profile);
       setSaved(true);
+      toast.success('Perfil guardado correctamente');
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      alert('Error al guardar: ' + err.message);
+      toast.error('Error al guardar: ' + err.message);
     } finally {
       setLoading(false);
     }

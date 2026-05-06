@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast';
-import { LogOut, LayoutDashboard, FileText, Building2, FileDown } from 'lucide-react';
+import { LogOut, LayoutDashboard, FileText, Building2, FileDown, HelpCircle } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { WizardHeader } from './components/WizardHeader';
 import { ScoreSidebar } from './components/ScoreSidebar';
 import { CaseManager } from './components/CaseManager';
 import { HelpModal } from './components/HelpModal';
+
 import { Step1Datos } from './views/Step1Datos';
 import { Step2Factores } from './views/Step2Factores';
 import { Step3Controles } from './views/Step3Controles';
@@ -16,8 +17,8 @@ import { Dashboard } from './views/Dashboard';
 import { NotaryProfile } from './views/NotaryProfile';
 import { calculateInherentRisk, calculateResidualRisk } from './utils/calculations';
 import { buildPrompt, analizarConGemini } from './utils/geminiApi';
-import { DEMO_CASE } from './data/demoCase';
-import { getAllCases, updateCaseAnalysis, setUserId } from './utils/storage';
+
+import { getAllCases, saveCase, updateCaseAnalysis, setUserId } from './utils/storage';
 import { getNotaryProfile } from './firebase/profileStore';
 import { generateMonthlyReport } from './utils/monthlyReport';
 
@@ -64,7 +65,7 @@ function AppContent() {
     const handleKeyDown = (e) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
-          case 's': e.preventDefault(); if (view === 'wizard') toast('Use el botón "Guardar" en el Historial', { icon: '💡' }); break;
+          case 's': e.preventDefault(); if (view === 'wizard') { toast('Guardando caso...'); saveCase({ datos, evaluaciones, controlesEval }).then(() => toast.success('Caso guardado en la nube')).catch(err => toast.error('Error al guardar: ' + err.message)); } break;
           case 'enter': e.preventDefault(); if (step < 4 && view === 'wizard') setStep(step + 1); break;
           case 'p': e.preventDefault(); break;
         }
@@ -73,13 +74,6 @@ function AppContent() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [step, view]);
-
-  const handleDemoMode = () => { setDatos(DEMO_CASE); setView('wizard'); };
-
-  const handleExpressAnalyze = () => {
-    if (!datos.cliente || !datos.cedula) { toast.error('Complete los datos básicos del cliente primero'); setStep(1); setView('wizard'); return; }
-    setEvaluaciones({}); setControlesEval({}); setStep(4); setView('wizard');
-  };
 
   const handleReset = () => {
     setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '' });
@@ -130,8 +124,9 @@ function AppContent() {
           <button className="btn btn-secondary" onClick={() => setView('profile')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Building2 size={16} /> Perfil
           </button>
+          <HelpModal />
           <button className="btn btn-secondary" onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <LogOut size={16} /> {user?.email?.split('@')[0]}
+            <LogOut size={16} /> Cerrar sesión
           </button>
         </div>
       </header>
@@ -153,11 +148,7 @@ function AppContent() {
 
       {view === 'wizard' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-secondary" onClick={handleDemoMode}>Cargar Demo</button>
-              <button className="btn" onClick={handleExpressAnalyze} style={{ background: 'var(--naranja)' }}>🚀 Análisis Rápido</button>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
             <CaseManager currentCase={{ datos, evaluaciones, controlesEval }} onLoadCase={(c) => { setDatos(c.datos); setEvaluaciones(c.evaluaciones); setControlesEval(c.controlesEval); }} onBatchAnalyze={handleBatchAnalyze} batchProgress={batchProgress} />
           </div>
           <WizardHeader currentStep={step} setStep={setStep} />
@@ -182,7 +173,7 @@ function App() {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--bg-app-1) 0%, var(--bg-app-2) 100%)' }}>
         <div style={{ width: '40px', height: '40px', border: '4px solid var(--bg-input)', borderTop: '4px solid var(--accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+
       </div>
     );
   }

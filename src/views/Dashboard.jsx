@@ -13,10 +13,12 @@ export const Dashboard = () => {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('month');
+  const [riskFilter, setRiskFilter] = useState('all');
+  const [actoFilter, setActoFilter] = useState('all');
 
   useEffect(() => {
     loadData();
-  }, [user, filter]);
+  }, [user, filter, riskFilter, actoFilter]);
 
   const loadData = async () => {
     if (!user) return;
@@ -37,12 +39,33 @@ export const Dashboard = () => {
         filtered = allCases.filter(c => new Date(c.createdAt) >= monthStart);
       }
 
+      if (riskFilter !== 'all') {
+        filtered = filtered.filter(c => {
+          const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
+          if (riskFilter === 'bajo') return score <= 8;
+          if (riskFilter === 'medio') return score > 8 && score <= 14;
+          if (riskFilter === 'medio-alto') return score > 14 && score <= 19;
+          if (riskFilter === 'alto') return score > 19;
+          return true;
+        });
+      }
+
+      if (actoFilter !== 'all') {
+        filtered = filtered.filter(c => c.datos?.acto === actoFilter);
+      }
+
       setCases(filtered);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getUniqueActos = () => {
+    const actos = new Set();
+    cases.forEach(c => { if (c.datos?.acto) actos.add(c.datos.acto); });
+    return Array.from(actos).sort();
   };
 
   const getRiskDistribution = () => {
@@ -103,12 +126,27 @@ export const Dashboard = () => {
           <h2 style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Activity size={24} /> Dashboard de Riesgo
           </h2>
-          <select className="input-field" style={{ width: 'auto' }} value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="today">Hoy</option>
-            <option value="week">Últimos 7 días</option>
-            <option value="month">Este Mes</option>
-            <option value="all">Todo el historial</option>
-          </select>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <select className="input-field" style={{ width: 'auto' }} value={filter} onChange={(e) => setFilter(e.target.value)}>
+              <option value="today">Hoy</option>
+              <option value="week">Últimos 7 días</option>
+              <option value="month">Este Mes</option>
+              <option value="all">Todo el historial</option>
+            </select>
+            <select className="input-field" style={{ width: 'auto' }} value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)}>
+              <option value="all">Todos los niveles</option>
+              <option value="bajo">Bajo (1-8)</option>
+              <option value="medio">Medio (9-14)</option>
+              <option value="medio-alto">Medio-Alto (15-19)</option>
+              <option value="alto">Alto (20-25)</option>
+            </select>
+            <select className="input-field" style={{ width: 'auto' }} value={actoFilter} onChange={(e) => setActoFilter(e.target.value)}>
+              <option value="all">Todos los actos</option>
+              {getUniqueActos().map(acto => (
+                <option key={acto} value={acto}>{acto}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid-2" style={{ marginBottom: '30px' }}>

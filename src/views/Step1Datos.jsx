@@ -135,7 +135,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           <span style={{ color: 'var(--rojo)' }}>❌ Errores: {importStats.error}</span>
         </div>
       )}
-      <style>{`.spin { animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+
 
       <div className="grid-2">
         <div className="form-group">
@@ -172,7 +172,11 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         <div className="form-group">
           <label>Valor de la operación (USD)</label>
            <input type="number" className="input-field" name="valor" value={datos.valor} onChange={handleChange} min="0" />
-
+           {datos.valor > 0 && (
+             <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginTop: '6px' }}>
+               {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(datos.valor)}
+             </p>
+           )}
         </div>
 
         <div className="form-group">
@@ -205,21 +209,6 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             <input type="checkbox" name="esPep" checked={datos.esPep} onChange={handleChange} />
             ¿El cliente es PEP (Persona Expuesta Políticamente)?
           </label>
-          
-           {datos.esPep && (
-             <div className="form-group" style={{ marginTop: '10px' }}>
-               <label style={{ fontSize: '0.8rem', color: 'var(--accent)' }}>Detalle obligatorio de la condición PEP:</label>
-               <input 
-                type="text" 
-                className={`input-field ${!datos.detallePep ? 'border-rojo' : ''}`} 
-                name="detallePep" 
-                value={datos.detallePep || ''} 
-                onChange={handleChange} 
-                placeholder="Ej: Ex-Ministro de Salud (2020-2022)" 
-              />
-             </div>
-           )}
-
 
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
             <input type="checkbox" name="apoderado" checked={datos.apoderado} onChange={handleChange} />
@@ -231,6 +220,20 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             ¿Tiene reportes previos ante la UAFE conocidos?
           </label>
         </div>
+
+        {datos.esPep && (
+          <div className="form-group" style={{ marginTop: '15px' }}>
+            <label style={{ fontSize: '0.85rem', color: 'var(--accent)', marginBottom: '8px' }}>Detalle obligatorio de la condición PEP:</label>
+            <input
+              type="text"
+              className={`input-field ${!datos.detallePep ? 'border-rojo' : ''}`}
+              name="detallePep"
+              value={datos.detallePep || ''}
+              onChange={handleChange}
+              placeholder="Ej: Ex-Ministro de Salud (2020-2022)"
+            />
+          </div>
+        )}
       </div>
 
       <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #30363d', borderRadius: '8px' }}>
