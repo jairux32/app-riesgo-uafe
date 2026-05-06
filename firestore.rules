@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Solo usuarios autenticados pueden leer/escribir sus propios casos
+    match /cases/{documentId} {
+      allow read, write: if request.auth != null 
+        && (resource.data.userId == request.auth.uid 
+            || request.resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null 
+        && request.resource.data.userId == request.auth.uid;
+    }
+  }
+}
