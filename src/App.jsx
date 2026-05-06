@@ -18,8 +18,10 @@ import { NotaryProfile } from './views/NotaryProfile';
 import { calculateInherentRisk, calculateResidualRisk } from './utils/calculations';
 import { buildPrompt, analizarConGemini } from './utils/geminiApi';
 
-import { getAllCases, saveCase, updateCaseAnalysis, setUserId } from './utils/storage';
+import { getAllCases, saveCase, updateCaseAnalysis, setUserId, syncPendingCases } from './utils/storage';
+import { onConnectivityChange } from './utils/offlineSync';
 import { getNotaryProfile } from './firebase/profileStore';
+import { requestNotificationPermission, onMessageReceived } from './firebase/messaging';
 import { generateMonthlyReport } from './utils/monthlyReport';
 
 function AppContent() {
@@ -50,6 +52,43 @@ function AppContent() {
   const [batchProgress, setBatchProgress] = useState({ active: false, current: 0, total: 0 });
 
   useEffect(() => { if (user?.uid) setUserId(user.uid); }, [user]);
+
+  // Solicitar permiso de notificaciones push
+  useEffect(() => {
+    if (user?.uid && 'Notification' in window) {
+      requestNotificationPermission(user.uid);
+      const unsubscribe = onMessageReceived((payload) => {
+        toast(payload.notification?.title || 'Notificación recibida', {
+          icon: '🔔',
+          duration: 5000,
+        });
+      });
+      return () => unsubscribe;
+    }
+  }, [user]);
+
+  // Sincronización offline: escuchar reconexión y mensajes del SW
+  useEffect(() => {
+    const unsubscribe = onConnectivityChange((online) => {
+      if (online) {
+        toast('Conexión restaurada. Sincronizando datos...', { icon: '📶' });
+        syncPendingCases();
+      } else {
+        toast('Modo offline activado. Los cambios se guardarán localmente.', { icon: '✈️', duration: 3000 });
+      }
+    });
+
+    // Escuchar mensajes del Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type === 'SYNC_PENDING_CASES') {
+          syncPendingCases();
+        }
+      });
+    }
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const resInherente = calculateInherentRisk(evaluaciones);
@@ -155,7 +194,7 @@ function AppContent() {
               <FileDown size={16} /> Generar Reporte Mensual PDF
             </button>
           </div>
-          <Dashboard />
+          <Dashboard onGenerateReport={handleMonthlyReport} />
         </>
       )}
 

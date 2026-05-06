@@ -42,6 +42,29 @@ const autoEvaluateRisk = (datos) => {
 };
 
 /**
+ * Encuentra la columna más cercana a un patrón usando búsqueda fuzzy
+ */
+const findColumnIndex = (headers, patterns) => {
+  const headerStrs = headers.map(h => String(h).toLowerCase().trim());
+  
+  for (const pattern of patterns) {
+    const exact = headerStrs.indexOf(pattern.toLowerCase());
+    if (exact !== -1) return exact;
+    
+    // Búsqueda parcial
+    const partial = headerStrs.findIndex(h => h.includes(pattern.toLowerCase()));
+    if (partial !== -1) return partial;
+    
+    // Búsqueda de palabras individuales
+    for (let i = 0; i < headerStrs.length; i++) {
+      const words = pattern.toLowerCase().split(/\s+/);
+      if (words.some(w => headerStrs[i].includes(w))) return i;
+    }
+  }
+  return -1;
+};
+
+/**
  * Procesa un archivo Excel y extrae la información de los casos
  */
 export const parseUAFEExcel = async (file) => {
@@ -57,46 +80,70 @@ export const parseUAFEExcel = async (file) => {
         const sheet = workbook.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
         
-        const headerIndex = rows.findIndex(row => 
-          row.some(cell => cell === 'NES' || cell === 'ESTADO CIVIL' || cell === 'SISTEMA')
-        );
+        // Detectar fila de encabezados de forma inteligente
+        let headerIndex = -1;
+        for (let i = 0; i < Math.min(rows.length, 10); i++) {
+          const row = rows[i];
+          if (row.some(cell => 
+            /cedula|idi|identificaci|rif|pasaporte/i.test(String(cell)) ||
+            /nombre|cliente|razon social|contribuyente/i.test(String(cell)) ||
+            /valor|monto|vam|cantidad/i.test(String(cell))
+          )) {
+            headerIndex = i;
+            break;
+          }
+        }
 
-        if (headerIndex === -1) throw new Error('No se encontraron cabeceras válidas.');
+        if (headerIndex === -1) throw new Error('No se encontraron cabeceras válidas en las primeras 10 filas.');
 
         const headers = rows[headerIndex];
         const dataRows = rows.slice(headerIndex + 1);
 
+        // Mapeo inteligente con múltiples patrones por campo
         const colMap = {
-          cedula: headers.indexOf('IDI'),
-          cliente: headers.indexOf('NRI'),
-          acto: headers.indexOf('TTR'),
-          valor: headers.indexOf('VAM'),
-          origen: headers.indexOf('ORIGEN DE LOS FONDOS'),
-          medioPago: headers.indexOf('FP'),
-          actividad: headers.indexOf('ACTIV ECONOMICA'),
-          esPep: headers.indexOf('PEPS'),
-          apoderado: headers.indexOf('CON PODER'),
-          observaciones: headers.indexOf('NOTAS'),
+          cedula: findColumnIndex(headers, ['IDI', 'CEDULA', 'IDENTIFICACION', 'RUC', 'PASAPORTE', 'NRO IDENTIFICACION', 'DOCUMENTO']),
+          cliente: findColumnIndex(headers, ['NRI', 'NOMBRE', 'CLIENTE', 'RAZON SOCIAL', 'CONTRIBUYENTE', 'TITULAR', 'BENEFICIARIO']),
+          acto: findColumnIndex(headers, ['TTR', 'ACTO', 'TIPO ACTO', 'TRANSACCION', 'OPERACION', 'SERVICIO']),
+          valor: findColumnIndex(headers, ['VAM', 'VALOR', 'MONTO', 'CANTIDAD', 'IMPORTE', 'MONTO OPERACION']),
+          origen: findColumnIndex(headers, ['ORIGEN DE LOS FONDOS', 'ORIGEN', 'PROCEDENCIA', 'FUENTE']),
+          medioPago: findColumnIndex(headers, ['FP', 'MEDIO PAGO', 'FORMA PAGO', 'PAGO', 'INSTRUMENTO']),
+          actividad: findColumnIndex(headers, ['ACTIV ECONOMICA', 'ACTIVIDAD', 'GIRO', 'SECTOR', 'OCUPACION']),
+          esPep: findColumnIndex(headers, ['PEPS', 'PEP', 'EXPUESTO', 'POLITICAMENTE']),
+          apoderado: findColumnIndex(headers, ['CON PODER', 'APODERADO', 'REPRESENTANTE', 'MANDATARIO']),
+          observaciones: findColumnIndex(headers, ['NOTAS', 'OBSERVACIONES', 'COMENTARIOS', 'DETALLE']),
         };
 
+        // Reportar campos no encontrados
+        const missingFields = Object.entries(colMap)
+          .filter(([_, idx]) => idx === -1)
+          .map(([name]) => name);
+        
+        if (missingFields.length > 0) {
+          console.warn('Campos no encontrados en el Excel:', missingFields);
+        }
+
         const cases = dataRows
-          .filter(row => row.length > 0 && row[colMap.cedula])
+          .filter(row => row.length > 0 && (row[colMap.cedula] || row[colMap.cliente]))
           .map(row => {
+            const valorRaw = row[colMap.valor];
+            const valorNum = typeof valorRaw === 'number' ? valorRaw : 
+              parseFloat(String(valorRaw).replace(/[$,]/g, '')) || 0;
+            
             const datos = {
               notaria: '', notario: '',
-              cliente: row[colMap.cliente] || '',
-              cedula: row[colMap.cedula] || '',
-              acto: row[colMap.acto] || 'Otro',
-              valor: parseFloat(row[colMap.valor]) || 0,
-              origen: row[colMap.origen] || '',
-              medioPago: row[colMap.medioPago] || '',
-              actividad: row[colMap.actividad] || '',
-              esPep: String(row[colMap.esPep]).toUpperCase() === 'SI',
-              detallePep: row[colMap.observaciones] || '',
-              apoderado: String(row[colMap.apoderado]).toUpperCase() === 'SI',
-              ofac: false, onu: false, pepUafe: String(row[colMap.esPep]).toUpperCase() === 'SI',
+              cliente: String(row[colMap.cliente] || '').trim(),
+              cedula: String(row[colMap.cedula] || '').trim(),
+              acto: String(row[colMap.acto] || 'Otro').trim(),
+              valor: valorNum,
+              origen: String(row[colMap.origen] || '').trim(),
+              medioPago: String(row[colMap.medioPago] || '').trim(),
+              actividad: String(row[colMap.actividad] || '').trim(),
+              esPep: /si|yes|true|1/i.test(String(row[colMap.esPep])),
+              detallePep: String(row[colMap.observaciones] || '').trim(),
+              apoderado: /si|yes|true|1/i.test(String(row[colMap.apoderado])),
+              ofac: false, onu: false, pepUafe: /si|yes|true|1/i.test(String(row[colMap.esPep])),
               reportesPrevios: false,
-              observaciones: row[colMap.observaciones] || '',
+              observaciones: String(row[colMap.observaciones] || '').trim(),
             };
 
             return {

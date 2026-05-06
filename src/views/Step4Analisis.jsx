@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen } from 'lucide-react';
 import { marked } from 'marked';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
+import { SignatureModal } from '../components/SignatureModal';
 
 export const Step4Analisis = ({ 
   datos, scores, controlesResult, factoresResult, 
@@ -15,6 +16,10 @@ export const Step4Analisis = ({
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [signatureNotario, setSignatureNotario] = useState(null);
+  const [signatureOficial, setSignatureOficial] = useState(null);
+  const [sigModalOpen, setSigModalOpen] = useState(false);
+  const [sigModalRole, setSigModalRole] = useState('');
 
   const handleGenerateIA = async () => {
     setIsLoading(true);
@@ -34,11 +39,27 @@ export const Step4Analisis = ({
     toast('Generando PDF...', { icon: '📄' });
     try {
       const profile = await getNotaryProfile(user.uid);
-      await exportToPDF(datos, scores, factoresResult, controlesResult, analysisResult, profile);
+      await exportToPDF(datos, scores, factoresResult, controlesResult, analysisResult, profile, {
+        notario: signatureNotario,
+        oficial: signatureOficial
+      });
       toast.success('PDF descargado correctamente');
     } catch (err) {
       toast.error('Error al generar PDF: ' + err.message);
       console.error("Error exportando PDF:", err);
+    }
+  };
+
+  const openSignatureModal = (role) => {
+    setSigModalRole(role);
+    setSigModalOpen(true);
+  };
+
+  const handleSaveSignature = (dataUrl) => {
+    if (sigModalRole === 'notario') {
+      setSignatureNotario(dataUrl);
+    } else {
+      setSignatureOficial(dataUrl);
     }
   };
 
@@ -197,6 +218,44 @@ export const Step4Analisis = ({
 
       </div>
 
+      <div className="card">
+        <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Pen size={20} /> Firmas Digitales
+        </h3>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginBottom: '8px' }}>Notario/a</p>
+            {signatureNotario ? (
+              <div style={{ border: '1px solid var(--accent)', borderRadius: '8px', padding: '10px', background: 'white' }}>
+                <img src={signatureNotario} alt="Firma notario" style={{ width: '100%', height: '80px', objectFit: 'contain' }} />
+                <button className="btn btn-secondary" onClick={() => openSignatureModal('notario')} style={{ marginTop: '8px', width: '100%', fontSize: '0.8rem' }}>
+                  <Pen size={14} /> Refirmar
+                </button>
+              </div>
+            ) : (
+              <button className="btn btn-secondary" onClick={() => openSignatureModal('notario')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Pen size={16} /> Firmar como Notario
+              </button>
+            )}
+          </div>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginBottom: '8px' }}>Oficial de Cumplimiento</p>
+            {signatureOficial ? (
+              <div style={{ border: '1px solid var(--accent)', borderRadius: '8px', padding: '10px', background: 'white' }}>
+                <img src={signatureOficial} alt="Firma oficial" style={{ width: '100%', height: '80px', objectFit: 'contain' }} />
+                <button className="btn btn-secondary" onClick={() => openSignatureModal('oficial')} style={{ marginTop: '8px', width: '100%', fontSize: '0.8rem' }}>
+                  <Pen size={14} /> Refirmar
+                </button>
+              </div>
+            ) : (
+              <button className="btn btn-secondary" onClick={() => openSignatureModal('oficial')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Pen size={16} /> Firmar como Oficial
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="card" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
         <button className="btn" onClick={handleExportPDF}>
           <FileText size={18} /> Exportar PDF
@@ -211,6 +270,13 @@ export const Step4Analisis = ({
           <RefreshCw size={18} /> Nueva Evaluación
         </button>
       </div>
+
+      <SignatureModal
+        isOpen={sigModalOpen}
+        onClose={() => setSigModalOpen(false)}
+        onSave={handleSaveSignature}
+        title={sigModalRole === 'notario' ? 'Firma del Notario' : 'Firma del Oficial de Cumplimiento'}
+      />
     </div>
   );
 };

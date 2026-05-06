@@ -3,12 +3,12 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { getUserCases } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { calculateInherentRisk } from '../utils/calculations';
-import { TrendingUp, AlertTriangle, FileCheck, Activity } from 'lucide-react';
+import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar } from 'lucide-react';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
 const RISK_LABELS = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
 
-export const Dashboard = () => {
+export const Dashboard = ({ onGenerateReport }) => {
   const { user } = useAuth();
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -117,10 +117,43 @@ export const Dashboard = () => {
   const factorData = getFactorAnalysis();
   const alertCases = getAlertCases();
 
+  // Verificar si ya se generó reporte este mes
+  const lastReportMonth = localStorage.getItem('app_last_report_month');
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const showReportReminder = cases.length > 0 && lastReportMonth !== currentMonth;
+
   if (loading) return <div className="card"><p style={{ textAlign: 'center' }}>Cargando estadísticas...</p></div>;
 
   return (
     <div>
+      {showReportReminder && (
+        <div style={{
+          marginBottom: '20px', padding: '16px', background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '8px',
+          display: 'flex', alignItems: 'center', gap: '12px'
+        }}>
+          <Calendar size={24} color="var(--accent)" />
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 'bold', color: 'var(--accent)' }}>
+              Reporte mensual pendiente
+            </p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--txt2)' }}>
+              Aún no ha generado el reporte de cumplimiento de este mes ({new Date().toLocaleDateString('es-EC', { month: 'long', year: 'numeric' })}).
+            </p>
+          </div>
+          <button
+            className="btn"
+            onClick={() => {
+              localStorage.setItem('app_last_report_month', currentMonth);
+              onGenerateReport?.();
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+          >
+            <FileCheck size={16} /> Generar ahora
+          </button>
+        </div>
+      )}
+
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '10px' }}>

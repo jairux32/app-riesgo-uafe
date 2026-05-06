@@ -214,7 +214,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
 };
 
 // ==================== PDF ====================
-export const exportToPDF = async (datos, scores, factoresResult, controlesResult, geminiAnalysis, profile) => {
+export const exportToPDF = async (datos, scores, factoresResult, controlesResult, geminiAnalysis, profile, signatures = {}) => {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const doc = new jsPDF();
@@ -318,8 +318,8 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
     y += 10;
   }
 
-  addPageIfNeeded(60);
-  generatePDFSignatureBlock(doc, y, profile);
+  addPageIfNeeded(80);
+  generatePDFSignatureBlock(doc, y, profile, signatures);
 
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
@@ -333,19 +333,45 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   doc.save(`Reporte_Riesgo_${datos.cedula || 'Caso'}_${new Date().getTime()}.pdf`);
 };
 
-export const generatePDFSignatureBlock = (doc, y, profile) => {
+export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text("FIRMAS DE VALIDACIÓN", 105, y, { align: "center" });
-  y += 20;
+  y += 10;
 
-  doc.line(20, y, 90, y);
-  doc.line(120, y, 190, y);
+  // Firma del Oficial de Cumplimiento
+  doc.setFontSize(9);
+  if (signatures.oficial) {
+    try {
+      doc.addImage(signatures.oficial, 'PNG', 15, y, 80, 30);
+    } catch (e) {
+      doc.line(20, y + 20, 90, y + 20);
+    }
+  } else {
+    doc.line(20, y + 20, 90, y + 20);
+  }
+  doc.text(profile?.oficialCumplimiento || "Firma del Analista / Oficial de Cumplimiento", 55, y + 28, { align: "center" });
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(profile?.oficialCumplimiento || "Firma del Analista / Oficial de Cumplimiento", 55, y + 5, { align: "center" });
-  doc.text(profile?.notario || "Firma y Sello del Notario Público", 155, y + 5, { align: "center" });
+  // Firma del Notario
+  if (signatures.notario) {
+    try {
+      doc.addImage(signatures.notario, 'PNG', 115, y, 80, 30);
+    } catch (e) {
+      doc.line(120, y + 20, 190, y + 20);
+    }
+  } else {
+    doc.line(120, y + 20, 190, y + 20);
+  }
+  doc.text(profile?.notario || "Firma y Sello del Notario Público", 155, y + 28, { align: "center" });
+
+  // Nota de firma digital
+  if (signatures.notario || signatures.oficial) {
+    y += 40;
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text("Documento firmado digitalmente mediante Sistema de Análisis de Riesgo LA/FD", 105, y, { align: "center" });
+    doc.text(`Fecha de firma: ${new Date().toLocaleString('es-EC')}`, 105, y + 4, { align: "center" });
+  }
 };
 
 // ==================== EXPORTACIÓN MÚLTIPLE ====================

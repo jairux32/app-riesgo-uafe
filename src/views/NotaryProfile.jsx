@@ -21,7 +21,9 @@ export const NotaryProfile = ({ onClose }) => {
     cedulaNotario: '',
     oficialCumplimiento: '',
     cargoOficial: '',
-    emailOficial: ''
+    emailOficial: '',
+    emailReportes: '',
+    reporteAutomatico: false,
   });
 
   useEffect(() => {
@@ -134,6 +136,27 @@ export const NotaryProfile = ({ onClose }) => {
           <label>Email del Oficial</label>
           <input type="email" className="input-field" name="emailOficial" value={profile.emailOficial} onChange={handleChange} />
         </div>
+      </div>
+
+      <div style={{ marginTop: '25px', padding: '20px', background: 'var(--bg-input)', borderRadius: '8px' }}>
+        <h3 style={{ fontSize: '1rem', color: 'var(--accent)', marginBottom: '15px' }}>
+          📊 Reportes Automáticos
+        </h3>
+        <div className="grid-2">
+          <div className="form-group">
+            <label>Email para recibir reportes mensuales</label>
+            <input type="email" className="input-field" name="emailReportes" value={profile.emailReportes} onChange={handleChange} placeholder="oficial@notaria.com" />
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '28px' }}>
+            <input type="checkbox" name="reporteAutomatico" checked={profile.reporteAutomatico} onChange={handleChange} style={{ width: '20px', height: '20px' }} />
+            <label style={{ margin: 0, cursor: 'pointer' }}>
+              Recordarme generar reporte mensual
+            </label>
+          </div>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginTop: '10px' }}>
+          Al activar esta opción, el sistema le recordará generar el reporte de cumplimiento mensual al inicio de cada mes.
+        </p>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px', gap: '10px' }}>

@@ -1,5 +1,8 @@
 const { onCall } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -47,6 +50,56 @@ exports.analyzeCase = onCall(
       return { text: data.candidates[0].content.parts[0].text };
     } catch (error) {
       throw new Error(`Analysis failed: ${error.message}`);
+    }
+  }
+);
+
+// Notificación push cuando se crea un caso de riesgo ALTO
+exports.notifyHighRiskCase = onDocumentCreated(
+  { document: 'cases/{caseId}', region: 'us-central1' },
+  async (event) => {
+    const caseData = event.data.data();
+    const userId = caseData.userId;
+
+    if (!userId || !caseData.evaluaciones) return;
+
+    // Calcular score (lógica simplificada, debe coincidir con el cliente)
+    const evals = caseData.evaluaciones;
+    let totalScore = 0;
+    let count = 0;
+    Object.values(evals).forEach(e => {
+      if (e.prob && e.imp) {
+        totalScore += e.prob * e.imp;
+        count++;
+      }
+    });
+    const avgScore = count > 0 ? totalScore / count : 0;
+
+    // Solo notificar si score >= 20 (riesgo ALTO)
+    if (avgScore < 20) return;
+
+    try {
+      const db = getFirestore();
+      const userDoc = await db.collection('users').doc(userId).get();
+      const userData = userDoc.data();
+
+      if (!userData?.fcmToken) return;
+
+      const messaging = getMessaging();
+      await messaging.send({
+        token: userData.fcmToken,
+        notification: {
+          title: '⚠️ Caso de Riesgo ALTO detectado',
+          body: `${caseData.datos?.cliente || 'Cliente'} - Score: ${Math.round(avgScore)}/25. Requiere evaluación de ROS.`,
+        },
+        data: {
+          caseId: event.data.id,
+          score: String(Math.round(avgScore)),
+          clickAction: '/wizard',
+        },
+      });
+    } catch (err) {
+      console.error('Error enviando notificación:', err.message);
     }
   }
 );
