@@ -3,7 +3,8 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { getUserCases } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { calculateInherentRisk } from '../utils/calculations';
-import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar } from 'lucide-react';
+import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download } from 'lucide-react';
+import { ESTADOS_CASO } from '../data/constants';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
 const RISK_LABELS = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
@@ -117,6 +118,18 @@ export const Dashboard = ({ onGenerateReport }) => {
   const factorData = getFactorAnalysis();
   const alertCases = getAlertCases();
 
+  const getEstadoCounts = () => {
+    const counts = {};
+    ESTADOS_CASO.forEach(e => counts[e.id] = 0);
+    cases.forEach(c => {
+      const estado = c.datos?.estado || 'borrador';
+      counts[estado] = (counts[estado] || 0) + 1;
+    });
+    return ESTADOS_CASO.map(e => ({ ...e, count: counts[e.id] || 0 }));
+  };
+
+  const estadoCounts = getEstadoCounts();
+
   // Verificar si ya se generó reporte este mes
   const lastReportMonth = localStorage.getItem('app_last_report_month');
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -153,6 +166,42 @@ export const Dashboard = ({ onGenerateReport }) => {
           </button>
         </div>
       )}
+
+      {/* Pipeline de Estados */}
+      <div className="card" style={{ marginBottom: '20px' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+          <GitBranch size={20} color="var(--accent)" /> Pipeline de Casos
+        </h3>
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px' }}>
+          {estadoCounts.map(est => (
+            <div
+              key={est.id}
+              style={{
+                flex: 1, minWidth: '140px', padding: '15px', borderRadius: '8px',
+                background: est.bg, border: '1px solid ' + est.color + '40',
+                textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s',
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <div style={{
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: est.color + '25', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 8px', color: est.color
+              }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{est.count}</span>
+              </div>
+              <p style={{ fontWeight: '600', color: est.color, fontSize: '0.85rem' }}>{est.label}</p>
+              {est.count > 0 && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--txt2)', marginTop: '4px' }}>
+                  {((est.count / cases.length) * 100).toFixed(0)}% del total
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -237,14 +286,40 @@ export const Dashboard = ({ onGenerateReport }) => {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {alertCases.map((c, i) => (
-              <div key={i} style={{ padding: '12px', background: 'var(--bg-input)', borderRadius: '6px', borderLeft: '3px solid var(--rojo)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
+              <div key={i} style={{ padding: '12px', background: 'var(--bg-input)', borderRadius: '6px', borderLeft: '3px solid var(--rojo)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 'bold' }}>{c.datos?.cliente || 'Sin nombre'}</p>
                   <p style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{c.datos?.acto} | {new Date(c.createdAt).toLocaleDateString()}</p>
                 </div>
-                <span style={{ fontWeight: 'bold', color: 'var(--rojo)' }}>
-                  {calculateInherentRisk(c.evaluaciones).inherente}/25
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontWeight: 'bold', color: 'var(--rojo)', marginRight: '8px' }}>
+                    {calculateInherentRisk(c.evaluaciones).inherente}/25
+                  </span>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                    onClick={() => window.dispatchEvent(new CustomEvent('openCase', { detail: c }))}
+                    title="Abrir caso"
+                  >
+                    <FileText size={14} />
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                    onClick={() => window.dispatchEvent(new CustomEvent('analyzeCase', { detail: c }))}
+                    title="Generar análisis IA"
+                  >
+                    <Bot size={14} />
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                    onClick={() => window.dispatchEvent(new CustomEvent('exportCasePDF', { detail: c }))}
+                    title="Exportar PDF"
+                  >
+                    <Download size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

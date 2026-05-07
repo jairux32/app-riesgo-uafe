@@ -218,3 +218,22 @@ export const CONTROLES_INTERNOS = [
   { id: 'co9', nombre: 'Archivo y custodia de expedientes (mínimo 7 años)' },
   { id: 'co10', nombre: 'Revisión por Oficial antes de elevar escritura en casos de alto riesgo' }
 ];
+
+// Estados de caso (workflow)
+export const ESTADOS_CASO = [
+  { id: 'borrador', label: 'Borrador', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)' },
+  { id: 'pendiente', label: 'Pendiente', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' },
+  { id: 'en_revision', label: 'En Revisión', color: '#f97316', bg: 'rgba(249, 115, 22, 0.15)' },
+  { id: 'aprobado', label: 'Aprobado', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
+  { id: 'reportado_uafe', label: 'Reportado UAFE', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)' }
+];
+
+// Tags predefinidos
+export const TAGS_PREDEFINIDOS = [
+  { id: 'urgente', label: 'Urgente', color: '#ef4444' },
+  { id: 'vip', label: 'Cliente VIP', color: '#f59e0b' },
+  { id: 'seguimiento', label: 'Requiere seguimiento', color: '#3b82f6' },
+  { id: 'ros', label: 'ROS Pendiente', color: '#ef4444' },
+  { id: 'complejo', label: 'Caso complejo', color: '#8b5cf6' },
+  { id: 'recurrente', label: 'Cliente recurrente', color: '#10b981' }
+];

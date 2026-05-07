@@ -4,6 +4,7 @@ import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldC
 import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
+import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 
 export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProgress }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,6 +25,8 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
     esPep: false,
     apoderado: false,
     ofac: false,
+    estado: '',
+    tag: '',
     sortBy: 'fecha',
     sortOrder: 'desc'
   });
@@ -77,7 +80,13 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
     if (advancedFilters.ofac) {
       filtered = filtered.filter(c => c.datos?.ofac);
     }
-    
+    if (advancedFilters.estado) {
+      filtered = filtered.filter(c => (c.datos?.estado || 'borrador') === advancedFilters.estado);
+    }
+    if (advancedFilters.tag) {
+      filtered = filtered.filter(c => (c.datos?.tags || []).includes(advancedFilters.tag));
+    }
+
     // Ordenamiento
     filtered.sort((a, b) => {
       let valA, valB;
@@ -296,6 +305,30 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                   />
                 </div>
                 <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Estado</label>
+                  <select className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.estado}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, estado: e.target.value }))}
+                  >
+                    <option value="">Todos</option>
+                    {ESTADOS_CASO.map(est => (
+                      <option key={est.id} value={est.id}>{est.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Etiqueta</label>
+                  <select className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.tag}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, tag: e.target.value }))}
+                  >
+                    <option value="">Todas</option>
+                    {TAGS_PREDEFINIDOS.map(tag => (
+                      <option key={tag.id} value={tag.id}>{tag.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Ordenar por</label>
                   <select className="input-field" style={{ padding: '8px' }}
                     value={advancedFilters.sortBy}
@@ -333,7 +366,7 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }}
-                    onClick={() => setAdvancedFilters({ fechaDesde: '', fechaHasta: '', scoreMin: '', scoreMax: '', esPep: false, apoderado: false, ofac: false, sortBy: 'fecha', sortOrder: 'desc' })}
+                    onClick={() => setAdvancedFilters({ fechaDesde: '', fechaHasta: '', scoreMin: '', scoreMax: '', esPep: false, apoderado: false, ofac: false, estado: '', tag: '', sortBy: 'fecha', sortOrder: 'desc' })}
                   >
                     Limpiar filtros
                   </button>
@@ -422,9 +455,10 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Cliente</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Cédula</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Acto</th>
+                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Estado</th>
                       <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Riesgo</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Fecha</th>
-                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', width: '50px' }}></th>
+                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', width: '80px' }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -458,6 +492,39 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                           </td>
                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--txt2)' }}>
                             {c.datos?.acto || '—'}
+                          </td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                            {(() => {
+                              const estadoId = c.datos?.estado || 'borrador';
+                              const estado = ESTADOS_CASO.find(e => e.id === estadoId);
+                              return (
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '600',
+                                  background: estado?.bg || 'var(--bg-panel)', color: estado?.color || 'var(--txt2)', whiteSpace: 'nowrap'
+                                }}>
+                                  {estado?.label || 'Borrador'}
+                                </span>
+                              );
+                            })()}
+                            {(c.datos?.tags || []).length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px', justifyContent: 'center' }}>
+                                {(c.datos.tags || []).slice(0, 3).map(tagId => {
+                                  const tag = TAGS_PREDEFINIDOS.find(t => t.id === tagId);
+                                  return tag ? (
+                                    <span key={tagId} style={{
+                                      display: 'inline-block', padding: '2px 6px', borderRadius: '8px',
+                                      fontSize: '0.7rem', background: tag.color + '25', color: tag.color
+                                    }}>
+                                      {tag.label}
+                                    </span>
+                                  ) : null;
+                                })}
+                                {(c.datos.tags || []).length > 3 && (
+                                  <span style={{ fontSize: '0.7rem', color: 'var(--txt2)' }}>+{c.datos.tags.length - 3}</span>
+                                )}
+                              </div>
+                            )}
                           </td>
                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
                             <span style={{

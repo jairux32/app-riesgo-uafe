@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen } from 'lucide-react';
+import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag } from 'lucide-react';
+import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 import { marked } from 'marked';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
@@ -8,9 +9,9 @@ import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { SignatureModal } from '../components/SignatureModal';
 
-export const Step4Analisis = ({ 
-  datos, scores, controlesResult, factoresResult, 
-  onReset 
+export const Step4Analisis = ({
+  datos, setDatos, scores, controlesResult, factoresResult,
+  onReset
 }) => {
   const { user } = useAuth();
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -216,6 +217,78 @@ export const Step4Analisis = ({
             </div>
           )}
 
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Tag size={20} /> Estado y Etiquetas del Caso
+        </h3>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '15px' }}>
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--txt2)', marginBottom: '8px', display: 'block' }}>Estado actual</label>
+            <select
+              className="input-field"
+              value={datos.estado || 'borrador'}
+              onChange={(e) => setDatos(prev => ({ ...prev, estado: e.target.value }))}
+              style={{ padding: '10px' }}
+            >
+              {ESTADOS_CASO.map(est => (
+                <option key={est.id} value={est.id}>{est.label}</option>
+              ))}
+            </select>
+            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                display: 'inline-block', width: '12px', height: '12px', borderRadius: '50%',
+                background: ESTADOS_CASO.find(e => e.id === (datos.estado || 'borrador'))?.color || '#94a3b8'
+              }} />
+              <span style={{ fontSize: '0.85rem', color: 'var(--txt2)' }}>
+                {ESTADOS_CASO.find(e => e.id === (datos.estado || 'borrador'))?.label}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.9rem', color: 'var(--txt2)', marginBottom: '8px', display: 'block' }}>Etiquetas</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {TAGS_PREDEFINIDOS.map(tag => {
+                const isSelected = (datos.tags || []).includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    onClick={() => {
+                      const currentTags = datos.tags || [];
+                      const newTags = isSelected
+                        ? currentTags.filter(t => t !== tag.id)
+                        : [...currentTags, tag.id];
+                      setDatos(prev => ({ ...prev, tags: newTags }));
+                    }}
+                    style={{
+                      padding: '6px 12px', borderRadius: '16px', fontSize: '0.8rem',
+                      border: '1px solid ' + (isSelected ? tag.color : 'rgba(255,255,255,0.2)'),
+                      background: isSelected ? tag.color + '20' : 'transparent',
+                      color: isSelected ? tag.color : 'var(--txt2)',
+                      cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    {isSelected ? '✓ ' : '+ '}{tag.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label style={{ fontSize: '0.9rem', color: 'var(--txt2)', marginBottom: '8px', display: 'block' }}>Notas internas (no aparecen en el PDF)</label>
+          <textarea
+            className="input-field"
+            rows="3"
+            value={datos.notasInternas || ''}
+            onChange={(e) => setDatos(prev => ({ ...prev, notasInternas: e.target.value }))}
+            placeholder="Notas para uso interno de la notaría..."
+          />
+        </div>
       </div>
 
       <div className="card">

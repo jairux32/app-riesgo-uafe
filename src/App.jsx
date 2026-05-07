@@ -42,7 +42,8 @@ function AppContent() {
     notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '',
     origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '',
     apoderado: false, ofac: false, onu: false, pepUafe: false,
-    reportesPrevios: false, observaciones: ''
+    reportesPrevios: false, observaciones: '',
+    estado: 'borrador', tags: [], notasInternas: ''
   });
 
   const [evaluaciones, setEvaluaciones] = useState({});
@@ -97,14 +98,75 @@ function AppContent() {
     setControlesResult(resResidual);
   }, [evaluaciones, controlesEval]);
 
+  // Guardar borrador automáticamente cada 10 segundos
   useEffect(() => {
-    sessionStorage.setItem('app_wizard_state', JSON.stringify({ datos, evaluaciones, controlesEval, step }));
+    const interval = setInterval(() => {
+      const isIncomplete = step < 4 || Object.keys(evaluaciones).length < 20 || Object.keys(controlesEval).length < 12;
+      if (isIncomplete) {
+        sessionStorage.setItem('app_draft_state', JSON.stringify({
+          datos, evaluaciones, controlesEval, step,
+          savedAt: new Date().toISOString(),
+          isDraft: true
+        }));
+      }
+    }, 10000);
+    return () => clearInterval(interval);
   }, [datos, evaluaciones, controlesEval, step]);
 
+  // Restaurar borrador al iniciar
   useEffect(() => {
-    const savedState = sessionStorage.getItem('app_wizard_state');
-    if (savedState) {
-      const { datos: sDatos, evaluaciones: sEval, controlesEval: sCtrl, step: sStep } = JSON.parse(savedState);
+    const draftState = sessionStorage.getItem('app_draft_state');
+    const wizardState = sessionStorage.getItem('app_wizard_state');
+
+    if (draftState) {
+      const draft = JSON.parse(draftState);
+      const savedAt = new Date(draft.savedAt);
+      const hoursSinceDraft = (new Date() - savedAt) / (1000 * 60 * 60);
+
+      if (hoursSinceDraft < 24 && draft.isDraft) {
+        toast((t) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <p style={{ fontWeight: 'bold' }}>📝 Borrador encontrado</p>
+            <p style={{ fontSize: '0.85rem' }}>
+              Tiene un caso de {draft.datos.cliente || 'sin nombre'} guardado como borrador.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="btn"
+                style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                onClick={() => {
+                  setDatos(draft.datos);
+                  setEvaluaciones(draft.evaluaciones);
+                  setControlesEval(draft.controlesEval);
+                  setStep(draft.step);
+                  setView('wizard');
+                  sessionStorage.removeItem('app_draft_state');
+                  toast.dismiss(t.id);
+                  toast.success('Borrador restaurado');
+                }}
+              >
+                Restaurar
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+                onClick={() => {
+                  sessionStorage.removeItem('app_draft_state');
+                  toast.dismiss(t.id);
+                }}
+              >
+                Descartar
+              </button>
+            </div>
+          </div>
+        ), { duration: 10000, id: 'draft-restore' });
+      } else {
+        sessionStorage.removeItem('app_draft_state');
+      }
+    }
+
+    if (wizardState) {
+      const { datos: sDatos, evaluaciones: sEval, controlesEval: sCtrl, step: sStep } = JSON.parse(wizardState);
       setDatos(sDatos); setEvaluaciones(sEval); setControlesEval(sCtrl); setStep(sStep);
     }
   }, []);
@@ -124,7 +186,7 @@ function AppContent() {
   }, [step, view]);
 
   const handleReset = () => {
-    setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '' });
+    setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '', estado: 'borrador', tags: [], notasInternas: '' });
     setEvaluaciones({}); setControlesEval({}); setStep(1);
   };
 
@@ -213,7 +275,7 @@ function AppContent() {
               {step === 1 && <Step1Datos datos={datos} setDatos={setDatos} setEvaluaciones={setEvaluaciones} setControlesEval={setControlesEval} onNext={() => setStep(2)} />}
               {step === 2 && <Step2Factores evaluaciones={evaluaciones} setEvaluaciones={setEvaluaciones} onNext={() => setStep(3)} onPrev={() => setStep(1)} />}
               {step === 3 && <Step3Controles controlesEval={controlesEval} setControlesEval={setControlesEval} onNext={() => setStep(4)} onPrev={() => setStep(2)} />}
-              {step === 4 && <Step4Analisis datos={datos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} onReset={handleReset} />}
+              {step === 4 && <Step4Analisis datos={datos} setDatos={setDatos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} onReset={handleReset} />}
             </main>
             <aside><ScoreSidebar scores={scores} /></aside>
           </div>
