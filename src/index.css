@@ -48,6 +48,9 @@ body {
 .bg-naranja\/10 { background-color: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.3); }
 .bg-rojo\/10 { background-color: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
 
+.border-verde { border-color: var(--verde) !important; }
+.border-rojo { border-color: var(--rojo) !important; }
+
 /* Layout Classes */
 .container {
   max-width: 1200px;

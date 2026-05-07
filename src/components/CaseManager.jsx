@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download, GitCompare } from 'lucide-react';
+import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download, GitCompare, History } from 'lucide-react';
 import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
@@ -13,24 +13,100 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditCase, setAuditCase] = useState(null);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    fechaDesde: '',
+    fechaHasta: '',
+    scoreMin: '',
+    scoreMax: '',
+    esPep: false,
+    apoderado: false,
+    ofac: false,
+    sortBy: 'fecha',
+    sortOrder: 'desc'
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (isOpen) loadHistory();
   }, [isOpen]);
 
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredCases(cases);
-      return;
+    let filtered = cases;
+    
+    // Filtro de búsqueda por texto
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(c =>
+        (c.datos?.cliente || '').toLowerCase().includes(term) ||
+        (c.datos?.cedula || '').toLowerCase().includes(term) ||
+        (c.datos?.acto || '').toLowerCase().includes(term)
+      );
     }
-    const term = searchTerm.toLowerCase();
-    const filtered = cases.filter(c =>
-      (c.datos?.cliente || '').toLowerCase().includes(term) ||
-      (c.datos?.cedula || '').toLowerCase().includes(term) ||
-      (c.datos?.acto || '').toLowerCase().includes(term)
-    );
+    
+    // Filtros avanzados
+    if (advancedFilters.fechaDesde) {
+      const desde = new Date(advancedFilters.fechaDesde);
+      filtered = filtered.filter(c => new Date(c.createdAt) >= desde);
+    }
+    if (advancedFilters.fechaHasta) {
+      const hasta = new Date(advancedFilters.fechaHasta);
+      hasta.setHours(23, 59, 59);
+      filtered = filtered.filter(c => new Date(c.createdAt) <= hasta);
+    }
+    if (advancedFilters.scoreMin) {
+      filtered = filtered.filter(c => {
+        const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
+        return score >= parseInt(advancedFilters.scoreMin);
+      });
+    }
+    if (advancedFilters.scoreMax) {
+      filtered = filtered.filter(c => {
+        const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
+        return score <= parseInt(advancedFilters.scoreMax);
+      });
+    }
+    if (advancedFilters.esPep) {
+      filtered = filtered.filter(c => c.datos?.esPep);
+    }
+    if (advancedFilters.apoderado) {
+      filtered = filtered.filter(c => c.datos?.apoderado);
+    }
+    if (advancedFilters.ofac) {
+      filtered = filtered.filter(c => c.datos?.ofac);
+    }
+    
+    // Ordenamiento
+    filtered.sort((a, b) => {
+      let valA, valB;
+      switch (advancedFilters.sortBy) {
+        case 'score':
+          valA = a.evaluaciones ? calculateInherentRisk(a.evaluaciones).inherente : 0;
+          valB = b.evaluaciones ? calculateInherentRisk(b.evaluaciones).inherente : 0;
+          break;
+        case 'cliente':
+          valA = a.datos?.cliente || '';
+          valB = b.datos?.cliente || '';
+          break;
+        case 'acto':
+          valA = a.datos?.acto || '';
+          valB = b.datos?.acto || '';
+          break;
+        case 'fecha':
+        default:
+          valA = new Date(a.createdAt);
+          valB = new Date(b.createdAt);
+      }
+      
+      if (valA < valB) return advancedFilters.sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return advancedFilters.sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
     setFilteredCases(filtered);
-  }, [searchTerm, cases]);
+  }, [searchTerm, cases, advancedFilters]);
 
   const loadHistory = async () => {
     const data = await getAllCases();
@@ -84,6 +160,20 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
       await deleteCase(id);
       await loadHistory();
       toast.success('Caso eliminado');
+    }
+  };
+
+  const handleShowAudit = async (c, e) => {
+    e.stopPropagation();
+    setAuditCase(c);
+    setShowAudit(true);
+    try {
+      const { getCaseAuditHistory } = await import('../firebase/auditStore');
+      const logs = await getCaseAuditHistory(c.id);
+      setAuditLogs(logs);
+    } catch (err) {
+      console.error('Error cargando auditoría:', err);
+      setAuditLogs([]);
     }
   };
 
@@ -152,6 +242,9 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                   }}
                 />
               </div>
+              <button className="btn btn-secondary" onClick={() => setShowFilters(!showFilters)} style={{ whiteSpace: 'nowrap' }}>
+                {showFilters ? 'Ocultar filtros' : 'Filtros avanzados'}
+              </button>
               <button className="btn" onClick={handleSave} disabled={isSaving} style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
                 <Save size={16} /> {isSaving ? 'Guardando...' : 'Guardar Caso Actual'}
               </button>
@@ -164,6 +257,89 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 <PlayCircle size={16} /> {batchProgress.active ? 'Analizando...' : `Analizar ${selectedIds.length}`}
               </button>
             </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px',
+                marginBottom: '15px', padding: '15px', background: 'var(--bg-input)', borderRadius: '8px',
+                flexShrink: 0
+              }}>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Desde</label>
+                  <input type="date" className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.fechaDesde}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, fechaDesde: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Hasta</label>
+                  <input type="date" className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.fechaHasta}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, fechaHasta: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Score mín</label>
+                  <input type="number" className="input-field" style={{ padding: '8px' }} min="0" max="25"
+                    value={advancedFilters.scoreMin}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, scoreMin: e.target.value }))}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Score máx</label>
+                  <input type="number" className="input-field" style={{ padding: '8px' }} min="0" max="25"
+                    value={advancedFilters.scoreMax}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, scoreMax: e.target.value }))}
+                    placeholder="25"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Ordenar por</label>
+                  <select className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.sortBy}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                  >
+                    <option value="fecha">Fecha</option>
+                    <option value="score">Score de riesgo</option>
+                    <option value="cliente">Cliente</option>
+                    <option value="acto">Tipo de acto</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '4px', display: 'block' }}>Orden</label>
+                  <select className="input-field" style={{ padding: '8px' }}
+                    value={advancedFilters.sortOrder}
+                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sortOrder: e.target.value }))}
+                  >
+                    <option value="desc">Descendente</option>
+                    <option value="asc">Ascendente</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={advancedFilters.esPep} onChange={(e) => setAdvancedFilters(prev => ({ ...prev, esPep: e.target.checked }))} />
+                    Solo PEP
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={advancedFilters.apoderado} onChange={(e) => setAdvancedFilters(prev => ({ ...prev, apoderado: e.target.checked }))} />
+                    Con apoderado
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={advancedFilters.ofac} onChange={(e) => setAdvancedFilters(prev => ({ ...prev, ofac: e.target.checked }))} />
+                    Verificado OFAC
+                  </label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button className="btn btn-secondary" style={{ width: '100%', fontSize: '0.8rem' }}
+                    onClick={() => setAdvancedFilters({ fechaDesde: '', fechaHasta: '', scoreMin: '', scoreMax: '', esPep: false, apoderado: false, ofac: false, sortBy: 'fecha', sortOrder: 'desc' })}
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Bulk Actions Bar */}
             {selectedIds.length > 0 && (
@@ -303,13 +479,23 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                             {new Date(c.createdAt).toLocaleDateString('es-EC')}
                           </td>
                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                            <button
-                              className="btn btn-secondary"
-                              onClick={(e) => handleDelete(c.id, e)}
-                              style={{ padding: '6px', color: 'var(--rojo)', minWidth: 'auto' }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={(e) => handleShowAudit(c, e)}
+                                style={{ padding: '6px', color: 'var(--accent)', minWidth: 'auto' }}
+                                title="Ver auditoría"
+                              >
+                                <History size={14} />
+                              </button>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={(e) => handleDelete(c.id, e)}
+                                style={{ padding: '6px', color: 'var(--rojo)', minWidth: 'auto' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -370,6 +556,63 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Audit Modal */}
+      {showAudit && auditCase && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, padding: '20px'
+        }}>
+          <div className="card" style={{ width: '600px', maxWidth: '100%', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <History size={22} /> Historial de Cambios
+              </h2>
+              <button className="btn btn-secondary" onClick={() => setShowAudit(false)}><X size={20} /></button>
+            </div>
+
+            <div style={{ marginBottom: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '8px' }}>
+              <p style={{ fontWeight: 'bold' }}>{auditCase.datos?.cliente}</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--txt2)' }}>{auditCase.datos?.cedula} | {auditCase.datos?.acto}</p>
+            </div>
+
+            {auditLogs.length === 0 ? (
+              <p style={{ textAlign: 'center', color: 'var(--txt2)', padding: '20px' }}>
+                No hay registros de auditoría para este caso.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {auditLogs.map((log, i) => (
+                  <div key={i} style={{ padding: '12px', background: 'var(--bg-input)', borderRadius: '6px', borderLeft: '3px solid var(--accent)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
+                        {log.action === 'CASO_CREADO' ? '📝 Caso creado' :
+                         log.action === 'CASO_ACTUALIZADO' ? '✏️ Caso actualizado' :
+                         log.action === 'ANALISIS_GENERADO' ? '🤖 Análisis generado' :
+                         log.action === 'EXPORTADO_PDF' ? '📄 PDF exportado' :
+                         log.action === 'FIRMADO' ? '✍️ Firmado' :
+                         log.action}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--txt2)' }}>
+                        {new Date(log.timestamp).toLocaleString('es-EC')}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--txt2)' }}>
+                      Usuario: {log.userEmail || 'Sistema'}
+                    </p>
+                    {log.details?.cliente && (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginTop: '4px' }}>
+                        Cliente: {log.details.cliente}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

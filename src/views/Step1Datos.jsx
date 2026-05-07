@@ -5,6 +5,7 @@ import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
+import { validarIdentificacion } from '../utils/validators';
 
 export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const suggestionsRef = useRef(null);
+  const [validacionCedula, setValidacionCedula] = useState(null);
 
   // Cargar clientes únicos del historial
   useEffect(() => {
@@ -90,6 +92,12 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       toast('Plantilla cargada para ' + value, { icon: '📋', duration: 2000 });
     }
 
+    // Validar cédula en tiempo real
+    if (name === 'cedula') {
+      const resultado = validarIdentificacion(value);
+      setValidacionCedula(resultado);
+    }
+
     // Autocompletar: buscar sugerencias al escribir en cliente o cédula
     if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2 && clientHistory.length > 0) {
       const term = value.toLowerCase();
@@ -125,9 +133,9 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     datos.notaria?.trim() && 
     datos.notario?.trim() && 
     datos.cliente?.trim() && 
-    datos.cedula?.trim().length >= 10 && 
+    validacionCedula?.valido && 
     datos.acto && 
-    datos.valor > 0 &&
+    datos.valor >= 0 &&
     (!datos.esPep || (datos.esPep && datos.detallePep?.trim()));
 
   const handleImportExcel = async (e) => {
@@ -268,7 +276,27 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         </div>
         <div className="form-group">
           <label>Cédula / RUC / Pasaporte</label>
-           <input type="text" className="input-field" name="cedula" value={datos.cedula} onChange={handleChange} placeholder="Ej: 1712345678001" />
+           <input
+             type="text"
+             className={`input-field ${validacionCedula ? (validacionCedula.valido ? 'border-verde' : 'border-rojo') : ''}`}
+             name="cedula"
+             value={datos.cedula}
+             onChange={handleChange}
+             placeholder="Ej: 1712345678001"
+           />
+           {validacionCedula && (
+             <p style={{
+               fontSize: '0.8rem',
+               marginTop: '6px',
+               color: validacionCedula.valido ? 'var(--verde)' : 'var(--rojo)',
+               display: 'flex',
+               alignItems: 'center',
+               gap: '4px'
+             }}>
+               {validacionCedula.valido ? '✅' : '❌'} {validacionCedula.mensaje}
+               {validacionCedula.tipo && <span style={{ color: 'var(--txt2)', marginLeft: '4px' }}>({validacionCedula.tipo})</span>}
+             </p>
+           )}
         </div>
 
         <div className="form-group">
@@ -350,19 +378,41 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         )}
       </div>
 
-      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #30363d', borderRadius: '8px' }}>
+      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '15px' }}>Verificaciones en Listas Restrictivas</h3>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <input type="checkbox" name="ofac" checked={datos.ofac} onChange={handleChange} /> OFAC
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <input type="checkbox" name="onu" checked={datos.onu} onChange={handleChange} /> ONU
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <input type="checkbox" name="pepUafe" checked={datos.pepUafe} onChange={handleChange} /> PEP UAFE
-          </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+          {[
+            { name: 'ofac', label: 'OFAC', url: 'https://sanctionssearch.ofac.treas.gov/' },
+            { name: 'onu', label: 'ONU', url: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list' },
+            { name: 'pepUafe', label: 'PEP UAFE', url: 'https://www.uafe.gob.ec' },
+          ].map(({ name, label, url }) => (
+            <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'var(--bg-input)', borderRadius: '6px' }}>
+              <input
+                type="checkbox"
+                name={name}
+                checked={datos[name]}
+                onChange={handleChange}
+                style={{ transform: 'scale(1.2)' }}
+              />
+              <span style={{ flex: 1, fontSize: '0.9rem' }}>{label}</span>
+              <button
+                className="btn btn-secondary"
+                style={{ fontSize: '0.75rem', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                onClick={() => {
+                  const searchUrl = datos.cedula ? `${url}?search=${encodeURIComponent(datos.cedula)}` : url;
+                  window.open(searchUrl, '_blank');
+                }}
+              >
+                🔍 Verificar
+              </button>
+            </div>
+          ))}
         </div>
+        {datos.ofac && datos.onu && datos.pepUafe && (
+          <p style={{ fontSize: '0.8rem', color: 'var(--verde)', marginTop: '10px' }}>
+            ✅ Verificado el {new Date().toLocaleDateString('es-EC', { dateStyle: 'full' })} a las {new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
       </div>
 
       <div className="form-group" style={{ marginTop: '20px' }}>

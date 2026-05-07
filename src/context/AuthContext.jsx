@@ -6,6 +6,7 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { setUserId } from '../utils/storage';
 
 const AuthContext = createContext();
 
@@ -18,6 +19,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        setUserId(currentUser.uid, currentUser.email);
+      }
       setLoading(false);
     });
     return unsubscribe;

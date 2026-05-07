@@ -51,7 +51,7 @@ function AppContent() {
   const [controlesResult, setControlesResult] = useState({ residual: 0, nivelResidual: '', colorClass: '', efectividadPromedio: 0, lista: [] });
   const [batchProgress, setBatchProgress] = useState({ active: false, current: 0, total: 0 });
 
-  useEffect(() => { if (user?.uid) setUserId(user.uid); }, [user]);
+
 
   // Solicitar permiso de notificaciones push
   useEffect(() => {
