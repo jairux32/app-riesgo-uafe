@@ -5,7 +5,6 @@ import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
-import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 
 export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProgress }) => {
   const [isOpen, setIsOpen] = useState(false);

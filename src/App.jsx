@@ -324,7 +324,7 @@ function AppContent() {
               {step === 1 && <Step1Datos datos={datos} setDatos={setDatos} setEvaluaciones={setEvaluaciones} setControlesEval={setControlesEval} onNext={() => setStep(2)} />}
               {step === 2 && <Step2Senales evaluaciones={evaluaciones} setEvaluaciones={setEvaluaciones} onNext={() => setStep(3)} onPrev={() => setStep(1)} />}
               {step === 3 && <Step3Controles controlesEval={controlesEval} setControlesEval={setControlesEval} onNext={() => setStep(4)} onPrev={() => setStep(2)} />}
-              {step === 4 && <Step4Analisis datos={datos} setDatos={setDatos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} onReset={handleReset} />}
+              {step === 4 && <Step4Analisis datos={datos} setDatos={setDatos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} evaluaciones={evaluaciones} onReset={handleReset} />}
             </main>
             <aside><ScoreSidebar scores={scores} /></aside>
           </div>

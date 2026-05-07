@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';

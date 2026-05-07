@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
 import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, Shield } from 'lucide-react';
 import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
@@ -11,7 +12,7 @@ import { getNotaryProfile } from '../firebase/profileStore';
 import { SignatureModal } from '../components/SignatureModal';
 
 export const Step4Analisis = ({
-  datos, setDatos, scores, controlesResult, factoresResult,
+  datos, setDatos, scores, controlesResult, factoresResult, evaluaciones,
   onReset
 }) => {
   const { user } = useAuth();
