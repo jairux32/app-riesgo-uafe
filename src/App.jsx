@@ -10,7 +10,7 @@ import { CaseManager } from './components/CaseManager';
 import { HelpModal } from './components/HelpModal';
 
 import { Step1Datos } from './views/Step1Datos';
-import { Step2Factores } from './views/Step2Factores';
+import { Step2Senales } from './views/Step2Senales';
 import { Step3Controles } from './views/Step3Controles';
 import { Step4Analisis } from './views/Step4Analisis';
 import { Dashboard } from './views/Dashboard';
@@ -48,7 +48,28 @@ function AppContent() {
       ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
       onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
       uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
-    }
+    },
+    // Campos ROS - v2.4
+    tipoPersona: 'natural', // natural | juridica
+    nacionalidad: 'ECU', // código ISO
+    provincia: '', canton: '', parroquia: '',
+    actividadSecundaria: '',
+    ingresoMensual: '', ingresoAnual: '',
+    estadoCivil: '',
+    conyuge: { nombre: '', cedula: '', nacionalidad: '' },
+    representanteLegal: { nombre: '', cedula: '', nacionalidad: '' },
+    fechaConstitucion: '', // solo jurídica
+    fechaTransaccion: '',
+    tipoTransaccion: '',
+    usoEfectivo: false, montoEfectivo: '',
+    billetesAltaDenominacion: false, montoBilletesAlta: '',
+    usoActivosVirtuales: false, tipoActivoVirtual: '', descripcionActivoVirtual: '',
+    antecedentesPenales: false,
+    registradoInterpolONUOFAC: false,
+    prioridadReporte: 'normal', // normal | alta
+    claseReporte: 'inicial', // inicial | tentativa
+    señalesAlertaDetectadas: [], // array de códigos SA
+    tercerosImplicados: [] // array de {nombre, cedula, vinculo, descripcionVinculo}
   });
 
   const [evaluaciones, setEvaluaciones] = useState({});
@@ -106,7 +127,7 @@ function AppContent() {
   // Guardar borrador automáticamente cada 10 segundos
   useEffect(() => {
     const interval = setInterval(() => {
-      const isIncomplete = step < 4 || Object.keys(evaluaciones).length < 20 || Object.keys(controlesEval).length < 12;
+      const isIncomplete = step < 4 || Object.keys(evaluaciones).length < 56 || Object.keys(controlesEval).length < 12;
       if (isIncomplete) {
         sessionStorage.setItem('app_draft_state', JSON.stringify({
           datos, evaluaciones, controlesEval, step,
@@ -191,7 +212,30 @@ function AppContent() {
   }, [step, view]);
 
   const handleReset = () => {
-    setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '', estado: 'borrador', tags: [], notasInternas: '', verificaciones: { ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }, onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }, uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] } } });
+    setDatos({
+      notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '',
+      origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '',
+      apoderado: false, ofac: false, onu: false, pepUafe: false,
+      reportesPrevios: false, observaciones: '',
+      estado: 'borrador', tags: [], notasInternas: '',
+      verificaciones: {
+        ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
+      },
+      tipoPersona: 'natural', nacionalidad: 'ECU',
+      provincia: '', canton: '', parroquia: '',
+      actividadSecundaria: '', ingresoMensual: '', ingresoAnual: '',
+      estadoCivil: '', conyuge: { nombre: '', cedula: '', nacionalidad: '' },
+      representanteLegal: { nombre: '', cedula: '', nacionalidad: '' },
+      fechaConstitucion: '', fechaTransaccion: '', tipoTransaccion: '',
+      usoEfectivo: false, montoEfectivo: '',
+      billetesAltaDenominacion: false, montoBilletesAlta: '',
+      usoActivosVirtuales: false, tipoActivoVirtual: '', descripcionActivoVirtual: '',
+      antecedentesPenales: false, registradoInterpolONUOFAC: false,
+      prioridadReporte: 'normal', claseReporte: 'inicial',
+      señalesAlertaDetectadas: [], tercerosImplicados: []
+    });
     setEvaluaciones({}); setControlesEval({}); setStep(1);
   };
 
@@ -278,7 +322,7 @@ function AppContent() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '30px', alignItems: 'start' }}>
             <main>
               {step === 1 && <Step1Datos datos={datos} setDatos={setDatos} setEvaluaciones={setEvaluaciones} setControlesEval={setControlesEval} onNext={() => setStep(2)} />}
-              {step === 2 && <Step2Factores evaluaciones={evaluaciones} setEvaluaciones={setEvaluaciones} onNext={() => setStep(3)} onPrev={() => setStep(1)} />}
+              {step === 2 && <Step2Senales evaluaciones={evaluaciones} setEvaluaciones={setEvaluaciones} onNext={() => setStep(3)} onPrev={() => setStep(1)} />}
               {step === 3 && <Step3Controles controlesEval={controlesEval} setControlesEval={setControlesEval} onNext={() => setStep(4)} onPrev={() => setStep(2)} />}
               {step === 4 && <Step4Analisis datos={datos} setDatos={setDatos} scores={scores} controlesResult={controlesResult} factoresResult={scores.factores} onReset={handleReset} />}
             </main>

@@ -4,7 +4,7 @@ import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, S
 import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 import { marked } from 'marked';
-import { exportToPDF, exportToExcel } from '../utils/exportUtils';
+import { exportToPDF, exportToExcel, exportROSPDF } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
@@ -77,6 +77,18 @@ export const Step4Analisis = ({
     } catch (err) {
       toast.error('Error al generar Excel: ' + err.message);
       console.error("Error exportando Excel:", err);
+    }
+  };
+
+  const handleExportROS = async () => {
+    toast('Generando ROS PDF...', { icon: '📋' });
+    try {
+      const profile = await getNotaryProfile(user.uid);
+      await exportROSPDF(datos, scores, evaluaciones, profile);
+      toast.success('ROS generado correctamente');
+    } catch (err) {
+      toast.error('Error al generar ROS: ' + err.message);
+      console.error("Error exportando ROS:", err);
     }
   };
 
@@ -374,6 +386,9 @@ export const Step4Analisis = ({
         </button>
         <button className="btn" onClick={handleExportExcel} style={{ background: 'var(--verde)' }}>
           <Download size={18} /> Exportar Excel
+        </button>
+        <button className="btn" onClick={handleExportROS} style={{ background: '#dc2626' }}>
+          <AlertTriangle size={18} /> Generar ROS
         </button>
         <button className="btn btn-secondary" onClick={handlePrint}>
           <Printer size={18} /> Imprimir

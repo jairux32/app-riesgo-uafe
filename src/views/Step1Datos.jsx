@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { validarIdentificacion } from '../utils/validators';
 import { verificarListasRestrictivas, verificarDocumentoUAFE, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
+import { PROVINCIAS_ECUADOR, cargarCatalogo } from '../data/constants';
 
 export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
@@ -19,6 +20,56 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const suggestionsRef = useRef(null);
   const [validacionCedula, setValidacionCedula] = useState(null);
   const [verificando, setVerificando] = useState(false);
+  const [cantones, setCantones] = useState([]);
+  const [parroquias, setParroquias] = useState([]);
+  const [nacionalidades, setNacionalidades] = useState([]);
+  const [actividades, setActividades] = useState([]);
+  const [catalogosCargados, setCatalogosCargados] = useState(false);
+
+  // Cargar catálogos UAFE
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      const [cant, parr, nac, act] = await Promise.all([
+        cargarCatalogo('cantones'),
+        cargarCatalogo('parroquias'),
+        cargarCatalogo('nacionalidades'),
+        cargarCatalogo('actividades')
+      ]);
+      setCantones(cant);
+      setParroquias(parr);
+      setNacionalidades(nac);
+      setActividades(act);
+      setCatalogosCargados(true);
+    };
+    loadCatalogs();
+  }, []);
+
+  // Filtrar cantones cuando cambia provincia
+  useEffect(() => {
+    if (datos.provincia && cantones.length > 0) {
+      const provCode = datos.provincia.substring(0, 2);
+      const filtered = cantones.filter(c => c.codigo.startsWith(provCode));
+      // No resetear cantón si ya está en la lista filtrada
+      const cantonValido = filtered.some(c => c.canton === datos.canton);
+      if (!cantonValido) {
+        setDatos(prev => ({ ...prev, canton: '', parroquia: '' }));
+      }
+    }
+  }, [datos.provincia, cantones]);
+
+  // Filtrar parroquias cuando cambia cantón
+  useEffect(() => {
+    if (datos.canton && parroquias.length > 0) {
+      const cantonObj = cantones.find(c => c.canton === datos.canton);
+      if (cantonObj) {
+        const filtered = parroquias.filter(p => p.codigo.startsWith(cantonObj.codigo));
+        const parroquiaValida = filtered.some(p => p.parroquia === datos.parroquia);
+        if (!parroquiaValida) {
+          setDatos(prev => ({ ...prev, parroquia: '' }));
+        }
+      }
+    }
+  }, [datos.canton, parroquias, cantones]);
 
   // Cargar clientes únicos del historial
   useEffect(() => {
@@ -393,6 +444,204 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         <div className="form-group">
           <label>Actividad económica del cliente</label>
           <input type="text" className="input-field" name="actividad" value={datos.actividad} onChange={handleChange} />
+        </div>
+      </div>
+
+      {/* Sección: Información Adicional ROS (UAFE) */}
+      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
+        <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FileText size={18} /> Información Adicional para ROS
+        </h3>
+
+        <div className="grid-2">
+          <div className="form-group">
+            <label>Tipo de Persona</label>
+            <select className="input-field" name="tipoPersona" value={datos.tipoPersona} onChange={handleChange}>
+              <option value="natural">Persona Natural</option>
+              <option value="juridica">Persona Jurídica</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Nacionalidad</label>
+            <select className="input-field" name="nacionalidad" value={datos.nacionalidad} onChange={handleChange}>
+              {nacionalidades.length > 0 ? (
+                nacionalidades.map(n => (
+                  <option key={n.codigo} value={n.codigo}>{n.nombre}</option>
+                ))
+              ) : (
+                <option value="ECU">ECUADOR</option>
+              )}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Provincia</label>
+            <select className="input-field" name="provincia" value={datos.provincia} onChange={handleChange}>
+              <option value="">-- Seleccione --</option>
+              {PROVINCIAS_ECUADOR.map(p => (
+                <option key={p.codigo} value={p.codigo}>{p.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Cantón</label>
+            <select className="input-field" name="canton" value={datos.canton} onChange={handleChange} disabled={!datos.provincia || cantones.length === 0}>
+              <option value="">-- Seleccione --</option>
+              {cantones.filter(c => datos.provincia && c.codigo.startsWith(datos.provincia.substring(0, 2))).map(c => (
+                <option key={c.codigo} value={c.canton}>{c.canton}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Parroquia</label>
+            <select className="input-field" name="parroquia" value={datos.parroquia} onChange={handleChange} disabled={!datos.canton || parroquias.length === 0}>
+              <option value="">-- Seleccione --</option>
+              {(() => {
+                const cantonObj = cantones.find(c => c.canton === datos.canton);
+                if (!cantonObj) return null;
+                return parroquias.filter(p => p.codigo.startsWith(cantonObj.codigo)).map(p => (
+                  <option key={p.codigo} value={p.parroquia}>{p.parroquia}</option>
+                ));
+              })()}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Actividad Económica Secundaria</label>
+            <input type="text" className="input-field" name="actividadSecundaria" value={datos.actividadSecundaria} onChange={handleChange} placeholder="Opcional" />
+          </div>
+
+          {datos.tipoPersona === 'natural' && (
+            <>
+              <div className="form-group">
+                <label>Ingreso Mensual Aprox. (USD)</label>
+                <input type="number" className="input-field" name="ingresoMensual" value={datos.ingresoMensual} onChange={handleChange} min="0" />
+              </div>
+              <div className="form-group">
+                <label>Estado Civil</label>
+                <select className="input-field" name="estadoCivil" value={datos.estadoCivil} onChange={handleChange}>
+                  <option value="">-- Seleccione --</option>
+                  <option value="soltero">Soltero/a</option>
+                  <option value="casado">Casado/a</option>
+                  <option value="divorciado">Divorciado/a</option>
+                  <option value="viudo">Viudo/a</option>
+                  <option value="union_libre">Unión Libre</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {datos.tipoPersona === 'juridica' && (
+            <>
+              <div className="form-group">
+                <label>Ingreso Anual Aprox. (USD)</label>
+                <input type="number" className="input-field" name="ingresoAnual" value={datos.ingresoAnual} onChange={handleChange} min="0" />
+              </div>
+              <div className="form-group">
+                <label>Fecha de Constitución</label>
+                <input type="date" className="input-field" name="fechaConstitucion" value={datos.fechaConstitucion} onChange={handleChange} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {datos.tipoPersona === 'natural' && datos.estadoCivil === 'casado' && (
+          <div style={{ marginTop: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '6px' }}>
+            <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Información del Cónyuge</h4>
+            <div className="grid-2">
+              <div className="form-group">
+                <label>Nombre del Cónyuge</label>
+                <input type="text" className="input-field" value={datos.conyuge.nombre} onChange={(e) => setDatos(prev => ({ ...prev, conyuge: { ...prev.conyuge, nombre: e.target.value } }))} />
+              </div>
+              <div className="form-group">
+                <label>Cédula del Cónyuge</label>
+                <input type="text" className="input-field" value={datos.conyuge.cedula} onChange={(e) => setDatos(prev => ({ ...prev, conyuge: { ...prev.conyuge, cedula: e.target.value } }))} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {datos.tipoPersona === 'juridica' && (
+          <div style={{ marginTop: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '6px' }}>
+            <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Representante Legal</h4>
+            <div className="grid-2">
+              <div className="form-group">
+                <label>Nombre</label>
+                <input type="text" className="input-field" value={datos.representanteLegal.nombre} onChange={(e) => setDatos(prev => ({ ...prev, representanteLegal: { ...prev.representanteLegal, nombre: e.target.value } }))} />
+              </div>
+              <div className="form-group">
+                <label>Cédula</label>
+                <input type="text" className="input-field" value={datos.representanteLegal.cedula} onChange={(e) => setDatos(prev => ({ ...prev, representanteLegal: { ...prev.representanteLegal, cedula: e.target.value } }))} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid-2" style={{ marginTop: '15px' }}>
+          <div className="form-group">
+            <label>Fecha de la Transacción</label>
+            <input type="date" className="input-field" name="fechaTransaccion" value={datos.fechaTransaccion} onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label>Tipo de Transacción</label>
+            <select className="input-field" name="tipoTransaccion" value={datos.tipoTransaccion} onChange={handleChange}>
+              <option value="">-- Seleccione --</option>
+              <option value="compraventa">Compraventa</option>
+              <option value="donacion">Donación</option>
+              <option value="hipoteca">Hipoteca / Cancelación</option>
+              <option value="poder">Poder / Mandato</option>
+              <option value="constitucion">Constitución de Compañía</option>
+              <option value="fideicomiso">Fideicomiso</option>
+              <option value="otra">Otra</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '15px' }}>
+          <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Forma de Pago</h4>
+          <div className="grid-2">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input type="checkbox" name="usoEfectivo" checked={datos.usoEfectivo} onChange={handleChange} />
+              ¿Usó efectivo?
+            </label>
+            {datos.usoEfectivo && (
+              <div className="form-group">
+                <label>Monto en efectivo (USD)</label>
+                <input type="number" className="input-field" name="montoEfectivo" value={datos.montoEfectivo} onChange={handleChange} min="0" />
+              </div>
+            )}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input type="checkbox" name="billetesAltaDenominacion" checked={datos.billetesAltaDenominacion} onChange={handleChange} />
+              ¿Billetes de alta denominación?
+            </label>
+            {datos.billetesAltaDenominacion && (
+              <div className="form-group">
+                <label>Monto en billetes alta denom. (USD)</label>
+                <input type="number" className="input-field" name="montoBilletesAlta" value={datos.montoBilletesAlta} onChange={handleChange} min="0" />
+              </div>
+            )}
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input type="checkbox" name="usoActivosVirtuales" checked={datos.usoActivosVirtuales} onChange={handleChange} />
+              ¿Usó activos virtuales?
+            </label>
+            {datos.usoActivosVirtuales && (
+              <div className="form-group">
+                <label>Tipo de activo virtual</label>
+                <input type="text" className="input-field" name="tipoActivoVirtual" value={datos.tipoActivoVirtual} onChange={handleChange} placeholder="Ej: Bitcoin" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid-2" style={{ marginTop: '15px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="antecedentesPenales" checked={datos.antecedentesPenales} onChange={handleChange} />
+            ¿Tiene antecedentes penales o judiciales?
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+            <input type="checkbox" name="registradoInterpolONUOFAC" checked={datos.registradoInterpolONUOFAC} onChange={handleChange} />
+            ¿Registrado en INTERPOL, ONU u OFAC?
+          </label>
         </div>
       </div>
 

@@ -1,18 +1,34 @@
-import { FACTORES_RIESGO, NIVELES_RIESGO } from '../data/constants';
+import { FACTORES_RIESGO, FACTORES_SENALES_UAFE, NIVELES_RIESGO } from '../data/constants';
+
+// Detecta si las evaluaciones usan el sistema antiguo o el nuevo de señales UAFE
+function detectarSistemaEvaluacion(evaluaciones) {
+  const keys = Object.keys(evaluaciones);
+  if (keys.length === 0) return 'senales'; // Default al nuevo sistema
+  const tieneSenalesUAFE = keys.some(k => k.startsWith('SA'));
+  return tieneSenalesUAFE ? 'senales' : 'factores';
+}
 
 // Calcula el score inherente total y de cada factor
 export const calculateInherentRisk = (evaluaciones) => {
+  const sistema = detectarSistemaEvaluacion(evaluaciones);
+  const factoresUsados = sistema === 'senales' ? FACTORES_SENALES_UAFE : FACTORES_RIESGO;
+  
   let scoreTotal = 0;
   const factoresResult = [];
 
-  FACTORES_RIESGO.forEach(factor => {
+  factoresUsados.forEach(factor => {
     let factorSuma = 0;
+    let subEvaluados = 0;
     factor.subcriterios.forEach(sub => {
-      const evalSub = evaluaciones[sub.id] || { prob: 0, imp: 0 };
-      factorSuma += (evalSub.prob * evalSub.imp);
+      const evalSub = evaluaciones[sub.id];
+      if (evalSub) {
+        factorSuma += (evalSub.prob * evalSub.imp);
+        subEvaluados++;
+      }
     });
 
-    const promedioFactor = factorSuma / factor.subcriterios.length;
+    // Si no hay subcriterios evaluados, evitar división por cero
+    const promedioFactor = subEvaluados > 0 ? factorSuma / factor.subcriterios.length : 0;
     const ponderadoFactor = promedioFactor * factor.peso;
     
     scoreTotal += ponderadoFactor;

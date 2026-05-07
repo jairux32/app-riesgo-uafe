@@ -1,0 +1,714 @@
+[
+  {
+    "codigo": "AED",
+    "nombre": "DIRHAM DE LOS EMIRATOS ARABES UNIDOS"
+  },
+  {
+    "codigo": "AFN",
+    "nombre": "AFGANI AFGANO"
+  },
+  {
+    "codigo": "ALL",
+    "nombre": "LEK ALBANO"
+  },
+  {
+    "codigo": "AMD",
+    "nombre": "DRAM ARMENIO"
+  },
+  {
+    "codigo": "ANG",
+    "nombre": "FLORIN DE LAS ANTILLAS HOLANDESAS"
+  },
+  {
+    "codigo": "AOA",
+    "nombre": "KWANZA ANGOLEÑO"
+  },
+  {
+    "codigo": "ARS",
+    "nombre": "PESO ARGENTINO"
+  },
+  {
+    "codigo": "AUD",
+    "nombre": "DOLAR AUSTRALIANO"
+  },
+  {
+    "codigo": "AWG",
+    "nombre": "FLORIN ARUBEÑO"
+  },
+  {
+    "codigo": "AZM",
+    "nombre": "MANAT AZERBAIYANO ( IT WAS REPLACED BY AZN ON ENERO 1, 2006)"
+  },
+  {
+    "codigo": "BAM",
+    "nombre": "MARCO CONVERTIBLE DE BOSNIA-HERZEGOVINA"
+  },
+  {
+    "codigo": "BBD",
+    "nombre": "DOLAR DE BARBADOS"
+  },
+  {
+    "codigo": "BDT",
+    "nombre": "TAKA DE BANGLADESH"
+  },
+  {
+    "codigo": "BGN",
+    "nombre": "LEV BULGARO"
+  },
+  {
+    "codigo": "BHD",
+    "nombre": "DINAR BAHREINI"
+  },
+  {
+    "codigo": "BIF",
+    "nombre": "FRANCO BURUNDES"
+  },
+  {
+    "codigo": "BMD",
+    "nombre": "DOLAR DE BERMUDA"
+  },
+  {
+    "codigo": "BND",
+    "nombre": "DOLAR DE BRUNEI"
+  },
+  {
+    "codigo": "BOB",
+    "nombre": "BOLIVIANO"
+  },
+  {
+    "codigo": "BOV",
+    "nombre": "MVDOL BOLIVIANO (CODIGO DE FONDOS)"
+  },
+  {
+    "codigo": "BRL",
+    "nombre": "REAL BRASILEÑO"
+  },
+  {
+    "codigo": "BSD",
+    "nombre": "DOLAR BAHAMEÑO"
+  },
+  {
+    "codigo": "BTN",
+    "nombre": "NGULTRUM DE BUTAN"
+  },
+  {
+    "codigo": "BWP",
+    "nombre": "PULA DE BOTSWANA"
+  },
+  {
+    "codigo": "BYR",
+    "nombre": "RUBLO BIELORRUSO"
+  },
+  {
+    "codigo": "BZD",
+    "nombre": "DOLAR DE BELICE"
+  },
+  {
+    "codigo": "CAD",
+    "nombre": "DOLAR CANADIENSE"
+  },
+  {
+    "codigo": "CDF",
+    "nombre": "FRANCO CONGOLEÑO"
+  },
+  {
+    "codigo": "CHF",
+    "nombre": "FRANCO SUIZO"
+  },
+  {
+    "codigo": "CLF",
+    "nombre": "UNIDADES DE FOMENTO CHILENAS (CODIGO DE FONDOS)"
+  },
+  {
+    "codigo": "CLP",
+    "nombre": "PESO CHILENO"
+  },
+  {
+    "codigo": "CNY",
+    "nombre": "YUAN RENMINBI DE CHINA"
+  },
+  {
+    "codigo": "COP",
+    "nombre": "PESO COLOMBIANO"
+  },
+  {
+    "codigo": "COU",
+    "nombre": "UNIDAD DE VALOR REAL COLOMBIANA (AÑADIDA AL COP)"
+  },
+  {
+    "codigo": "CRC",
+    "nombre": "COLON COSTARRICENSE"
+  },
+  {
+    "codigo": "CSD",
+    "nombre": "DINAR SERBIO (IT WAS REPLACED BY RSD ON OCTOBER 25, 2006)"
+  },
+  {
+    "codigo": "CUP",
+    "nombre": "PESO CUBANO"
+  },
+  {
+    "codigo": "CVE",
+    "nombre": "ESCUDO CABOVERDIANO"
+  },
+  {
+    "codigo": "CZK",
+    "nombre": "KORUNA CHECO"
+  },
+  {
+    "codigo": "DJF",
+    "nombre": "FRANCO YIBUTIANO"
+  },
+  {
+    "codigo": "DKK",
+    "nombre": "CORONA DANESA"
+  },
+  {
+    "codigo": "DOP",
+    "nombre": "PESO DOMINICANO"
+  },
+  {
+    "codigo": "DZD",
+    "nombre": "DINAR ALGERINO"
+  },
+  {
+    "codigo": "EEK",
+    "nombre": "CORONA ESTONIA"
+  },
+  {
+    "codigo": "EGP",
+    "nombre": "LIBRA EGIPCIA"
+  },
+  {
+    "codigo": "ERN",
+    "nombre": "NAKFA ERITREO"
+  },
+  {
+    "codigo": "ETB",
+    "nombre": "BIRR ETIOPE"
+  },
+  {
+    "codigo": "EUR",
+    "nombre": "EURO"
+  },
+  {
+    "codigo": "FJD",
+    "nombre": "DOLAR FIJIANO"
+  },
+  {
+    "codigo": "FKP",
+    "nombre": "LIBRA MALVINENSE"
+  },
+  {
+    "codigo": "GBP",
+    "nombre": "LIBRA ESTERLINA (LIBRA DE GRAN BRETAÑA)"
+  },
+  {
+    "codigo": "GEL",
+    "nombre": "LARI GEORGIANO"
+  },
+  {
+    "codigo": "GHC",
+    "nombre": "CEDI GHANES"
+  },
+  {
+    "codigo": "GIP",
+    "nombre": "LIBRA DE GIBRALTAR"
+  },
+  {
+    "codigo": "GMD",
+    "nombre": "DALASI GAMBIANO"
+  },
+  {
+    "codigo": "GNF",
+    "nombre": "FRANCO GUINEANO"
+  },
+  {
+    "codigo": "GTQ",
+    "nombre": "QUETZAL GUATEMALTECO"
+  },
+  {
+    "codigo": "GYD",
+    "nombre": "DOLAR GUYANES"
+  },
+  {
+    "codigo": "HKD",
+    "nombre": "DOLAR DE HONG KONG"
+  },
+  {
+    "codigo": "HNL",
+    "nombre": "LEMPIRA HONDUREÑO"
+  },
+  {
+    "codigo": "HRK",
+    "nombre": "KUNA CROATA"
+  },
+  {
+    "codigo": "HTG",
+    "nombre": "GOURDE HAITIANO"
+  },
+  {
+    "codigo": "HUF",
+    "nombre": "FORINT HUNGARO"
+  },
+  {
+    "codigo": "IDR",
+    "nombre": "RUPIAH INDONESIA"
+  },
+  {
+    "codigo": "ILS",
+    "nombre": "NUEVO SHEQUEL ISRAELI"
+  },
+  {
+    "codigo": "INR",
+    "nombre": "RUPIA INDIA"
+  },
+  {
+    "codigo": "IQD",
+    "nombre": "DINAR IRAQUI"
+  },
+  {
+    "codigo": "IRR",
+    "nombre": "RIAL IRANI"
+  },
+  {
+    "codigo": "ISK",
+    "nombre": "KRONA ISLANDESA"
+  },
+  {
+    "codigo": "JMD",
+    "nombre": "DOLAR JAMAICANO"
+  },
+  {
+    "codigo": "JOD",
+    "nombre": "DINAR JORDANO"
+  },
+  {
+    "codigo": "JPY",
+    "nombre": "YEN JAPONES"
+  },
+  {
+    "codigo": "KES",
+    "nombre": "CHELIN KENIATA"
+  },
+  {
+    "codigo": "KGS",
+    "nombre": "SOM KIRGUIS (DE KIRGUISTAN)"
+  },
+  {
+    "codigo": "KHR",
+    "nombre": "RIEL CAMBOYANO"
+  },
+  {
+    "codigo": "KMF",
+    "nombre": "FRANCO COMORIANO (DE COMORAS)"
+  },
+  {
+    "codigo": "KPW",
+    "nombre": "WON NORCOREANO"
+  },
+  {
+    "codigo": "KRW",
+    "nombre": "WON SURCOREANO"
+  },
+  {
+    "codigo": "KWD",
+    "nombre": "DINAR KUWAITI"
+  },
+  {
+    "codigo": "KYD",
+    "nombre": "DOLAR CAIMANO (DE ISLAS CAIMAN)"
+  },
+  {
+    "codigo": "KZT",
+    "nombre": "TENGE KAZAJO (DE KAZAJISTAN)"
+  },
+  {
+    "codigo": "LAK",
+    "nombre": "KIP LAO"
+  },
+  {
+    "codigo": "LBP",
+    "nombre": "LIBRA LIBANESA"
+  },
+  {
+    "codigo": "LKR",
+    "nombre": "RUPIA DE SRI LANKA"
+  },
+  {
+    "codigo": "LRD",
+    "nombre": "DOLAR LIBERIANO"
+  },
+  {
+    "codigo": "LSL",
+    "nombre": "LOTI LESOTHENSE (DE LESOTHO)"
+  },
+  {
+    "codigo": "LTL",
+    "nombre": "LITAS LITUANO"
+  },
+  {
+    "codigo": "LVL",
+    "nombre": "LAT LETON"
+  },
+  {
+    "codigo": "LYD",
+    "nombre": "DINAR LIBIO"
+  },
+  {
+    "codigo": "MAD",
+    "nombre": "DIRHAM MARROQUI"
+  },
+  {
+    "codigo": "MDL",
+    "nombre": "LEU MOLDAVO"
+  },
+  {
+    "codigo": "MGA",
+    "nombre": "ARIARY MALGACHE (DE MADAGASCAR)"
+  },
+  {
+    "codigo": "MKD",
+    "nombre": "DENAR MACEDONIO"
+  },
+  {
+    "codigo": "MMK",
+    "nombre": "KYAT MYANMARO"
+  },
+  {
+    "codigo": "MNT",
+    "nombre": "TUGHRIK MONGOL"
+  },
+  {
+    "codigo": "MOP",
+    "nombre": "PATACA DE MACAO"
+  },
+  {
+    "codigo": "MRO",
+    "nombre": "OUGUIYA MAURITANA"
+  },
+  {
+    "codigo": "MUR",
+    "nombre": "RUPIA MAURICIA"
+  },
+  {
+    "codigo": "MVR",
+    "nombre": "RUFIYAA MALDIVA"
+  },
+  {
+    "codigo": "MWK",
+    "nombre": "KWACHA MALAWIANO"
+  },
+  {
+    "codigo": "MXN",
+    "nombre": "PESO MEXICANO"
+  },
+  {
+    "codigo": "MXV",
+    "nombre": "UNIDAD DE INVERSION (UDI) MEXICANA (CODIGO DE FONDOS)"
+  },
+  {
+    "codigo": "MYR",
+    "nombre": "RINGGIT MALAYO"
+  },
+  {
+    "codigo": "MZM",
+    "nombre": "METICAL MOZAMBIQUEÑO (MOZAMBICAN NUEVO METICAL MZN DE JULIO EL 1 DE 2006)."
+  },
+  {
+    "codigo": "NAD",
+    "nombre": "DOLAR NAMIBIO"
+  },
+  {
+    "codigo": "NGN",
+    "nombre": "NAIRA NIGERIANA"
+  },
+  {
+    "codigo": "NIO",
+    "nombre": "CORDOBA NICARAGÜENSE"
+  },
+  {
+    "codigo": "NOK",
+    "nombre": "CORONA NORUEGA"
+  },
+  {
+    "codigo": "NPR",
+    "nombre": "RUPIA NEPALESA"
+  },
+  {
+    "codigo": "NZD",
+    "nombre": "DOLAR NEOZELANDES"
+  },
+  {
+    "codigo": "OMR",
+    "nombre": "RIAL OMANI (DE OMAN)"
+  },
+  {
+    "codigo": "PAB",
+    "nombre": "BALBOA PANAMEÑA"
+  },
+  {
+    "codigo": "PEN",
+    "nombre": "NUEVO SOL PERUANO"
+  },
+  {
+    "codigo": "PGK",
+    "nombre": "KINA DE PAPUA NUEVA GUINEA"
+  },
+  {
+    "codigo": "PHP",
+    "nombre": "PESO FILIPINO"
+  },
+  {
+    "codigo": "PKR",
+    "nombre": "RUPIA PAKISTANI"
+  },
+  {
+    "codigo": "PLN",
+    "nombre": "ZLOTY POLACO"
+  },
+  {
+    "codigo": "PYG",
+    "nombre": "GUARANI PARAGUAYO"
+  },
+  {
+    "codigo": "QAR",
+    "nombre": "RIAL QATARI"
+  },
+  {
+    "codigo": "RON",
+    "nombre": "LEU RUMANO (DESDE EL 1 DE JULIO DE 2005)"
+  },
+  {
+    "codigo": "RUB",
+    "nombre": "RUBLO RUSO"
+  },
+  {
+    "codigo": "RWF",
+    "nombre": "FRANCO RUANDES"
+  },
+  {
+    "codigo": "SAR",
+    "nombre": "RIYAL SAUDI"
+  },
+  {
+    "codigo": "SBD",
+    "nombre": "DOLAR DE LAS ISLAS SALOMON"
+  },
+  {
+    "codigo": "SCR",
+    "nombre": "RUPIA DE SEYCHELLES"
+  },
+  {
+    "codigo": "SDD",
+    "nombre": "DINAR SUDANES"
+  },
+  {
+    "codigo": "SEK",
+    "nombre": "CORONA SUECA"
+  },
+  {
+    "codigo": "SGD",
+    "nombre": "DOLAR DE SINGAPUR"
+  },
+  {
+    "codigo": "SHP",
+    "nombre": "LIBRA DE SANTA HELENA"
+  },
+  {
+    "codigo": "SLL",
+    "nombre": "LEONE DE SIERRA LEONA"
+  },
+  {
+    "codigo": "SOS",
+    "nombre": "CHELIN SOMALI"
+  },
+  {
+    "codigo": "SRD",
+    "nombre": "DOLAR SURINAMES (DESDE EL 1 DE ENERO DE 2004)"
+  },
+  {
+    "codigo": "STD",
+    "nombre": "DOBRA DE SANTO TOME Y PRINCIPE"
+  },
+  {
+    "codigo": "SVC",
+    "nombre": "COLON SALVADOREÑO"
+  },
+  {
+    "codigo": "SYP",
+    "nombre": "LIBRA SIRIA"
+  },
+  {
+    "codigo": "SZL",
+    "nombre": "LILANGENI SUAZI (DE SUAZILANDIA)"
+  },
+  {
+    "codigo": "THB",
+    "nombre": "BAHT TAILANDES"
+  },
+  {
+    "codigo": "TJS",
+    "nombre": "SOMONI TAYIK (DE TAYIKISTAN)"
+  },
+  {
+    "codigo": "TMM",
+    "nombre": "MANAT TURCOMANO"
+  },
+  {
+    "codigo": "TND",
+    "nombre": "DINAR TUNECINO"
+  },
+  {
+    "codigo": "TOP",
+    "nombre": "PA'ANGA TONGANO"
+  },
+  {
+    "codigo": "TRY",
+    "nombre": "NUEVA LIRA TURCA"
+  },
+  {
+    "codigo": "TTD",
+    "nombre": "DOLAR DE TRINIDAD Y TOBAGO"
+  },
+  {
+    "codigo": "TWD",
+    "nombre": "DOLAR TAIWANES"
+  },
+  {
+    "codigo": "TZS",
+    "nombre": "CHELIN TANZANO"
+  },
+  {
+    "codigo": "UAH",
+    "nombre": "HRYVNIA UCRANIANA"
+  },
+  {
+    "codigo": "UGX",
+    "nombre": "CHELIN UGANDES"
+  },
+  {
+    "codigo": "USD",
+    "nombre": "DOLAR ESTADOUNIDENSE"
+  },
+  {
+    "codigo": "USN",
+    "nombre": "DOLAR ESTADOUNIDENSE (SIGUIENTE DIA) (CODIGO DE FONDOS)"
+  },
+  {
+    "codigo": "USS",
+    "nombre": "UNITED STATES DOLLAR (MISMO DIA) (CODIGO DE FONDOS)"
+  },
+  {
+    "codigo": "UYU",
+    "nombre": "PESO URUGUAYO"
+  },
+  {
+    "codigo": "UZS",
+    "nombre": "SUM UZBECO"
+  },
+  {
+    "codigo": "VEB",
+    "nombre": "BOLIVAR VENEZOLANO"
+  },
+  {
+    "codigo": "VEF",
+    "nombre": "BOLIVAR FUERTE VENEZOLANO"
+  },
+  {
+    "codigo": "VND",
+    "nombre": "DONG VIETNAMITA"
+  },
+  {
+    "codigo": "VUV",
+    "nombre": "VATU VANUATENSE"
+  },
+  {
+    "codigo": "WST",
+    "nombre": "TALA SAMOANA"
+  },
+  {
+    "codigo": "XAF",
+    "nombre": "FRANCO CFA"
+  },
+  {
+    "codigo": "XAG",
+    "nombre": "ONZA DE PLATA"
+  },
+  {
+    "codigo": "XAU",
+    "nombre": "ONZA DE ORO"
+  },
+  {
+    "codigo": "XBA",
+    "nombre": "EUROPEAN COMPOSITE UNIT (EURCO) (BONDS MARKET UNIT)"
+  },
+  {
+    "codigo": "XBB",
+    "nombre": "EUROPEAN MONETARY UNIT (E.M.U.-6) (BONDS MARKET UNIT)"
+  },
+  {
+    "codigo": "XBC",
+    "nombre": "EUROPEAN UNIT OF ACCOUNT 9 (E.U.A.-9) (BONDS MARKET UNIT)"
+  },
+  {
+    "codigo": "XBD",
+    "nombre": "EUROPEAN UNIT OF ACCOUNT 17 (E.U.A.-17) (BONDS MARKET UNIT)"
+  },
+  {
+    "codigo": "XCD",
+    "nombre": "DOLAR DEL CARIBE ORIENTAL"
+  },
+  {
+    "codigo": "XDR",
+    "nombre": "SPECIAL DRAWING RIGHTS (FMI)"
+  },
+  {
+    "codigo": "XFO",
+    "nombre": "FRANCO DE ORO (SPECIAL SETTLEMENT CURRENCY)"
+  },
+  {
+    "codigo": "XFU",
+    "nombre": "FRANCO UIC (SPECIAL SETTLEMENT CURRENCY)"
+  },
+  {
+    "codigo": "XOF",
+    "nombre": "FRANCO CFA OCCIDENTAL"
+  },
+  {
+    "codigo": "XPD",
+    "nombre": "ONZA DE PALADIO"
+  },
+  {
+    "codigo": "XPF",
+    "nombre": "FRANCO CFP"
+  },
+  {
+    "codigo": "XPT",
+    "nombre": "ONZA DE PLATINO"
+  },
+  {
+    "codigo": "XTS",
+    "nombre": "RESERVADO PARA PRUEBAS"
+  },
+  {
+    "codigo": "XXX",
+    "nombre": "SIN DIVISA"
+  },
+  {
+    "codigo": "YER",
+    "nombre": "RIAL YEMENI (DE YEMEN)"
+  },
+  {
+    "codigo": "ZAR",
+    "nombre": "RAND SUDAFRICANO"
+  },
+  {
+    "codigo": "ZMK",
+    "nombre": "KWACHA ZAMBIANO"
+  },
+  {
+    "codigo": "ZWL",
+    "nombre": "DOLAR ZIMBABUENSE"
+  }
+]

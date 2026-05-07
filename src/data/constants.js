@@ -237,3 +237,214 @@ export const TAGS_PREDEFINIDOS = [
   { id: 'complejo', label: 'Caso complejo', color: '#8b5cf6' },
   { id: 'recurrente', label: 'Cliente recurrente', color: '#10b981' }
 ];
+
+// ============================================
+// CATÁLOGOS OFICIALES UAFE - v2.4
+// Extraídos de CATALOGO_ROS.xlsx y ESTRUCTURA_ROS.xlsx
+// Catálogos grandes (cantones, parroquias, etc.) se cargan dinámicamente desde /data/*.json
+// ============================================
+
+export const PROVINCIAS_ECUADOR = [
+  { codigo: '01', nombre: 'AZUAY' },
+  { codigo: '02', nombre: 'BOLIVAR' },
+  { codigo: '03', nombre: 'CAÑAR' },
+  { codigo: '04', nombre: 'CARCHI' },
+  { codigo: '05', nombre: 'COTOPAXI' },
+  { codigo: '06', nombre: 'CHIMBORAZO' },
+  { codigo: '07', nombre: 'EL ORO' },
+  { codigo: '08', nombre: 'ESMERALDAS' },
+  { codigo: '09', nombre: 'GUAYAS' },
+  { codigo: '10', nombre: 'IMBABURA' },
+  { codigo: '11', nombre: 'LOJA' },
+  { codigo: '12', nombre: 'LOS RIOS' },
+  { codigo: '13', nombre: 'MANABI' },
+  { codigo: '14', nombre: 'MORONA SANTIAGO' },
+  { codigo: '15', nombre: 'NAPO' },
+  { codigo: '16', nombre: 'PASTAZA' },
+  { codigo: '17', nombre: 'PICHINCHA' },
+  { codigo: '18', nombre: 'TUNGURAHUA' },
+  { codigo: '19', nombre: 'ZAMORA CHINCHIPE' },
+  { codigo: '20', nombre: 'GALAPAGOS' },
+  { codigo: '21', nombre: 'SUCUMBIOS' },
+  { codigo: '22', nombre: 'ORELLANA' },
+  { codigo: '23', nombre: 'SANTO DOMINGO DE LOS TSACHILAS' },
+  { codigo: '24', nombre: 'SANTA ELENA' },
+  { codigo: '90', nombre: 'ZONA NO DELIMITADA' },
+  { codigo: '98', nombre: 'EXTERIOR' }
+];
+
+export const VINCULOS_TERCEROS = [
+  { codigo: '1', descripcion: 'Padre' },
+  { codigo: '2', descripcion: 'Madre' },
+  { codigo: '3', descripcion: 'Hermano/a' },
+  { codigo: '4', descripcion: 'Cónyuge/Conviviente' },
+  { codigo: '5', descripcion: 'Hijo/a' },
+  { codigo: '6', descripcion: 'Ex-cónyuge/Ex-conviviente' },
+  { codigo: '7', descripcion: 'Accionista/Socio/Administrador' },
+  { codigo: '8', descripcion: 'Ex-accionista/Ex-socio/Ex-administrador' },
+  { codigo: '9', descripcion: 'Proveedor' },
+  { codigo: '10', descripcion: 'Cliente' },
+  { codigo: '11', descripcion: 'Empleador' },
+  { codigo: '12', descripcion: 'Empleado' },
+  { codigo: '13', descripcion: 'Otro' }
+];
+
+// Señales de alerta UAFE filtradas para sector notarial (~56 señales)
+export const SENALES_ALERTA_UAFE = [
+  { codigo: 'SA01', descripcion: 'Resistencia a proporcionar información', categoria: 'identidad' },
+  { codigo: 'SA02', descripcion: 'Proporciona información inconsistente o contradictoria', categoria: 'identidad' },
+  { codigo: 'SA03', descripcion: 'Dirección o teléfono falsos o imposibles de verificar', categoria: 'identidad' },
+  { codigo: 'SA04', descripcion: 'Uso de múltiples documentos de identidad', categoria: 'identidad' },
+  { codigo: 'SA05', descripcion: 'Actitud nerviosa o evasiva al explicar el origen de fondos', categoria: 'identidad' },
+  { codigo: 'SA06', descripcion: 'Cliente que actúa en nombre de un tercero sin transparencia', categoria: 'identidad' },
+  { codigo: 'SA07', descripcion: 'Perfil económico no acorde a sus operaciones', categoria: 'identidad' },
+  { codigo: 'SA08', descripcion: 'Relación con antecedentes penales o notoriedad negativa', categoria: 'identidad' },
+  { codigo: 'SA09', descripcion: 'Estructura familiar o laboral poco clara', categoria: 'identidad' },
+  { codigo: 'SA10', descripcion: 'Uso frecuente de apoderados para operaciones simples', categoria: 'corporativa' },
+  { codigo: 'SA11', descripcion: 'Sociedad sin actividad comercial aparente', categoria: 'corporativa' },
+  { codigo: 'SA12', descripcion: 'Empresa recién constituida con altos volúmenes de operación', categoria: 'corporativa' },
+  { codigo: 'SA13', descripcion: 'Estructura accionaria compleja o poco transparente', categoria: 'corporativa' },
+  { codigo: 'SA14', descripcion: 'Accionistas o representantes sin capacidad económica visible', categoria: 'corporativa' },
+  { codigo: 'SA15', descripcion: 'Cambios frecuentes de accionistas o representantes legales', categoria: 'corporativa' },
+  { codigo: 'SA16', descripcion: 'Beneficiario final difícil de identificar', categoria: 'corporativa' },
+  { codigo: 'SA17', descripcion: 'Uso de sedes o domicilios virtuales exclusivamente', categoria: 'corporativa' },
+  { codigo: 'SA18', descripcion: 'Objeto social muy amplio o genérico', categoria: 'corporativa' },
+  { codigo: 'SA19', descripcion: 'Negativa a entregar estados financieros o documentación contable', categoria: 'corporativa' },
+  { codigo: 'SA20', descripcion: 'Desconocimiento de su propia actividad por parte del representante', categoria: 'corporativa' },
+  { codigo: 'SA21', descripcion: 'Operaciones que no guardan relación con la actividad declarada', categoria: 'transaccional' },
+  { codigo: 'SA22', descripcion: 'Incremento repentino e injustificado en el volumen de operaciones', categoria: 'transaccional' },
+  { codigo: 'SA23', descripcion: 'Fragmentación de operaciones para evitar reportes', categoria: 'transaccional' },
+  { codigo: 'SA28', descripcion: 'Movimientos frecuentes hacia y desde jurisdicciones de alto riesgo', categoria: 'transaccional' },
+  { codigo: 'SA29', descripcion: 'Uso recurrente de terceros para realizar pagos', categoria: 'transaccional' },
+  { codigo: 'SA30', descripcion: 'Operaciones con contrapartes desconocidas o poco identificadas', categoria: 'transaccional' },
+  { codigo: 'SA31', descripcion: 'Depósitos significativos en efectivo sin causa aparente', categoria: 'transaccional' },
+  { codigo: 'SA33', descripcion: 'Uso dominante de efectivo en sectores donde se privilegia lo electrónico', categoria: 'transaccional' },
+  { codigo: 'SA34', descripcion: 'Presentación de billetes en mal estado o de alta denominación', categoria: 'transaccional' },
+  { codigo: 'SA35', descripcion: 'Retiro inmediato de efectivo tras recibir transferencias', categoria: 'transaccional' },
+  { codigo: 'SA36', descripcion: 'Compra de instrumentos negociables con efectivo', categoria: 'transaccional' },
+  { codigo: 'SA38', descripcion: 'Depósitos en efectivo realizados por múltiples personas no relacionadas', categoria: 'transaccional' },
+  { codigo: 'SA39', descripcion: 'Depósitos fuera del área geográfica habitual del cliente', categoria: 'transaccional' },
+  { codigo: 'SA40', descripcion: 'Inconsistencias entre registros de ventas y depósitos en efectivo', categoria: 'transaccional' },
+  { codigo: 'SA41', descripcion: 'Transacciones con países sancionados o no cooperantes', categoria: 'internacional' },
+  { codigo: 'SA42', descripcion: 'Uso de paraísos fiscales sin razón comercial clara', categoria: 'internacional' },
+  { codigo: 'SA46', descripcion: 'Declaración de domicilio en país distinto al lugar donde realiza la actividad', categoria: 'internacional' },
+  { codigo: 'SA48', descripcion: 'Uso de múltiples monedas sin necesidad comercial', categoria: 'internacional' },
+  { codigo: 'SA50', descripcion: 'Domicilios o sedes en zonas de baja supervisión regulatoria', categoria: 'internacional' },
+  { codigo: 'SA71', descripcion: 'Compra de inmuebles a nombre de terceros', categoria: 'bienes_raices' },
+  { codigo: 'SA72', descripcion: 'Pagos en efectivo significativos por bienes raíces', categoria: 'bienes_raices' },
+  { codigo: 'SA73', descripcion: 'Precio de venta muy inferior o superior al de mercado', categoria: 'bienes_raices' },
+  { codigo: 'SA74', descripcion: 'Rápida reventa de inmuebles', categoria: 'bienes_raices' },
+  { codigo: 'SA75', descripcion: 'Compras múltiples en un corto período de tiempo', categoria: 'bienes_raices' },
+  { codigo: 'SA76', descripcion: 'Uso de empresas pantalla para adquirir propiedades', categoria: 'bienes_raices' },
+  { codigo: 'SA77', descripcion: 'Pagos realizados por terceros no vinculados', categoria: 'bienes_raices' },
+  { codigo: 'SA78', descripcion: 'Esquemas de permuta o canje poco claros', categoria: 'bienes_raices' },
+  { codigo: 'SA79', descripcion: 'Incongruencias entre la actividad del cliente y el tipo de inmueble', categoria: 'bienes_raices' },
+  { codigo: 'SA80', descripcion: 'Frecuentes hipotecas y cancelaciones sobre el mismo bien', categoria: 'bienes_raices' },
+  { codigo: 'SA91', descripcion: 'Uso intensivo de criptomonedas sin justificación comercial', categoria: 'activos_virtuales' },
+  { codigo: 'SA92', descripcion: 'Operaciones con plataformas no reguladas', categoria: 'activos_virtuales' },
+  { codigo: 'SA93', descripcion: 'Transacciones de alto valor en cortos períodos de tiempo', categoria: 'activos_virtuales' },
+  { codigo: 'SA97', descripcion: 'Conversión inmediata de criptoactivos a efectivo', categoria: 'activos_virtuales' },
+  { codigo: 'SA99', descripcion: 'Operaciones desde direcciones IP de países de alto riesgo', categoria: 'activos_virtuales' },
+  { codigo: 'SA100', descripcion: 'Inconsistencia entre el perfil del cliente y su volumen de operaciones en cripto', categoria: 'activos_virtuales' },
+  { codigo: 'SA201', descripcion: 'Otra señal de alerta no contemplada en el catálogo', categoria: 'otra' }
+];
+
+export const CATEGORIAS_SENALES = [
+  { id: 'identidad', label: 'Identidad y Comportamiento', icon: '👤' },
+  { id: 'corporativa', label: 'Estructura Corporativa', icon: '🏢' },
+  { id: 'transaccional', label: 'Patrones Transaccionales', icon: '💰' },
+  { id: 'internacional', label: 'Internacional y Jurisdicción', icon: '🌍' },
+  { id: 'bienes_raices', label: 'Bienes Raíces', icon: '🏠' },
+  { id: 'activos_virtuales', label: 'Activos Virtuales', icon: '₿' },
+  { id: 'otra', label: 'Otras Señales', icon: '⚠️' }
+];
+
+// Factores de riesgo basados en Señales de Alerta UAFE (v2.4)
+// Cada categoría es un factor con peso, y cada señal es un subcriterio
+export const FACTORES_SENALES_UAFE = [
+  {
+    id: 'identidad',
+    nombre: 'Identidad y Comportamiento',
+    descripcion: 'Señales relacionadas con la identidad del cliente y su comportamiento durante la operación.',
+    peso: 1.0,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'identidad').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'corporativa',
+    nombre: 'Estructura Corporativa',
+    descripcion: 'Señales sobre la estructura societaria, accionaria y operativa de personas jurídicas.',
+    peso: 1.2,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'corporativa').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'transaccional',
+    nombre: 'Patrones Transaccionales',
+    descripcion: 'Señales sobre el comportamiento de las transacciones y movimientos de fondos.',
+    peso: 1.5,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'transaccional').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'internacional',
+    nombre: 'Internacional y Jurisdicción',
+    descripcion: 'Señales relacionadas con jurisdicciones de alto riesgo, paraísos fiscales y operaciones internacionales.',
+    peso: 1.3,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'internacional').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'bienes_raices',
+    nombre: 'Bienes Raíces',
+    descripcion: 'Señales específicas de operaciones inmobiliarias. Altamente relevante para notarios.',
+    peso: 1.5,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'bienes_raices').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'activos_virtuales',
+    nombre: 'Activos Virtuales',
+    descripcion: 'Señales sobre el uso de criptomonedas y activos digitales en la operación.',
+    peso: 1.2,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'activos_virtuales').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  },
+  {
+    id: 'otra',
+    nombre: 'Otras Señales',
+    descripcion: 'Señales adicionales no contempladas en el catálogo oficial.',
+    peso: 1.0,
+    subcriterios: SENALES_ALERTA_UAFE.filter(s => s.categoria === 'otra').map(s => ({
+      id: s.codigo,
+      pregunta: s.descripcion
+    }))
+  }
+];
+
+// Helper para cargar catálogos grandes dinámicamente
+const catalogCache = {};
+export async function cargarCatalogo(nombre) {
+  if (catalogCache[nombre]) return catalogCache[nombre];
+  try {
+    const res = await fetch(`/data/${nombre}.json`);
+    const data = await res.json();
+    catalogCache[nombre] = data;
+    return data;
+  } catch (err) {
+    console.error(`Error cargando catálogo ${nombre}:`, err);
+    return [];
+  }
+}

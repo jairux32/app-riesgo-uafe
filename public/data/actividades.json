@@ -1,0 +1,1714 @@
+[
+  {
+    "codigo": "A0111",
+    "nombre": "CULTIVO DE CEREALES (EXCEPTO ARROZ), LEGUMBRES Y SEMILLAS OLEAGINOSAS."
+  },
+  {
+    "codigo": "A0112",
+    "nombre": "CULTIVO DE ARROZ."
+  },
+  {
+    "codigo": "A0113",
+    "nombre": "CULTIVO DE HORTALIZAS Y MELONES, RAICES Y TUBERCULOS."
+  },
+  {
+    "codigo": "A0114",
+    "nombre": "CULTIVO DE CAÑA DE AZUCAR."
+  },
+  {
+    "codigo": "A0115",
+    "nombre": "CULTIVO DE TABACO."
+  },
+  {
+    "codigo": "A0116",
+    "nombre": "CULTIVO DE PLANTAS DE FIBRAS."
+  },
+  {
+    "codigo": "A0119",
+    "nombre": "CULTIVO DE OTRAS PLANTAS NO PERENNES."
+  },
+  {
+    "codigo": "A0121",
+    "nombre": "CULTIVO DE UVAS."
+  },
+  {
+    "codigo": "A0122",
+    "nombre": "CULTIVO DE FRUTAS TROPICALES Y SUBTROPICALES."
+  },
+  {
+    "codigo": "A0123",
+    "nombre": "CULTIVO DE CITRICOS."
+  },
+  {
+    "codigo": "A0124",
+    "nombre": "CULTIVO DE FRUTAS CON HUESO Y CON PEPA."
+  },
+  {
+    "codigo": "A0125",
+    "nombre": "CULTIVO DE OTROS FRUTOS Y NUECES DE ARBOLES Y ARBUSTOS."
+  },
+  {
+    "codigo": "A0126",
+    "nombre": "CULTIVO DE FRUTOS OLEAGINOSOS."
+  },
+  {
+    "codigo": "A0127",
+    "nombre": "CULTIVO DE PLANTAS CON LAS QUE SE PREPARAN BEBIDAS."
+  },
+  {
+    "codigo": "A0128",
+    "nombre": "CULTIVO DE ESPECIAS Y DE PLANTAS AROMATICAS, MEDICINALES Y FARMACEUTICAS."
+  },
+  {
+    "codigo": "A0129",
+    "nombre": "CULTIVO DE OTRAS PLANTAS PERENNES."
+  },
+  {
+    "codigo": "A0130",
+    "nombre": "PROPAGACION DE PLANTAS."
+  },
+  {
+    "codigo": "A0141",
+    "nombre": "CRIA DE GANADO BOVINO Y BUFALOS."
+  },
+  {
+    "codigo": "A0142",
+    "nombre": "CRIA DE CABALLOS Y OTROS EQUINOS."
+  },
+  {
+    "codigo": "A0143",
+    "nombre": "CRIA DE CAMELLOS Y OTROS CAMELIDOS."
+  },
+  {
+    "codigo": "A0144",
+    "nombre": "CRIA DE OVEJAS Y CABRAS."
+  },
+  {
+    "codigo": "A0145",
+    "nombre": "CRIA DE CERDOS."
+  },
+  {
+    "codigo": "A0146",
+    "nombre": "CRIA DE AVES DE CORRAL."
+  },
+  {
+    "codigo": "A0149",
+    "nombre": "CRIA DE OTROS ANIMALES."
+  },
+  {
+    "codigo": "A0150",
+    "nombre": "CULTIVO DE PRODUCTOS AGRICOLAS EN COMBINACION CON LA CRIA DE ANIMALES (EXPLOTACION MIXTA)."
+  },
+  {
+    "codigo": "A0161",
+    "nombre": "ACTIVIDADES DE APOYO A LA AGRICULTURA."
+  },
+  {
+    "codigo": "A0162",
+    "nombre": "ACTIVIDADES DE APOYO A LA GANADERIA."
+  },
+  {
+    "codigo": "A0163",
+    "nombre": "ACTIVIDADES POSCOSECHA."
+  },
+  {
+    "codigo": "A0164",
+    "nombre": "TRATAMIENTO DE SEMILLAS PARA PROPAGACION."
+  },
+  {
+    "codigo": "A0170",
+    "nombre": "CAZA ORDINARIA, MEDIANTE TRAMPAS Y ACTIVIDADES DE SERVICIOS CONEXAS."
+  },
+  {
+    "codigo": "A0210",
+    "nombre": "SILVICULTURA Y OTRAS ACTIVIDADES FORESTALES."
+  },
+  {
+    "codigo": "A0220",
+    "nombre": "EXTRACCION DE MADERA."
+  },
+  {
+    "codigo": "A0230",
+    "nombre": "RECOLECCION DE PRODUCTOS FORESTALES DISTINTOS DE LA MADERA."
+  },
+  {
+    "codigo": "A0240",
+    "nombre": "SERVICIOS DE APOYO A LA SILVICULTURA."
+  },
+  {
+    "codigo": "A0311",
+    "nombre": "PESCA MARINA."
+  },
+  {
+    "codigo": "A0312",
+    "nombre": "PESCA DE AGUA DULCE."
+  },
+  {
+    "codigo": "A0321",
+    "nombre": "ACUICULTURA MARINA."
+  },
+  {
+    "codigo": "A0322",
+    "nombre": "ACUICULTURA DE AGUA DULCE."
+  },
+  {
+    "codigo": "B0510",
+    "nombre": "EXTRACCION DE CARBON DE PIEDRA."
+  },
+  {
+    "codigo": "B0520",
+    "nombre": "EXTRACCION DE LIGNITO."
+  },
+  {
+    "codigo": "B0610",
+    "nombre": "EXTRACCION DE PETROLEO CRUDO."
+  },
+  {
+    "codigo": "B0620",
+    "nombre": "EXTRACCION DE GAS NATURAL."
+  },
+  {
+    "codigo": "B0710",
+    "nombre": "EXTRACCION DE MINERALES DE HIERRO."
+  },
+  {
+    "codigo": "B0721",
+    "nombre": "EXTRACCION DE MINERALES DE URANIO Y TORIO."
+  },
+  {
+    "codigo": "B0729",
+    "nombre": "EXTRACCION DE OTROS MINERALES METALIFEROS NO FERROSOS."
+  },
+  {
+    "codigo": "B0810",
+    "nombre": "EXTRACCION DE PIEDRA, ARENA Y ARCILLA."
+  },
+  {
+    "codigo": "B0891",
+    "nombre": "EXTRACCION DE MINERALES PARA LA FABRICACION DE ABONOS Y PRODUCTOS QUIMICOS."
+  },
+  {
+    "codigo": "B0892",
+    "nombre": "EXTRACCION DE TURBA."
+  },
+  {
+    "codigo": "B0893",
+    "nombre": "EXTRACCION DE SAL."
+  },
+  {
+    "codigo": "B0899",
+    "nombre": "EXPLOTACION DE OTRAS MINAS Y CANTERAS N.C.P."
+  },
+  {
+    "codigo": "B0910",
+    "nombre": "ACTIVIDADES DE APOYO PARA LA EXTRACCION DE PETROLEO Y GAS NATURAL."
+  },
+  {
+    "codigo": "B0990",
+    "nombre": "ACTIVIDADES DE APOYO PARA LA EXPLOTACION DE OTRAS MINAS Y CANTERAS."
+  },
+  {
+    "codigo": "C1010",
+    "nombre": "ELABORACION Y CONSERVACION DE CARNE."
+  },
+  {
+    "codigo": "C1020",
+    "nombre": "ELABORACION Y CONSERVACION DE PESCADOS, CRUSTACEOS Y MOLUSCOS."
+  },
+  {
+    "codigo": "C1030",
+    "nombre": "ELABORACION Y CONSERVACION DE FRUTAS, LEGUMBRES Y HORTALIZAS."
+  },
+  {
+    "codigo": "C1040",
+    "nombre": "ELABORACION DE ACEITES Y GRASAS DE ORIGEN VEGETAL Y ANIMAL."
+  },
+  {
+    "codigo": "C1050",
+    "nombre": "ELABORACION DE PRODUCTOS LACTEOS."
+  },
+  {
+    "codigo": "C1061",
+    "nombre": "ELABORACION DE PRODUCTOS DE MOLINERIA."
+  },
+  {
+    "codigo": "C1062",
+    "nombre": "ELABORACION DE ALMIDONES Y PRODUCTOS DERIVADOS DEL ALMIDON."
+  },
+  {
+    "codigo": "C1071",
+    "nombre": "ELABORACION DE PRODUCTOS DE PANADERIA."
+  },
+  {
+    "codigo": "C1072",
+    "nombre": "ELABORACION DE AZUCAR."
+  },
+  {
+    "codigo": "C1073",
+    "nombre": "ELABORACION DE CACAO, CHOCOLATE Y PRODUCTOS DE CONFITERIA."
+  },
+  {
+    "codigo": "C1074",
+    "nombre": "ELABORACION DE MACARRONES, FIDEOS, ALCUZCUZ Y PRODUCTOS FARINACEOS SIMILARES."
+  },
+  {
+    "codigo": "C1075",
+    "nombre": "ELABORACION DE COMIDAS Y PLATOS PREPARADOS."
+  },
+  {
+    "codigo": "C1079",
+    "nombre": "ELABORACION DE OTROS PRODUCTOS ALIMENTICIOS N.C.P."
+  },
+  {
+    "codigo": "C1080",
+    "nombre": "ELABORACION DE ALIMENTOS PREPARADOS PARA ANIMALES."
+  },
+  {
+    "codigo": "C1101",
+    "nombre": "DESTILACION, RECTIFICACION Y MEZCLA DE BEBIDAS ALCOHOLICAS."
+  },
+  {
+    "codigo": "C1102",
+    "nombre": "ELABORACION DE VINOS."
+  },
+  {
+    "codigo": "C1103",
+    "nombre": "ELABORACION DE BEBIDAS MALTEADAS Y DE MALTA."
+  },
+  {
+    "codigo": "C1104",
+    "nombre": "ELABORACION DE BEBIDAS NO ALCOHOLICAS; PRODUCCION DE AGUAS MINERALES Y OTRAS AGUAS EMBOTELLADAS."
+  },
+  {
+    "codigo": "C1200",
+    "nombre": "ELABORACION DE PRODUCTOS DE TABACO."
+  },
+  {
+    "codigo": "C1311",
+    "nombre": "PREPARACION E HILATURA DE FIBRAS TEXTILES."
+  },
+  {
+    "codigo": "C1312",
+    "nombre": "TEJEDURA DE PRODUCTOS TEXTILES."
+  },
+  {
+    "codigo": "C1313",
+    "nombre": "SERVICIO DE ACABADO DE PRODUCTOS TEXTILES."
+  },
+  {
+    "codigo": "C1391",
+    "nombre": "FABRICACION DE TEJIDOS DE PUNTO Y GANCHILLO."
+  },
+  {
+    "codigo": "C1392",
+    "nombre": "FABRICACION DE ARTICULOS CONFECCIONADOS DE MATERIALES TEXTILES, EXCEPTO PRENDAS DE VESTIR."
+  },
+  {
+    "codigo": "C1393",
+    "nombre": "FABRICACION DE TAPICES Y ALFOMBRAS."
+  },
+  {
+    "codigo": "C1394",
+    "nombre": "FABRICACION DE CUERDAS, CORDELES, BRAMANTES Y REDES."
+  },
+  {
+    "codigo": "C1399",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS TEXTILES N.C.P."
+  },
+  {
+    "codigo": "C1410",
+    "nombre": "FABRICACION DE PRENDAS DE VESTIR, EXCEPTO PRENDAS DE PIEL."
+  },
+  {
+    "codigo": "C1420",
+    "nombre": "FABRICACION DE ARTICULOS DE PIEL."
+  },
+  {
+    "codigo": "C1430",
+    "nombre": "FABRICACION DE ARTICULOS DE PUNTO Y GANCHILLO."
+  },
+  {
+    "codigo": "C1511",
+    "nombre": "CURTIDO Y ADOBO DE CUEROS; ADOBO Y TEÑIDO DE PIELES."
+  },
+  {
+    "codigo": "C1512",
+    "nombre": "FABRICACION DE MALETAS, BOLSOS DE MANO Y ARTICULOS SIMILARES, ARTICULOS DE TALABARTERIA Y GUARNICIONERIA."
+  },
+  {
+    "codigo": "C1520",
+    "nombre": "FABRICACION DE CALZADO."
+  },
+  {
+    "codigo": "C1610",
+    "nombre": "ASERRADO Y ACEPILLADURA DE MADERA."
+  },
+  {
+    "codigo": "C1621",
+    "nombre": "FABRICACION DE HOJAS DE MADERA PARA ENCHAPADO Y TABLEROS A BASE DE MADERA."
+  },
+  {
+    "codigo": "C1622",
+    "nombre": "FABRICACION DE PARTES Y PIEZAS DE CARPINTERIA PARA EDIFICIOS Y CONSTRUCCIONES."
+  },
+  {
+    "codigo": "C1623",
+    "nombre": "FABRICACION DE RECIPIENTES DE MADERA."
+  },
+  {
+    "codigo": "C1629",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS DE MADERA; FABRICACION DE ARTICULOS DE CORCHO, PAJA Y MATERIALES TRENZABLES."
+  },
+  {
+    "codigo": "C1701",
+    "nombre": "FABRICACION DE PASTA DE MADERA, PAPEL Y CARTON."
+  },
+  {
+    "codigo": "C1702",
+    "nombre": "FABRICACION DE PAPEL Y CARTON ONDULADO Y DE ENVASES DE PAPEL Y CARTON."
+  },
+  {
+    "codigo": "C1709",
+    "nombre": "FABRICACION DE OTROS ARTICULOS DEL PAPEL Y CARTON."
+  },
+  {
+    "codigo": "C1811",
+    "nombre": "ACTIVIDADES DE IMPRESION."
+  },
+  {
+    "codigo": "C1812",
+    "nombre": "ACTIVIDADES DE SERVICIOS RELACIONADOS CON LA IMPRESION."
+  },
+  {
+    "codigo": "C1820",
+    "nombre": "REPRODUCCION DE GRABACIONES."
+  },
+  {
+    "codigo": "C1910",
+    "nombre": "FABRICACION DE PRODUCTOS DE HORNO DE COQUE."
+  },
+  {
+    "codigo": "C1920",
+    "nombre": "FABRICACION DE PRODUCTOS DE LA REFINACION DEL PETROLEO."
+  },
+  {
+    "codigo": "C2011",
+    "nombre": "FABRICACION DE SUBSTANCIAS QUIMICAS BASICAS."
+  },
+  {
+    "codigo": "C2012",
+    "nombre": "FABRICACION DE ABONOS Y COMPUESTOS DE NITROGENO."
+  },
+  {
+    "codigo": "C2013",
+    "nombre": "FABRICACION DE PLASTICOS Y CAUCHOS SINTETICOS EN FORMAS PRIMARIAS."
+  },
+  {
+    "codigo": "C2021",
+    "nombre": "FABRICACION DE PLAGUICIDAS Y OTROS PRODUCTOS QUIMICOS DE USO AGROPECUARIO."
+  },
+  {
+    "codigo": "C2022",
+    "nombre": "FABRICACION DE PINTURAS, BARNICES Y PRODUCTOS DE REVESTIMIENTO SIMILARES, TINTAS DE IMPRENTA Y MASILLAS."
+  },
+  {
+    "codigo": "C2023",
+    "nombre": "FABRICACION DE JABONES Y DETERGENTES, PREPARADOS PARA LIMPIAR Y PULIR, PERFUMES Y PREPARADOS DE TOCADOR."
+  },
+  {
+    "codigo": "C2029",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS QUIMICOS N.C.P."
+  },
+  {
+    "codigo": "C2030",
+    "nombre": "FABRICACION DE FIBRAS ARTIFICIALES."
+  },
+  {
+    "codigo": "C2100",
+    "nombre": "FABRICACION DE PRODUCTOS FARMACEUTICOS, SUSTANCIAS QUIMICAS MEDICINALES Y PRODUCTOS BOTANICOS DE USO FARMACEUTICO."
+  },
+  {
+    "codigo": "C2211",
+    "nombre": "FABRICACION DE CUBIERTAS Y CAMARAS DE CAUCHO; RECAUCHUTADO Y RENOVACION DE CUBIERTAS DE CAUCHO."
+  },
+  {
+    "codigo": "C2219",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS DE CAUCHO."
+  },
+  {
+    "codigo": "C2220",
+    "nombre": "FABRICACION DE PRODUCTOS DE PLASTICO."
+  },
+  {
+    "codigo": "C2310",
+    "nombre": "FABRICACION DE VIDRIO Y PRODUCTOS DE VIDRIO."
+  },
+  {
+    "codigo": "C2391",
+    "nombre": "FABRICACION DE PRODUCTOS REFRACTARIOS."
+  },
+  {
+    "codigo": "C2392",
+    "nombre": "FABRICACION DE MATERIALES DE CONSTRUCCION DE ARCILLA."
+  },
+  {
+    "codigo": "C2393",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS DE PORCELANA Y DE CERAMICA."
+  },
+  {
+    "codigo": "C2394",
+    "nombre": "FABRICACION DE CEMENTO, CAL Y YESO."
+  },
+  {
+    "codigo": "C2395",
+    "nombre": "FABRICACION DE ARTICULOS DE HORMIGON, DE CEMENTO Y YESO."
+  },
+  {
+    "codigo": "C2396",
+    "nombre": "CORTE, TALLADO Y ACABADO DE LA PIEDRA."
+  },
+  {
+    "codigo": "C2399",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS MINERALES NO METALICOS N.C.P."
+  },
+  {
+    "codigo": "C2410",
+    "nombre": "INDUSTRIAS BASICAS DE HIERRO Y ACERO."
+  },
+  {
+    "codigo": "C2420",
+    "nombre": "FABRICACION DE PRODUCTOS PRIMARIOS DE METALES PRECIOSOS Y METALES NO FERROSOS."
+  },
+  {
+    "codigo": "C2431",
+    "nombre": "FUNDICION DE HIERRO Y ACERO."
+  },
+  {
+    "codigo": "C2432",
+    "nombre": "FUNDICION DE METALES NO FERROSOS."
+  },
+  {
+    "codigo": "C2511",
+    "nombre": "FABRICACION DE PRODUCTOS METALICOS PARA USO ESTRUCTURAL."
+  },
+  {
+    "codigo": "C2512",
+    "nombre": "FABRICACION DE TANQUES, DEPOSITOS Y RECIPIENTES DE METAL."
+  },
+  {
+    "codigo": "C2513",
+    "nombre": "FABRICACION DE GENERADORES DE VAPOR, EXCEPTO CALDERAS DE AGUA CALIENTE PARA CALEFACCION CENTRAL."
+  },
+  {
+    "codigo": "C2520",
+    "nombre": "FABRICACION DE ARMAS Y MUNICIONES."
+  },
+  {
+    "codigo": "C2591",
+    "nombre": "FORJA, PRENSADO, ESTAMPADO Y LAMINADO DE METALES; PULVIMETALURGIA."
+  },
+  {
+    "codigo": "C2592",
+    "nombre": "TRATAMIENTO Y REVESTIMIENTO DE METALES; MAQUINADO."
+  },
+  {
+    "codigo": "C2593",
+    "nombre": "FABRICACION DE ARTICULOS DE CUCHILLERIA, HERRAMIENTAS DE MANO Y ARTICULOS DE FERRETERIA."
+  },
+  {
+    "codigo": "C2599",
+    "nombre": "FABRICACION DE OTROS PRODUCTOS ELABORADOS DE METAL N.C.P."
+  },
+  {
+    "codigo": "C2610",
+    "nombre": "FABRICACION DE COMPONENTES Y TABLEROS ELECTRONICOS."
+  },
+  {
+    "codigo": "C2620",
+    "nombre": "FABRICACION DE COMPUTADORAS Y EQUIPO PERIFERICO."
+  },
+  {
+    "codigo": "C2630",
+    "nombre": "FABRICACION DE EQUIPO DE COMUNICACIONES."
+  },
+  {
+    "codigo": "C2640",
+    "nombre": "FABRICACION DE APARATOS ELECTRONICOS DE CONSUMO."
+  },
+  {
+    "codigo": "C2651",
+    "nombre": "FABRICACION DE EQUIPOS DE MEDICION, PRUEBA, NAVEGACION, CONTROL Y DE RELOJES."
+  },
+  {
+    "codigo": "C2652",
+    "nombre": "FABRICACION DE RELOJES."
+  },
+  {
+    "codigo": "C2660",
+    "nombre": "FABRICACION DE EQUIPO DE IRRADIACION, Y EQUIPO ELECTRONICO DE USO MEDICO Y TERAPEUTICO."
+  },
+  {
+    "codigo": "C2670",
+    "nombre": "FABRICACION DE INSTRUMENTOS OPTICOS Y EQUIPO FOTOGRAFICOS."
+  },
+  {
+    "codigo": "C2680",
+    "nombre": "FABRICACION DE SOPORTES MAGNETICOS Y OPTICOS."
+  },
+  {
+    "codigo": "C2710",
+    "nombre": "FABRICACION DE MOTORES, GENERADORES, TRANSFORMADORES ELECTRICOS Y APARATOS DE DISTRIBUCION Y CONTROL DE LA ENERGIA ELECTRICA."
+  },
+  {
+    "codigo": "C2720",
+    "nombre": "FABRICACION DE PILAS, BATERIAS Y ACUMULADORES."
+  },
+  {
+    "codigo": "C2731",
+    "nombre": "FABRICACION DE CABLES DE FIBRA OPTICA."
+  },
+  {
+    "codigo": "C2732",
+    "nombre": "FABRICACION DE OTROS HILOS Y CABLES ELECTRICOS."
+  },
+  {
+    "codigo": "C2733",
+    "nombre": "FABRICACION DE DISPOSITIVOS DE CABLEADO."
+  },
+  {
+    "codigo": "C2740",
+    "nombre": "FABRICACION DE EQUIPO ELECTRICO DE ILUMINACION."
+  },
+  {
+    "codigo": "C2750",
+    "nombre": "FABRICACION DE APARATOS DE USO DOMESTICO."
+  },
+  {
+    "codigo": "C2790",
+    "nombre": "FABRICACION DE OTROS TIPOS DE EQUIPO ELECTRICO."
+  },
+  {
+    "codigo": "C2811",
+    "nombre": "FABRICACION DE MOTORES Y TURBINAS, EXCEPTO MOTORES PARA AERONAVES, VEHICULOS AUTOMOTORES Y MOTOCICLETAS."
+  },
+  {
+    "codigo": "C2812",
+    "nombre": "FABRICACION DE EQUIPO DE PROPULSION DE FLUIDOS."
+  },
+  {
+    "codigo": "C2813",
+    "nombre": "FABRICACION DE OTRAS BOMBAS, COMPRESORES, GRIFOS Y VALVULAS."
+  },
+  {
+    "codigo": "C2814",
+    "nombre": "FABRICACION DE COJINETES, ENGRANAJES, TRENES DE ENGRANAJES Y PIEZAS DE TRANSMISION."
+  },
+  {
+    "codigo": "C2815",
+    "nombre": "FABRICACION DE HORNOS Y QUEMADORES."
+  },
+  {
+    "codigo": "C2816",
+    "nombre": "FABRICACION DE EQUIPO DE ELEVACION Y MANIPULACION."
+  },
+  {
+    "codigo": "C2817",
+    "nombre": "FABRICACION DE MAQUINARIA Y EQUIPO DE OFICINA (EXCEPTO COMPUTADORAS Y EQUIPO PERIFERICO)."
+  },
+  {
+    "codigo": "C2818",
+    "nombre": "FABRICACION DE HERRAMIENTAS DE MANO MOTORIZADAS."
+  },
+  {
+    "codigo": "C2819",
+    "nombre": "FABRICACION DE OTROS TIPOS DE MAQUINARIA DE USO GENERAL."
+  },
+  {
+    "codigo": "C2821",
+    "nombre": "FABRICACION DE MAQUINARIA AGROPECUARIA Y FORESTAL."
+  },
+  {
+    "codigo": "C2822",
+    "nombre": "FABRICACION DE MAQUINARIA PARA LA CONFORMACION DE METALES Y DE MAQUINAS HERRAMIENTA."
+  },
+  {
+    "codigo": "C2823",
+    "nombre": "FABRICACION DE MAQUINARIA METALURGICA."
+  },
+  {
+    "codigo": "C2824",
+    "nombre": "FABRICACION DE MAQUINARIA PARA LA EXPLOTACION DE MINAS Y CANTERAS Y PARA OBRAS DE CONSTRUCCION."
+  },
+  {
+    "codigo": "C2825",
+    "nombre": "FABRICACION DE MAQUINARIA PARA LA ELABORACION DE ALIMENTOS, BEBIDAS Y TABACO."
+  },
+  {
+    "codigo": "C2826",
+    "nombre": "FABRICACION DE MAQUINARIA PARA LA ELABORACION DE PRODUCTOS TEXTILES, PRENDAS DE VESTIR Y CUEROS."
+  },
+  {
+    "codigo": "C2829",
+    "nombre": "FABRICACION DE OTROS TIPOS DE MAQUINARIA DE USO ESPECIAL."
+  },
+  {
+    "codigo": "C2910",
+    "nombre": "FABRICACION DE VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "C2920",
+    "nombre": "FABRICACION DE CARROCERIAS PARA VEHICULOS AUTOMOTORES; FABRICACION DE REMOLQUES Y SEMIRREMOLQUES."
+  },
+  {
+    "codigo": "C2930",
+    "nombre": "FABRICACION DE PARTES, PIEZAS Y ACCESORIOS PARA VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "C3011",
+    "nombre": "CONSTRUCCION DE BUQUES Y ESTRUCTURAS FLOTANTES."
+  },
+  {
+    "codigo": "C3012",
+    "nombre": "CONSTRUCCION DE EMBARCACIONES DE RECREO Y DEPORTE."
+  },
+  {
+    "codigo": "C3020",
+    "nombre": "FABRICACION DE LOCOMOTORAS Y MATERIAL RODANTE."
+  },
+  {
+    "codigo": "C3030",
+    "nombre": "FABRICACION DE AERONAVES Y NAVES ESPECIALES Y MAQUINARIA CONEXA."
+  },
+  {
+    "codigo": "C3040",
+    "nombre": "FABRICACION DE VEHICULOS MILITARES DE COMBATE."
+  },
+  {
+    "codigo": "C3091",
+    "nombre": "FABRICACION DE MOTOCICLETAS."
+  },
+  {
+    "codigo": "C3092",
+    "nombre": "FABRICACION DE BICICLETAS Y DE SILLAS DE RUEDAS PARA INVALIDOS."
+  },
+  {
+    "codigo": "C3099",
+    "nombre": "FABRICACION DE OTROS TIPOS DE EQUIPO DE TRANSPORTE N.C.P."
+  },
+  {
+    "codigo": "C3100",
+    "nombre": "FABRICACION DE MUEBLES."
+  },
+  {
+    "codigo": "C3211",
+    "nombre": "FABRICACION DE JOYAS Y ARTICULOS CONEXOS."
+  },
+  {
+    "codigo": "C3212",
+    "nombre": "FABRICACION DE BISUTERIA Y ARTICULOS CONEXOS."
+  },
+  {
+    "codigo": "C3220",
+    "nombre": "FABRICACION DE INSTRUMENTOS MUSICALES."
+  },
+  {
+    "codigo": "C3230",
+    "nombre": "FABRICACION DE ARTICULOS DE DEPORTE."
+  },
+  {
+    "codigo": "C3240",
+    "nombre": "FABRICACION DE JUEGOS Y JUGUETES."
+  },
+  {
+    "codigo": "C3250",
+    "nombre": "FABRICACION DE INSTRUMENTOS Y MATERIALES MEDICOS Y ODONTOLOGICOS."
+  },
+  {
+    "codigo": "C3290",
+    "nombre": "OTRAS INDUSTRIAS MANUFACTURERAS N.C.P."
+  },
+  {
+    "codigo": "C3311",
+    "nombre": "REPARACION DE PRODUCTOS ELABORADOS DE METAL."
+  },
+  {
+    "codigo": "C3312",
+    "nombre": "REPARACION DE MAQUINARIA."
+  },
+  {
+    "codigo": "C3313",
+    "nombre": "REPARACION DE EQUIPO ELECTRONICO Y OPTICO."
+  },
+  {
+    "codigo": "C3314",
+    "nombre": "REPARACION DE EQUIPO ELECTRICO."
+  },
+  {
+    "codigo": "C3315",
+    "nombre": "REPARACION DE EQUIPO DE TRANSPORTE, EXCEPTO VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "C3319",
+    "nombre": "REPARACION DE OTROS TIPOS DE EQUIPO."
+  },
+  {
+    "codigo": "C3320",
+    "nombre": "INSTALACION DE MAQUINARIA Y EQUIPO INDUSTRIALES."
+  },
+  {
+    "codigo": "D3510",
+    "nombre": "GENERACION, TRANSMISION Y DISTRIBUCION DE ENERGIA ELECTRICA."
+  },
+  {
+    "codigo": "D3520",
+    "nombre": "FABRICACION DE GAS; DISTRIBUCION DE COMBUSTIBLES GASEOSOS POR TUBERIAS."
+  },
+  {
+    "codigo": "D3530",
+    "nombre": "SUMINISTRO DE VAPOR Y DE AIRE ACONDICIONADO."
+  },
+  {
+    "codigo": "E3600",
+    "nombre": "CAPTACION, TRATAMIENTO Y DISTRIBUCION DE AGUA."
+  },
+  {
+    "codigo": "E3700",
+    "nombre": "EVACUACION DE AGUAS RESIDUALES."
+  },
+  {
+    "codigo": "E3811",
+    "nombre": "RECOLECCION DE DESECHOS NO PELIGROSOS."
+  },
+  {
+    "codigo": "E3812",
+    "nombre": "RECOLECCION DE DESECHOS PELIGROSOS."
+  },
+  {
+    "codigo": "E3821",
+    "nombre": "TRATAMIENTO Y ELIMINACION DE DESECHOS NO PELIGROSOS."
+  },
+  {
+    "codigo": "E3822",
+    "nombre": "TRATAMIENTO Y ELIMINACION DE DESECHOS PELIGROSOS."
+  },
+  {
+    "codigo": "E3830",
+    "nombre": "RECUPERACION DE MATERIALES."
+  },
+  {
+    "codigo": "E3900",
+    "nombre": "ACTIVIDADES DE DESCONTAMINACION Y OTROS SERVICIOS DE  GESTION DE DESECHOS."
+  },
+  {
+    "codigo": "F4100",
+    "nombre": "CONSTRUCCION DE EDIFICIOS."
+  },
+  {
+    "codigo": "F4210",
+    "nombre": "CONSTRUCCION DE CARRETERAS Y LINEAS DE FERROCARRIL."
+  },
+  {
+    "codigo": "F4220",
+    "nombre": "CONSTRUCCION DE PROYECTOS DE SERVICIOS PUBLICOS."
+  },
+  {
+    "codigo": "F4290",
+    "nombre": "CONSTRUCCION DE OTRAS OBRAS DE INGENIERIA CIVIL."
+  },
+  {
+    "codigo": "F4311",
+    "nombre": "DEMOLICION."
+  },
+  {
+    "codigo": "F4312",
+    "nombre": "PREPARACION DEL TERRENO."
+  },
+  {
+    "codigo": "F4321",
+    "nombre": "INSTALACIONES ELECTRICAS."
+  },
+  {
+    "codigo": "F4322",
+    "nombre": "FONTANERIA (PLOMERIA, GASFITERIA) E INSTALACION DE CALEFACCION Y AIRE ACONDICIONADO."
+  },
+  {
+    "codigo": "F4329",
+    "nombre": "OTRAS INSTALACIONES PARA OBRAS DE CONSTRUCCION."
+  },
+  {
+    "codigo": "F4330",
+    "nombre": "TERMINACION Y ACABADO DE EDIFICIOS."
+  },
+  {
+    "codigo": "F4390",
+    "nombre": "OTRAS ACTIVIDADES ESPECIALIZADAS DE CONSTRUCCION."
+  },
+  {
+    "codigo": "G4510",
+    "nombre": "VENTA DE VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "G4520",
+    "nombre": "MANTENIMIENTO Y REPARACION DE VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "G4530",
+    "nombre": "VENTA DE PARTES, PIEZAS Y ACCESORIOS PARA VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "G4540",
+    "nombre": "VENTA, MANTENIMIENTO Y REPARACION DE MOTOCICLETAS Y DE SUS PARTES, PIEZAS Y ACCESORIOS."
+  },
+  {
+    "codigo": "G4610",
+    "nombre": "VENTA AL POR MAYOR A CAMBIO DE UNA COMISION O POR CONTRATO."
+  },
+  {
+    "codigo": "G4620",
+    "nombre": "VENTA AL POR MAYOR DE MATERIAS PRIMAS AGROPECUARIAS Y ANIMALES VIVOS."
+  },
+  {
+    "codigo": "G4630",
+    "nombre": "VENTA AL POR MAYOR DE ALIMENTOS, BEBIDAS Y TABACO."
+  },
+  {
+    "codigo": "G4641",
+    "nombre": "VENTA AL POR MAYOR DE TEXTILES, PRENDAS DE VESTIR Y CALZADO."
+  },
+  {
+    "codigo": "G4649",
+    "nombre": "VENTA AL POR MAYOR DE OTROS ENSERES DOMESTICOS."
+  },
+  {
+    "codigo": "G4651",
+    "nombre": "VENTA AL POR MAYOR DE COMPUTADORAS, EQUIPO Y PROGRAMAS INFORMATICOS."
+  },
+  {
+    "codigo": "G4652",
+    "nombre": "VENTA AL POR MAYOR DE EQUIPO, PARTES Y PIEZAS ELECTRONICOS Y DE TELECOMUNICACIONES."
+  },
+  {
+    "codigo": "G4653",
+    "nombre": "VENTA AL POR MAYOR DE MAQUINARIA, EQUIPO Y MATERIALES AGROPECUARIOS."
+  },
+  {
+    "codigo": "G4659",
+    "nombre": "VENTA AL POR MAYOR DE OTROS TIPOS DE MAQUINARIA Y EQUIPO."
+  },
+  {
+    "codigo": "G4661",
+    "nombre": "VENTA AL POR MAYOR DE COMBUSTIBLES SOLIDOS, LIQUIDOS Y GASEOSOS Y PRODUCTOS CONEXOS."
+  },
+  {
+    "codigo": "G4662",
+    "nombre": "VENTA AL POR MAYOR DE METALES Y MINERALES METALIFEROS."
+  },
+  {
+    "codigo": "G4663",
+    "nombre": "VENTA AL POR MAYOR DE MATERIALES PARA LA CONSTRUCCION, ARTICULOS DE FERRETERIA, EQUIPO, MATERIALES DE FONTANERIA (PLOMERIA O GASFITERIA) Y CALEFACCION."
+  },
+  {
+    "codigo": "G4669",
+    "nombre": "VENTA AL POR MAYOR DE DESPERDICIOS, DESECHOS, CHATARRA Y OTROS PRODUCTOS N.C.P."
+  },
+  {
+    "codigo": "G4690",
+    "nombre": "VENTA AL POR MAYOR DE OTROS PRODUCTOS NO ESPECIALIZADO."
+  },
+  {
+    "codigo": "G4711",
+    "nombre": "VENTA AL POR MENOR EN COMERCIOS NO ESPECIALIZADOS CON PREDOMINIO DE LA VENTA DE ALIMENTOS, BEBIDAS O TABACO."
+  },
+  {
+    "codigo": "G4719",
+    "nombre": "OTRAS ACTIVIDADES DE VENTA AL POR MENOR EN COMERCIOS NO ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4721",
+    "nombre": "VENTA AL POR MENOR DE ALIMENTOS EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4722",
+    "nombre": "VENTA AL POR MENOR DE BEBIDAS EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4723",
+    "nombre": "VENTA AL POR MENOR DE TABACO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4730",
+    "nombre": "VENTA AL POR MENOR DE COMBUSTIBLES PARA VEHICULOS AUTOMOTORES EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4741",
+    "nombre": "VENTA AL POR MENOR DE COMPUTADORES, EQUIPO PERIFERICO, PROGRAMAS INFORMATICOS Y EQUIPO DE TELECOMUNICACIONES EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4742",
+    "nombre": "VENTA AL POR MENOR DE EQUIPO DE SONIDO Y VIDEO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4751",
+    "nombre": "VENTA AL POR MENOR DE PRODUCTOS TEXTILES EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4752",
+    "nombre": "VENTA AL POR MENOR DE ARTICULOS DE FERRETERIA, PINTURAS Y PRODUCTOS DE VIDRIO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4753",
+    "nombre": "VENTA AL POR MENOR DE TAPICES, ALFOMBRAS Y CUBRIMIENTOS PARA PAREDES Y PISOS EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4759",
+    "nombre": "VENTA AL POR MENOR DE APARATOS ELECTRICOS DE USO DOMESTICO, MUEBLES, EQUIPO DE ILUMINACION Y OTROS ENSERES DOMESTICOS EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4761",
+    "nombre": "VENTA AL POR MENOR DE LIBROS, PERIODICOS Y ARTICULOS DE PAPELERIA EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4762",
+    "nombre": "VENTA AL POR MENOR DE GRABACIONES DE MUSICA Y DE VIDEO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4763",
+    "nombre": "VENTA AL POR MENOR DE EQUIPO DE DEPORTE EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4764",
+    "nombre": "VENTA AL POR MENOR DE JUEGOS Y JUGUETES EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4771",
+    "nombre": "VENTA AL POR MENOR DE PRENDAS DE VESTIR, CALZADO Y ARTICULOS DE CUERO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4772",
+    "nombre": "VENTA AL POR MENOR DE PRODUCTOS FARMACEUTICOS Y MEDICINALES, COSMETICOS Y ARTICULOS DE TOCADOR EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4773",
+    "nombre": "VENTA AL POR MENOR DE OTROS PRODUCTOS NUEVOS EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4774",
+    "nombre": "VENTA AL POR MENOR DE ARTICULOS DE SEGUNDA MANO EN COMERCIOS ESPECIALIZADOS."
+  },
+  {
+    "codigo": "G4781",
+    "nombre": "VENTA AL POR MENOR DE ALIMENTOS, BEBIDAS Y TABACO EN PUESTOS DE VENTA Y MERCADOS."
+  },
+  {
+    "codigo": "G4782",
+    "nombre": "VENTA AL POR MENOR DE PRODUCTOS TEXTILES, PRENDAS DE VESTIR Y CALZADO EN PUESTOS DE VENTA Y MERCADOS."
+  },
+  {
+    "codigo": "G4789",
+    "nombre": "VENTA AL POR MENOR DE OTROS PRODUCTOS EN PUESTOS DE VENTA Y MERCADOS."
+  },
+  {
+    "codigo": "G4791",
+    "nombre": "VENTA AL POR MENOR POR CORREO Y POR INTERNET."
+  },
+  {
+    "codigo": "G4799",
+    "nombre": "OTRAS ACTIVIDADES DE VENTA AL POR MENOR NO REALIZADAS EN COMERCIOS, PUESTOS DE VENTA O MERCADOS."
+  },
+  {
+    "codigo": "H4911",
+    "nombre": "TRANSPORTE INTERURBANO DE PASAJEROS POR FERROCARRIL."
+  },
+  {
+    "codigo": "H4912",
+    "nombre": "TRANSPORTE DE CARGA POR FERROCARRIL."
+  },
+  {
+    "codigo": "H4921",
+    "nombre": "TRANSPORTE URBANO Y SUBURBANO DE PASAJEROS POR VIA TERRESTRE."
+  },
+  {
+    "codigo": "H4922",
+    "nombre": "OTRAS ACTIVIDADES DE TRANSPORTE DE PASAJEROS POR VIA TERRESTRE."
+  },
+  {
+    "codigo": "H4923",
+    "nombre": "TRANSPORTE DE CARGA POR CARRETERA."
+  },
+  {
+    "codigo": "H4930",
+    "nombre": "TRANSPORTE POR TUBERIAS."
+  },
+  {
+    "codigo": "H5011",
+    "nombre": "TRANSPORTE DE PASAJEROS MARITIMO Y DE CABOTAJE."
+  },
+  {
+    "codigo": "H5012",
+    "nombre": "TRANSPORTE DE CARGA MARITIMO Y DE CABOTAJE."
+  },
+  {
+    "codigo": "H5021",
+    "nombre": "TRANSPORTE DE PASAJEROS POR VIAS DE NAVEGACION INTERIORES."
+  },
+  {
+    "codigo": "H5022",
+    "nombre": "TRANSPORTE DE CARGA, POR VIAS DE NAVEGACION INTERIORES."
+  },
+  {
+    "codigo": "H5110",
+    "nombre": "TRANSPORTE DE PASAJEROS POR VIA AEREA."
+  },
+  {
+    "codigo": "H5120",
+    "nombre": "TRANSPORTE DE CARGA POR VIA AEREA."
+  },
+  {
+    "codigo": "H5210",
+    "nombre": "ALMACENAMIENTO Y DEPOSITO."
+  },
+  {
+    "codigo": "H5221",
+    "nombre": "ACTIVIDADES DE SERVICIOS VINCULADAS AL TRANSPORTE TERRESTRE."
+  },
+  {
+    "codigo": "H5222",
+    "nombre": "ACTIVIDADES DE SERVICIOS VINCULADAS AL TRANSPORTE ACUATICO."
+  },
+  {
+    "codigo": "H5223",
+    "nombre": "ACTIVIDADES DE SERVICIOS VINCULADAS AL TRANSPORTE AEREO."
+  },
+  {
+    "codigo": "H5224",
+    "nombre": "MANIPULACION DE CARGA."
+  },
+  {
+    "codigo": "H5229",
+    "nombre": "OTRAS ACTIVIDADES DE APOYO AL TRANSPORTE."
+  },
+  {
+    "codigo": "H5310",
+    "nombre": "ACTIVIDADES POSTALES."
+  },
+  {
+    "codigo": "H5320",
+    "nombre": "ACTIVIDADES DE MENSAJERIA."
+  },
+  {
+    "codigo": "I5510",
+    "nombre": "ACTIVIDADES DE ALOJAMIENTO PARA ESTANCIAS CORTAS."
+  },
+  {
+    "codigo": "I5520",
+    "nombre": "ACTIVIDADES DE CAMPAMENTOS, PARQUES DE VEHICULOS DE RECREO Y PARQUES DE CARAVANAS."
+  },
+  {
+    "codigo": "I5590",
+    "nombre": "OTRAS ACTIVIDADES DE ALOJAMIENTO."
+  },
+  {
+    "codigo": "I5610",
+    "nombre": "ACTIVIDADES DE RESTAURANTES Y DE SERVICIO MOVIL DE COMIDAS."
+  },
+  {
+    "codigo": "I5621",
+    "nombre": "SUMINISTRO DE COMIDAS POR ENCARGO."
+  },
+  {
+    "codigo": "I5629",
+    "nombre": "OTRAS ACTIVIDADES DE SERVICIO DE COMIDAS."
+  },
+  {
+    "codigo": "I5630",
+    "nombre": "ACTIVIDADES DE SERVICIO DE BEBIDAS."
+  },
+  {
+    "codigo": "J5811",
+    "nombre": "PUBLICACION DE LIBROS, PERIODICOS Y OTRAS ACTIVIDADES DE PUBLICACION."
+  },
+  {
+    "codigo": "J5812",
+    "nombre": "PUBLICACION DE DIRECTORIOS Y DE LISTAS DE CORREO."
+  },
+  {
+    "codigo": "J5813",
+    "nombre": "PUBLICACION DE PERIODICOS, DIARIOS Y REVISTAS."
+  },
+  {
+    "codigo": "J5819",
+    "nombre": "OTRAS PUBLICACIONES."
+  },
+  {
+    "codigo": "J5820",
+    "nombre": "PUBLICACION DE PROGRAMAS INFORMATICOS."
+  },
+  {
+    "codigo": "J5911",
+    "nombre": "ACTIVIDADES DE PRODUCCION DE PELICULAS CINEMATOGRAFICAS, VIDEOS Y PROGRAMAS DE TELEVISION."
+  },
+  {
+    "codigo": "J5912",
+    "nombre": "ACTIVIDADES DE POSTPRODUCCION DE PELICULAS CINEMATOGRAFICAS, VIDEOS Y PROGRAMAS DE TELEVISION."
+  },
+  {
+    "codigo": "J5913",
+    "nombre": "ACTIVIDADES DE DISTRIBUCION DE PELICULAS CINEMATOGRAFICAS, VIDEOS Y PROGRAMAS DE TELEVISION."
+  },
+  {
+    "codigo": "J5914",
+    "nombre": "ACTIVIDADES DE EXHIBICION DE PELICULAS CINEMATOGRAFICAS Y CINTAS DE VIDEO."
+  },
+  {
+    "codigo": "J5920",
+    "nombre": "ACTIVIDADES DE GRABACION DE SONIDO Y EDICION DE MUSICA."
+  },
+  {
+    "codigo": "J6010",
+    "nombre": "TRANSMISIONES DE RADIO."
+  },
+  {
+    "codigo": "J6020",
+    "nombre": "PROGRAMACION Y TRANSMISIONES DE TELEVISION."
+  },
+  {
+    "codigo": "J6110",
+    "nombre": "ACTIVIDADES DE TELECOMUNICACIONES ALAMBRICA."
+  },
+  {
+    "codigo": "J6120",
+    "nombre": "ACTIVIDADES DE TELECOMUNICACIONES INALAMBRICAS."
+  },
+  {
+    "codigo": "J6130",
+    "nombre": "ACTIVIDADES DE TELECOMUNICACIONES POR SATELITE."
+  },
+  {
+    "codigo": "J6190",
+    "nombre": "OTRAS ACTIVIDADES DE TELECOMUNICACIONES."
+  },
+  {
+    "codigo": "J6201",
+    "nombre": "ACTIVIDADES DE PROGRAMACION INFORMATICA."
+  },
+  {
+    "codigo": "J6202",
+    "nombre": "ACTIVIDADES DE CONSULTORIA DE INFORMATICA Y DE GESTION DE INSTALACIONES INFORMATICAS."
+  },
+  {
+    "codigo": "J6203",
+    "nombre": "ACTIVIDADES DE DISEÑO Y DESARROLLO DE SOLUCIONES BASADAS EN TECNOLOGIA BLOCKCHAIN (CADENAS DE BLOQUES)\n"
+  },
+  {
+    "codigo": "J6209",
+    "nombre": "OTRAS ACTIVIDADES DE TECNOLOGIA DE LA INFORMACION Y DE SERVICIOS INFORMATICOS."
+  },
+  {
+    "codigo": "J6311",
+    "nombre": "PROCESAMIENTO DE DATOS, HOSPEDAJE Y ACTIVIDADES CONEXAS."
+  },
+  {
+    "codigo": "J6312",
+    "nombre": "PORTALES WEB."
+  },
+  {
+    "codigo": "J6391",
+    "nombre": "ACTIVIDADES DE AGENCIAS DE NOTICIAS."
+  },
+  {
+    "codigo": "J6399",
+    "nombre": "OTRAS ACTIVIDADES DE SERVICIOS DE INFORMACION N.C.P."
+  },
+  {
+    "codigo": "K6411",
+    "nombre": "BANCA CENTRAL."
+  },
+  {
+    "codigo": "K6419",
+    "nombre": "OTROS TIPOS DE INTERMEDIACION MONETARIA."
+  },
+  {
+    "codigo": "K6420",
+    "nombre": "ACTIVIDADES DE SOCIEDADES DE CARTERA."
+  },
+  {
+    "codigo": "K6430",
+    "nombre": "FONDOS Y SOCIEDADES DE INVERSION Y ENTIDADES FINANCIERAS SIMILARES."
+  },
+  {
+    "codigo": "K6491",
+    "nombre": "ARRENDAMIENTO FINANCIERO."
+  },
+  {
+    "codigo": "K6492",
+    "nombre": "OTRAS ACTIVIDADES DE CONCESION DE CREDITO."
+  },
+  {
+    "codigo": "K6499",
+    "nombre": "OTRAS ACTIVIDADES DE SERVICIOS FINANCIEROS, EXCEPTO LAS DE SEGUROS Y FONDOS DE PENSIONES, N.C.P."
+  },
+  {
+    "codigo": "K6511",
+    "nombre": "SEGUROS DE VIDA."
+  },
+  {
+    "codigo": "K6512",
+    "nombre": "SEGUROS GENERALES."
+  },
+  {
+    "codigo": "K6520",
+    "nombre": "REASEGUROS."
+  },
+  {
+    "codigo": "K6530",
+    "nombre": "FONDOS DE PENSION."
+  },
+  {
+    "codigo": "K6611",
+    "nombre": "ADMINISTRACION DE MERCADOS FINANCIEROS."
+  },
+  {
+    "codigo": "K6612",
+    "nombre": "CORRETAJE DE VALORES Y DE CONTRATOS DE PRODUCTOS BASICOS."
+  },
+  {
+    "codigo": "K6613",
+    "nombre": "ADMINISTRACION DE ACTIVOS VIRTUALES"
+  },
+  {
+    "codigo": "K6614",
+    "nombre": "SERVICIOS DE ASESORAMIENTO, GESTION Y OPERACION DE MERCADOS VIRTUALES"
+  },
+  {
+    "codigo": "K6619",
+    "nombre": "OTRAS ACTIVIDADES AUXILIARES A LAS ACTIVIDADES DE SERVICIOS FINANCIEROS."
+  },
+  {
+    "codigo": "K6621",
+    "nombre": "EVALUACION DE RIESGOS Y DAÑOS."
+  },
+  {
+    "codigo": "K6622",
+    "nombre": "ACTIVIDADES DE LOS AGENTES Y CORREDORES DE SEGURO."
+  },
+  {
+    "codigo": "K6629",
+    "nombre": "OTRAS ACTIVIDADES AUXILIARES DE SEGUROS Y FONDOS DE PENSIONES."
+  },
+  {
+    "codigo": "K6630",
+    "nombre": "ACTIVIDADES DE GESTION DE FONDOS."
+  },
+  {
+    "codigo": "L6810",
+    "nombre": "ACTIVIDADES INMOBILIARIAS REALIZADAS CON BIENES PROPIOS O ARRENDADOS."
+  },
+  {
+    "codigo": "L6820",
+    "nombre": "ACTIVIDADES INMOBILIARIAS REALIZADAS A CAMBIO DE UNA RETRIBUCION O POR CONTRATO."
+  },
+  {
+    "codigo": "M6910",
+    "nombre": "ACTIVIDADES JURIDICAS."
+  },
+  {
+    "codigo": "M6920",
+    "nombre": "ACTIVIDADES DE CONTABILIDAD, TENEDURIA DE LIBROS Y AUDITORIAS; CONSULTORIA FISCAL."
+  },
+  {
+    "codigo": "M7010",
+    "nombre": "ACTIVIDADES DE OFICINAS PRINCIPALES."
+  },
+  {
+    "codigo": "M7020",
+    "nombre": "ACTIVIDADES DE CONSULTORIA DE GESTION."
+  },
+  {
+    "codigo": "M7110",
+    "nombre": "ACTIVIDADES DE ARQUITECTURA E INGENIERIA Y ACTIVIDADES CONEXAS DE CONSULTORIA TECNICA."
+  },
+  {
+    "codigo": "M7120",
+    "nombre": "ENSAYOS Y ANALISIS TECNICOS."
+  },
+  {
+    "codigo": "M7210",
+    "nombre": "INVESTIGACIONES Y DESARROLLO EXPERIMENTAL EN EL CAMPO DE LAS CIENCIAS NATURALES Y LA INGENIERIA."
+  },
+  {
+    "codigo": "M7220",
+    "nombre": "INVESTIGACIONES Y DESARROLLO EXPERIMENTAL EN EL CAMPO DE LAS CIENCIAS SOCIALES Y LAS HUMANIDADES."
+  },
+  {
+    "codigo": "M7310",
+    "nombre": "PUBLICIDAD."
+  },
+  {
+    "codigo": "M7320",
+    "nombre": "ESTUDIOS DE MERCADO Y ENCUESTAS DE OPINION PUBLICA."
+  },
+  {
+    "codigo": "M7410",
+    "nombre": "ACTIVIDADES ESPECIALIZADAS DE DISEÑO."
+  },
+  {
+    "codigo": "M7420",
+    "nombre": "ACTIVIDADES DE FOTOGRAFIA."
+  },
+  {
+    "codigo": "M7490",
+    "nombre": "OTRAS ACTIVIDADES PROFESIONALES, CIENTIFICAS Y TECNICAS N.C.P."
+  },
+  {
+    "codigo": "M7500",
+    "nombre": "ACTIVIDADES VETERINARIAS."
+  },
+  {
+    "codigo": "N7710",
+    "nombre": "ALQUILER DE VEHICULOS AUTOMOTORES."
+  },
+  {
+    "codigo": "N7721",
+    "nombre": "ALQUILER DE EQUIPO RECREATIVO Y DEPORTIVO."
+  },
+  {
+    "codigo": "N7722",
+    "nombre": "ALQUILER DE CINTAS DE VIDEO Y DISCOS."
+  },
+  {
+    "codigo": "N7729",
+    "nombre": "ALQUILER OTROS EFECTOS PERSONALES Y ARTICULOS DE USO DOMESTICOS."
+  },
+  {
+    "codigo": "N7730",
+    "nombre": "ALQUILER DE OTROS TIPOS DE MAQUINARIA, EQUIPO Y BIENES TANGIBLES."
+  },
+  {
+    "codigo": "N7740",
+    "nombre": "ARRENDAMIENTO DE PROPIEDAD INTELECTUAL Y PRODUCTOS SIMILARES, EXCEPTO OBRAS PROTEGIDAS POR DERECHOS DE AUTOR."
+  },
+  {
+    "codigo": "N7810",
+    "nombre": "ACTIVIDADES DE AGENCIAS DE EMPLEO."
+  },
+  {
+    "codigo": "N7820",
+    "nombre": "ACTIVIDADES DE AGENCIAS DE EMPLEO TEMPORAL."
+  },
+  {
+    "codigo": "N7830",
+    "nombre": "OTRAS ACTIVIDADES DE DOTACION DE RECURSOS HUMANOS."
+  },
+  {
+    "codigo": "N7911",
+    "nombre": "ACTIVIDADES DE AGENCIAS DE VIAJES."
+  },
+  {
+    "codigo": "N7912",
+    "nombre": "ACTIVIDADES DE OPERADORES TURISTICOS."
+  },
+  {
+    "codigo": "N7990",
+    "nombre": "OTROS SERVICIOS DE RESERVAS Y ACTIVIDADES CONEXAS."
+  },
+  {
+    "codigo": "N8010",
+    "nombre": "ACTIVIDADES DE SEGURIDAD PRIVADA."
+  },
+  {
+    "codigo": "N8020",
+    "nombre": "ACTIVIDADES DE SERVICIOS DE SISTEMAS DE SEGURIDAD."
+  },
+  {
+    "codigo": "N8030",
+    "nombre": "ACTIVIDADES DE INVESTIGACION."
+  },
+  {
+    "codigo": "N8110",
+    "nombre": "ACTIVIDADES COMBINADAS DE APOYO A INSTALACIONES."
+  },
+  {
+    "codigo": "N8121",
+    "nombre": "LIMPIEZA GENERAL DE EDIFICIOS."
+  },
+  {
+    "codigo": "N8129",
+    "nombre": "OTRAS ACTIVIDADES DE LIMPIEZA DE EDIFICIOS E INSTALACIONES INDUSTRIALES."
+  },
+  {
+    "codigo": "N8130",
+    "nombre": "ACTIVIDADES DE PAISAJISMO Y SERVICIOS DE MANTENIMIENTO CONEXOS."
+  },
+  {
+    "codigo": "N8211",
+    "nombre": "ACTIVIDADES COMBINADAS DE SERVICIOS ADMINISTRATIVOS DE OFICINA."
+  },
+  {
+    "codigo": "N8219",
+    "nombre": "FOTOCOPIADO, PREPARACION DE DOCUMENTOS Y OTRAS ACTIVIDADES ESPECIALIZADAS DE APOYO DE OFICINA."
+  },
+  {
+    "codigo": "N8220",
+    "nombre": "ACTIVIDADES DE CENTROS DE LLAMADAS."
+  },
+  {
+    "codigo": "N8230",
+    "nombre": "ORGANIZACION DE CONVENCIONES Y EXPOSICIONES COMERCIALES."
+  },
+  {
+    "codigo": "N8291",
+    "nombre": "ACTIVIDADES DE AGENCIAS DE COBRO Y AGENCIAS DE CALIFICACION CREDITICIA."
+  },
+  {
+    "codigo": "N8292",
+    "nombre": "ACTIVIDADES DE ENVASADO Y EMPAQUETADO."
+  },
+  {
+    "codigo": "N8299",
+    "nombre": "OTRAS ACTIVIDADES DE SERVICIOS DE APOYO A EMPRESAS N.C.P."
+  },
+  {
+    "codigo": "O8411",
+    "nombre": "ACTIVIDADES DE LA ADMINISTRACION PUBLICA EN GENERAL."
+  },
+  {
+    "codigo": "O8412",
+    "nombre": "REGULACION DE LAS ACTIVIDADES DE ORGANISMOS QUE PRESTAN SERVICIOS SANITARIOS, EDUCATIVOS, CULTURALES Y OTROS SERVICIOS SOCIALES, EXCEPTO SERVICIOS DE SEGURIDAD SOCIAL."
+  },
+  {
+    "codigo": "O8413",
+    "nombre": "REGULACION Y FACILITACION DE LA ACTIVIDAD ECONOMICA."
+  },
+  {
+    "codigo": "O8421",
+    "nombre": "RELACIONES EXTERIORES."
+  },
+  {
+    "codigo": "O8422",
+    "nombre": "ACTIVIDADES DE DEFENSA."
+  },
+  {
+    "codigo": "O8423",
+    "nombre": "ACTIVIDADES DE MANTENIMIENTO DEL ORDEN PUBLICO Y DE SEGURIDAD."
+  },
+  {
+    "codigo": "O8430",
+    "nombre": "ACTIVIDADES DE PLANES DE SEGURIDAD SOCIAL DE AFILIACION OBLIGATORIA."
+  },
+  {
+    "codigo": "P8510",
+    "nombre": "ENSEÑANZA PREPRIMARIA Y PRIMARIA."
+  },
+  {
+    "codigo": "P8521",
+    "nombre": "ENSEÑANZA SECUNDARIA DE FORMACION GENERAL."
+  },
+  {
+    "codigo": "P8522",
+    "nombre": "ENSEÑANZA DE FORMACION TECNICA Y PROFESIONAL."
+  },
+  {
+    "codigo": "P8530",
+    "nombre": "ENSEÑANZA SUPERIOR."
+  },
+  {
+    "codigo": "P8541",
+    "nombre": "ENSEÑANZA DEPORTIVA Y RECREATIVA."
+  },
+  {
+    "codigo": "P8542",
+    "nombre": "ENSEÑANZA CULTURAL."
+  },
+  {
+    "codigo": "P8549",
+    "nombre": "OTROS TIPOS DE ENSEÑANZA N.C.P."
+  },
+  {
+    "codigo": "P8550",
+    "nombre": "ACTIVIDADES DE APOYO A LA ENSEÑANZA."
+  },
+  {
+    "codigo": "Q8610",
+    "nombre": "ACTIVIDADES DE HOSPITALES Y CLINICAS."
+  },
+  {
+    "codigo": "Q8620",
+    "nombre": "ACTIVIDADES DE MEDICOS Y ODONTOLOGOS."
+  },
+  {
+    "codigo": "Q8690",
+    "nombre": "OTRAS ACTIVIDADES DE ATENCION DE LA SALUD HUMANA."
+  },
+  {
+    "codigo": "Q8710",
+    "nombre": "ACTIVIDADES DE ATENCION DE ENFERMERIA EN INSTITUCIONES."
+  },
+  {
+    "codigo": "Q8720",
+    "nombre": "ACTIVIDADES DE ATENCION EN INSTITUCIONES PARA PERSONAS CON RETRASO MENTAL, ENFERMOS MENTALES Y TOXICOMANOS."
+  },
+  {
+    "codigo": "Q8730",
+    "nombre": "ACTIVIDADES DE ATENCION EN INSTITUCIONES PARA PERSONAS DE EDAD Y PERSONAS CON DISCAPACIDAD."
+  },
+  {
+    "codigo": "Q8790",
+    "nombre": "OTRAS ACTIVIDADES DE ATENCION EN INSTITUCIONES."
+  },
+  {
+    "codigo": "Q8810",
+    "nombre": "ACTIVIDADES DE ASISTENCIA SOCIAL SIN ALOJAMIENTO PARA PERSONAS DE EDAD Y PERSONAS CON DISCAPACIDAD."
+  },
+  {
+    "codigo": "Q8890",
+    "nombre": "OTRAS ACTIVIDADES DE ASISTENCIA SOCIAL SIN ALOJAMIENTO."
+  },
+  {
+    "codigo": "R9000",
+    "nombre": "ACTIVIDADES CREATIVAS, ARTISTICAS Y DE ENTRETENIMIENTO."
+  },
+  {
+    "codigo": "R9101",
+    "nombre": "ACTIVIDADES DE BIBLIOTECAS Y ARCHIVOS."
+  },
+  {
+    "codigo": "R9102",
+    "nombre": "ACTIVIDADES DE MUSEOS Y GESTION DE LUGARES Y EDIFICIOS HISTORICOS."
+  },
+  {
+    "codigo": "R9103",
+    "nombre": "ACTIVIDADES DE JARDINES BOTANICOS Y ZOOLOGICOS Y RESERVAS NATURALES."
+  },
+  {
+    "codigo": "R9200",
+    "nombre": "ACTIVIDADES DE JUEGOS DE AZAR Y APUESTAS."
+  },
+  {
+    "codigo": "R9311",
+    "nombre": "EXPLOTACION DE INSTALACIONES DEPORTIVAS."
+  },
+  {
+    "codigo": "R9312",
+    "nombre": "ACTIVIDADES DE CLUBES DEPORTIVOS."
+  },
+  {
+    "codigo": "R9319",
+    "nombre": "OTRAS ACTIVIDADES DEPORTIVAS."
+  },
+  {
+    "codigo": "R9321",
+    "nombre": "ACTIVIDADES DE PARQUES DE ATRACCIONES Y PARQUES TEMATICOS."
+  },
+  {
+    "codigo": "R9329",
+    "nombre": "OTRAS ACTIVIDADES DE ESPARCIMIENTO Y RECREATIVAS N.C.P."
+  },
+  {
+    "codigo": "S9411",
+    "nombre": "ACTIVIDADES DE ASOCIACIONES EMPRESARIALES Y DE EMPLEADORES."
+  },
+  {
+    "codigo": "S9412",
+    "nombre": "ACTIVIDADES DE ASOCIACIONES PROFESIONALES."
+  },
+  {
+    "codigo": "S9420",
+    "nombre": "ACTIVIDADES DE SINDICATOS."
+  },
+  {
+    "codigo": "S9491",
+    "nombre": "ACTIVIDADES DE ORGANIZACIONES RELIGIOSAS."
+  },
+  {
+    "codigo": "S9492",
+    "nombre": "ACTIVIDADES DE ORGANIZACIONES POLITICAS."
+  },
+  {
+    "codigo": "S9499",
+    "nombre": "ACTIVIDADES DE OTRAS ASOCIACIONES N.C.P."
+  },
+  {
+    "codigo": "S9511",
+    "nombre": "REPARACION DE COMPUTADORAS Y EQUIPO PERIFERICO."
+  },
+  {
+    "codigo": "S9512",
+    "nombre": "REPARACION DE EQUIPO DE COMUNICACIONES."
+  },
+  {
+    "codigo": "S9521",
+    "nombre": "REPARACION DE APARATOS ELECTRONICOS DE CONSUMO."
+  },
+  {
+    "codigo": "S9522",
+    "nombre": "REPARACION DE APARATOS DE USO DOMESTICO Y EQUIPO DOMESTICO Y DE JARDINERIA."
+  },
+  {
+    "codigo": "S9523",
+    "nombre": "REPARACION DE CALZADO Y ARTICULOS DE CUERO."
+  },
+  {
+    "codigo": "S9524",
+    "nombre": "REPARACION DE MUEBLES Y ACCESORIOS DOMESTICOS."
+  },
+  {
+    "codigo": "S9529",
+    "nombre": "REPARACION DE OTROS BIENES PERSONALES Y ENSERES DOMESTICOS."
+  },
+  {
+    "codigo": "S9601",
+    "nombre": "LAVADO Y LIMPIEZA, INCLUIDA LA LIMPIEZA EN SECO, DE PRODUCTOS TEXTILES Y DE PIEL."
+  },
+  {
+    "codigo": "S9602",
+    "nombre": "ACTIVIDADES DE PELUQUERIA Y OTROS TRATAMIENTOS DE BELLEZA."
+  },
+  {
+    "codigo": "S9603",
+    "nombre": "POMPAS FUNEBRES Y ACTIVIDADES CONEXAS."
+  },
+  {
+    "codigo": "S9609",
+    "nombre": "OTRAS ACTIVIDADES DE SERVICIOS PERSONALES N.C.P."
+  },
+  {
+    "codigo": "T9700",
+    "nombre": "ACTIVIDADES DE LOS HOGARES COMO EMPLEADORES DE PERSONAL DOMESTICO."
+  },
+  {
+    "codigo": "T9810",
+    "nombre": "ACTIVIDADES NO DIFERENCIADAS DE LOS HOGARES COMO PRODUCTORES DE BIENES Y SERVICIOS PARA USO PROPIO."
+  },
+  {
+    "codigo": "T9820",
+    "nombre": "ACTIVIDADES NO DIFERENCIADAS DE LOS HOGARES COMO PRODUCTORES DE SERVICIOS PARA USO PROPIO."
+  },
+  {
+    "codigo": "U9900",
+    "nombre": "ACTIVIDADES DE ORGANIZACIONES Y ORGANOS EXTRATERRITORIALES."
+  },
+  {
+    "codigo": "S01",
+    "nombre": "JUBILADO"
+  },
+  {
+    "codigo": "S02",
+    "nombre": "ESTUDIANTE"
+  },
+  {
+    "codigo": "S03",
+    "nombre": "AMA DE CASA"
+  },
+  {
+    "codigo": "S04",
+    "nombre": "EMPLEADO PUBLICO"
+  },
+  {
+    "codigo": "S05",
+    "nombre": "EMPLEADO PRIVADO"
+  },
+  {
+    "codigo": "NA",
+    "nombre": "NO APLICA"
+  }
+]
