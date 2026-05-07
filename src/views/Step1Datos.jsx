@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Upload, Loader, UserCheck } from 'lucide-react';
+import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { validarIdentificacion } from '../utils/validators';
+import { verificarListasRestrictivas, verificarDocumentoUAFE, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 
 export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [suggestions, setSuggestions] = useState([]);
   const suggestionsRef = useRef(null);
   const [validacionCedula, setValidacionCedula] = useState(null);
+  const [verificando, setVerificando] = useState(false);
 
   // Cargar clientes únicos del historial
   useEffect(() => {
@@ -127,6 +129,57 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     }));
     setShowSuggestions(false);
     toast.success(`Cliente ${clientData.cliente} cargado desde historial`, { icon: '👤' });
+  };
+
+  const handleVerificarListas = async () => {
+    if (!datos.cliente || datos.cliente.trim().length < 3) {
+      toast.error('Ingrese el nombre del cliente para verificar');
+      return;
+    }
+    setVerificando(true);
+    try {
+      const resultados = await verificarListasRestrictivas(datos.cliente, 'todos');
+      const docResult = datos.cedula ? await verificarDocumentoUAFE(datos.cedula) : null;
+
+      setDatos(prev => ({
+        ...prev,
+        verificaciones: {
+          ofac: {
+            estado: resultados.ofac?.estado || 'error',
+            fecha: resultados.ofac?.fecha,
+            resultado: resultados.ofac?.mensaje,
+            coincidencias: resultados.ofac?.coincidencias || []
+          },
+          onu: {
+            estado: resultados.onu?.estado || 'error',
+            fecha: resultados.onu?.fecha,
+            resultado: resultados.onu?.mensaje,
+            coincidencias: resultados.onu?.coincidencias || []
+          },
+          uafe: {
+            estado: docResult ? docResult.estado : (resultados.uafe?.estado || 'error'),
+            fecha: docResult ? docResult.fecha : resultados.uafe?.fecha,
+            resultado: docResult ? docResult.mensaje : resultados.uafe?.mensaje,
+            coincidencias: resultados.uafe?.coincidencias || []
+          }
+        }
+      }));
+
+      const hayAlerta = Object.values(resultados).some(r => r.estado === 'coincidencia' || r.estado === 'alerta');
+      const hayPosible = Object.values(resultados).some(r => r.estado === 'posible');
+      
+      if (hayAlerta) {
+        toast.error('¡ALERTA! Se encontraron coincidencias en listas restrictivas', { duration: 6000 });
+      } else if (hayPosible) {
+        toast('Se encontraron posibles coincidencias - Requiere revisión manual', { icon: '⚠️', duration: 5000 });
+      } else {
+        toast.success('Verificación completada: Sin coincidencias encontradas');
+      }
+    } catch (err) {
+      toast.error('Error en verificación: ' + err.message);
+    } finally {
+      setVerificando(false);
+    }
   };
 
   const isComplete = 
@@ -379,40 +432,71 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       </div>
 
       <div style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
-        <h3 style={{ fontSize: '1rem', marginBottom: '15px' }}>Verificaciones en Listas Restrictivas</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-          {[
-            { name: 'ofac', label: 'OFAC', url: 'https://sanctionssearch.ofac.treas.gov/' },
-            { name: 'onu', label: 'ONU', url: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list' },
-            { name: 'pepUafe', label: 'PEP UAFE', url: 'https://www.uafe.gob.ec' },
-          ].map(({ name, label, url }) => (
-            <div key={name} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'var(--bg-input)', borderRadius: '6px' }}>
-              <input
-                type="checkbox"
-                name={name}
-                checked={datos[name]}
-                onChange={handleChange}
-                style={{ transform: 'scale(1.2)' }}
-              />
-              <span style={{ flex: 1, fontSize: '0.9rem' }}>{label}</span>
-              <button
-                className="btn btn-secondary"
-                style={{ fontSize: '0.75rem', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                onClick={() => {
-                  const searchUrl = datos.cedula ? `${url}?search=${encodeURIComponent(datos.cedula)}` : url;
-                  window.open(searchUrl, '_blank');
-                }}
-              >
-                🔍 Verificar
-              </button>
-            </div>
-          ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Shield size={18} color="var(--accent)" /> Verificación en Listas Restrictivas
+          </h3>
+          <button
+            className="btn"
+            style={{ fontSize: '0.8rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handleVerificarListas}
+            disabled={verificando || !datos.cliente}
+          >
+            {verificando ? <><Loader size={14} className="spin" /> Verificando...</> : <><Search size={14} /> Verificar Ahora</>}
+          </button>
         </div>
-        {datos.ofac && datos.onu && datos.pepUafe && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--verde)', marginTop: '10px' }}>
-            ✅ Verificado el {new Date().toLocaleDateString('es-EC', { dateStyle: 'full' })} a las {new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
-          </p>
-        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+          {[
+            { key: 'ofac', label: 'OFAC', url: 'https://sanctionssearch.ofac.treas.gov/' },
+            { key: 'onu', label: 'ONU', url: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list' },
+            { key: 'uafe', label: 'UAFE Ecuador', url: 'https://www.uafe.gob.ec' },
+          ].map(({ key, label, url }) => {
+            const verif = datos.verificaciones?.[key] || { estado: 'pendiente' };
+            const style = getEstadoVerificacionStyle(verif.estado);
+            return (
+              <div key={key} style={{
+                padding: '12px', background: style.bg, borderRadius: '8px',
+                border: `1px solid ${style.color}30`, transition: 'all 0.2s'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: style.color }}>{style.icon} {label}</span>
+                  <span style={{ fontSize: '0.75rem', color: style.color, fontWeight: '500' }}>{style.label}</span>
+                </div>
+                {verif.resultado && (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '6px', lineHeight: '1.4' }}>
+                    {verif.resultado}
+                  </p>
+                )}
+                {verif.coincidencias?.length > 0 && (
+                  <div style={{ marginTop: '6px', padding: '6px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--txt2)', marginBottom: '4px' }}>Coincidencias:</p>
+                    {verif.coincidencias.slice(0, 2).map((coin, i) => (
+                      <div key={i} style={{ fontSize: '0.75rem', color: style.color, display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{coin.nombre}</span>
+                        <span>{coin.confianza}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                  {verif.fecha && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--txt2)' }}>
+                      {new Date(verif.fecha).toLocaleDateString('es-EC')}
+                    </span>
+                  )}
+                  <button
+                    className="btn btn-secondary"
+                    style={{ fontSize: '0.7rem', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    onClick={() => window.open(url, '_blank')}
+                  >
+                    <ExternalLink size={12} /> Consultar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="form-group" style={{ marginTop: '20px' }}>

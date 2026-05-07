@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag } from 'lucide-react';
+import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, Shield } from 'lucide-react';
+import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 import { marked } from 'marked';
 import { exportToPDF, exportToExcel } from '../utils/exportUtils';
@@ -150,6 +151,44 @@ export const Step4Analisis = ({
           </div>
         </div>
 
+
+      {datos.verificaciones && (
+        <div className="card">
+          <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)' }}>
+            <Shield size={22} /> Estado de Verificaciones
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+            {['ofac', 'onu', 'uafe'].map(key => {
+              const verif = datos.verificaciones[key] || { estado: 'pendiente' };
+              const style = getEstadoVerificacionStyle(verif.estado);
+              return (
+                <div key={key} style={{
+                  padding: '12px', background: style.bg, borderRadius: '8px',
+                  border: `1px solid ${style.color}30`, display: 'flex',
+                  flexDirection: 'column', gap: '6px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '0.9rem', textTransform: 'uppercase', color: style.color }}>
+                      {key}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: style.color, fontWeight: '600' }}>
+                      {style.icon} {style.label}
+                    </span>
+                  </div>
+                  {verif.resultado && (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', lineHeight: '1.4' }}>{verif.resultado}</p>
+                  )}
+                  {verif.fecha && (
+                    <p style={{ fontSize: '0.7rem', color: 'var(--txt2)' }}>
+                      Verificado: {new Date(verif.fecha).toLocaleDateString('es-EC')}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)' }}>

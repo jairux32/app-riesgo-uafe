@@ -5,6 +5,7 @@ import { getAllCases, saveCase, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
+import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 
 export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProgress }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -457,6 +458,7 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Acto</th>
                       <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Estado</th>
                       <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Riesgo</th>
+                      <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Verif.</th>
                       <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>Fecha</th>
                       <th style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', width: '80px' }}></th>
                     </tr>
@@ -540,10 +542,21 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
                               ) : (
                                 <><Shield size={12} /> Sin evaluar</>
                               )}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--txt2)', fontSize: '0.85rem' }}>
-                            {new Date(c.createdAt).toLocaleDateString('es-EC')}
+                           </span>
+                           </td>
+                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
+                             {(() => {
+                               const verifs = c.datos?.verificaciones;
+                               if (!verifs) return <span style={{ fontSize: '0.75rem', color: 'var(--txt2)' }}>—</span>;
+                               const allDone = ['ofac', 'onu', 'uafe'].every(k => verifs[k]?.estado && verifs[k]?.estado !== 'pendiente');
+                               const anyAlert = ['ofac', 'onu', 'uafe'].some(k => verifs[k]?.estado === 'coincidencia' || verifs[k]?.estado === 'alerta');
+                               if (anyAlert) return <span style={{ color: 'var(--rojo)', fontSize: '0.9rem' }} title="Coincidencia encontrada">🚫</span>;
+                               if (allDone) return <span style={{ color: 'var(--verde)', fontSize: '0.9rem' }} title="Verificado">✅</span>;
+                               return <span style={{ color: 'var(--amarillo)', fontSize: '0.9rem' }} title="Pendiente">⏳</span>;
+                             })()}
+                           </td>
+                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--txt2)', fontSize: '0.85rem' }}>
+                             {new Date(c.createdAt).toLocaleDateString('es-EC')}
                           </td>
                           <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                             <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>

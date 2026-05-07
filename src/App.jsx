@@ -43,7 +43,12 @@ function AppContent() {
     origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '',
     apoderado: false, ofac: false, onu: false, pepUafe: false,
     reportesPrevios: false, observaciones: '',
-    estado: 'borrador', tags: [], notasInternas: ''
+    estado: 'borrador', tags: [], notasInternas: '',
+    verificaciones: {
+      ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+      onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+      uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
+    }
   });
 
   const [evaluaciones, setEvaluaciones] = useState({});
@@ -186,7 +191,7 @@ function AppContent() {
   }, [step, view]);
 
   const handleReset = () => {
-    setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '', estado: 'borrador', tags: [], notasInternas: '' });
+    setDatos({ notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '', origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '', apoderado: false, ofac: false, onu: false, pepUafe: false, reportesPrevios: false, observaciones: '', estado: 'borrador', tags: [], notasInternas: '', verificaciones: { ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }, onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }, uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] } } });
     setEvaluaciones({}); setControlesEval({}); setStep(1);
   };
 

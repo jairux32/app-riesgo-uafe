@@ -3,7 +3,8 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { getUserCases } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { calculateInherentRisk } from '../utils/calculations';
-import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download } from 'lucide-react';
+import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download, Bell } from 'lucide-react';
+import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../utils/alertasInteligentes';
 import { ESTADOS_CASO } from '../data/constants';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
@@ -16,6 +17,7 @@ export const Dashboard = ({ onGenerateReport }) => {
   const [filter, setFilter] = useState('month');
   const [riskFilter, setRiskFilter] = useState('all');
   const [actoFilter, setActoFilter] = useState('all');
+  const [alertas, setAlertas] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -56,6 +58,9 @@ export const Dashboard = ({ onGenerateReport }) => {
       }
 
       setCases(filtered);
+      // Generar alertas inteligentes con todos los casos del usuario (no filtrados)
+      const allAlertas = generarAlertas(allCases);
+      setAlertas(allAlertas);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -279,10 +284,69 @@ export const Dashboard = ({ onGenerateReport }) => {
         </div>
       </div>
 
+      {/* Alertas Inteligentes */}
+      {alertas.length > 0 && (
+        <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--rojo)' }}>
+              <Bell size={20} /> Alertas Inteligentes ({alertas.length})
+            </h3>
+            {(() => {
+              const counts = contarAlertasPorPrioridad(alertas);
+              return (
+                <div style={{ display: 'flex', gap: '10px', fontSize: '0.8rem' }}>
+                  {counts.alta > 0 && <span style={{ color: 'var(--rojo)', fontWeight: 'bold' }}>{counts.alta} alta{counts.alta > 1 ? 's' : ''}</span>}
+                  {counts.media > 0 && <span style={{ color: 'var(--amarillo)' }}>{counts.media} media{counts.media > 1 ? 's' : ''}</span>}
+                </div>
+              );
+            })()}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {alertas.slice(0, 8).map((alerta, i) => {
+              const style = getAlertaStyle(alerta.tipo);
+              return (
+                <div key={i} style={{
+                  padding: '12px', background: style.bg, borderRadius: '6px',
+                  borderLeft: `3px solid ${style.color}`, display: 'flex',
+                  justifyContent: 'space-between', alignItems: 'center', gap: '10px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '1rem' }}>{style.icon}</span>
+                      <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: style.color }}>
+                        {alerta.cliente}
+                      </span>
+                      <span style={{
+                        fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
+                        background: alerta.prioridad === 'alta' ? 'var(--rojo)' : 'var(--amarillo)',
+                        color: 'white', textTransform: 'uppercase', fontWeight: 'bold'
+                      }}>
+                        {alerta.prioridad}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', lineHeight: '1.4' }}>
+                      {alerta.mensaje}
+                    </p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--accent)', marginTop: '4px' }}>
+                      💡 Acción: {alerta.accion}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            {alertas.length > 8 && (
+              <p style={{ textAlign: 'center', color: 'var(--txt2)', fontSize: '0.85rem' }}>
+                +{alertas.length - 8} alertas más...
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {alertCases.length > 0 && (
         <div className="card">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', color: 'var(--rojo)' }}>
-            <AlertTriangle size={20} /> Casos que Requieren Atención ({alertCases.length})
+            <AlertTriangle size={20} /> Casos de Riesgo Alto ({alertCases.length})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {alertCases.map((c, i) => (
