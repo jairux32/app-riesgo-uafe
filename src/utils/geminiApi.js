@@ -1,9 +1,12 @@
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import app from '../firebase/config';
 import { CONTEXTO_LEGAL_COMPLETO_ECUADOR, CONTROLES_INTERNOS } from '../data/constants';
 
-const functions = getFunctions(app, 'us-central1');
-const analyzeCaseFn = httpsCallable(functions, 'analyzeCase');
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
+const getApiKey = () => {
+  const key = sessionStorage.getItem('gemini_api_key');
+  if (!key) throw new Error('API Key de Gemini no configurada. Guárdela en Ajustes.');
+  return key;
+};
 
 export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
   const controlesEvaluados = controlesResult.lista.map(c => {
@@ -86,6 +89,38 @@ proporcionados. Usa lenguaje formal apropiado para un documento legal notarial.
 };
 
 export const analizarConGemini = async (promptText) => {
-  const result = await analyzeCaseFn({ prompt: promptText });
-  return result.data.text;
+  const apiKey = getApiKey();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+  const body = {
+    contents: [{ parts: [{ text: promptText }] }],
+    generationConfig: {
+      temperature: 0.2,
+      topP: 0.8,
+      maxOutputTokens: 4096,
+    },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+    ],
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const msg = err.error?.message || `Error HTTP ${response.status}`;
+    throw new Error(`Gemini API: ${msg}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('Gemini no devolvió texto en la respuesta');
+  return text;
 };

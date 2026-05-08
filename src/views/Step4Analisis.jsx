@@ -23,6 +23,15 @@ export const Step4Analisis = ({
   const [signatureOficial, setSignatureOficial] = useState(null);
   const [sigModalOpen, setSigModalOpen] = useState(false);
   const [sigModalRole, setSigModalRole] = useState('');
+  const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('gemini_api_key') || '');
+
+  useEffect(() => {
+    if (apiKey) {
+      sessionStorage.setItem('gemini_api_key', apiKey);
+    } else {
+      sessionStorage.removeItem('gemini_api_key');
+    }
+  }, [apiKey]);
 
   const handleGenerateIA = async () => {
     setIsLoading(true);
@@ -211,11 +220,24 @@ export const Step4Analisis = ({
         {!analysisResult && !isLoading && (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
             <p style={{ color: 'var(--txt2)', marginBottom: '20px' }}>Genera un dictamen jurídico y detección de señales de alerta automatizado.</p>
-            <button className="btn" onClick={handleGenerateIA} style={{ fontSize: '1.1rem', padding: '12px 24px' }}>
+            <div style={{ maxWidth: '400px', margin: '0 auto 16px' }}>
+              <input
+                type="password"
+                className="input-field"
+                placeholder="API Key de Gemini (obligatorio)"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                style={{ textAlign: 'center' }}
+              />
+              <p style={{ fontSize: '0.7rem', color: 'var(--txt2)', marginTop: '4px' }}>
+                Obténgala en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>Google AI Studio</a>
+              </p>
+            </div>
+            <button className="btn" onClick={handleGenerateIA} style={{ fontSize: '1.1rem', padding: '12px 24px' }} disabled={!apiKey}>
               <Bot size={20} /> Generar Análisis con IA
             </button>
-            <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginTop: '10px' }}>
-              Modelo gratuito: gemini-2.5-flash | Consume ~2000 tokens
+            <p style={{ fontSize: '0.75rem', color: 'var(--txt2)', marginTop: '10px' }}>
+              Modelo gratuito: gemini-2.5-flash | ~2000 tokens
             </p>
           </div>
         )}
