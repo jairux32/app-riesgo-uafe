@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
@@ -307,151 +307,144 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   };
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '10px', borderBottom: '1px solid #30363d' }}>
-        <h2>Paso 1: Datos del Caso Notarial</h2>
-        <button 
-          className="btn btn-secondary" 
-          onClick={() => fileInputRef.current?.click()}
-          disabled={importing}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          {importing ? <><Loader size={16} className="spin" /> Importando...</> : <><Upload size={16} /> Importar Excel</>}
-        </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImportExcel}
-          accept=".xlsx,.xls"
-          style={{ display: 'none' }}
-        />
-      </div>
-
-      {importStats && (
-        <div style={{ marginBottom: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '8px', display: 'flex', gap: '20px', justifyContent: 'center', fontSize: '0.9rem' }}>
-          <span style={{ color: 'var(--verde)' }}>✅ Importados: {importStats.imported}</span>
-          <span style={{ color: 'var(--amarillo)' }}>⚠️ Inválidos: {importStats.invalid}</span>
-          <span style={{ color: 'var(--rojo)' }}>❌ Errores: {importStats.error}</span>
+    <div className="flex flex-col gap-4 page-transition">
+      {/* ===== CARD 1: Datos Básicos ===== */}
+      <div className="card">
+        <div className="flex justify-between items-center flex-wrap gap-3" style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <h2 style={{ margin: 0 }}>Paso 1: Datos del Caso Notarial</h2>
+          <button 
+            className="btn btn-secondary btn-sm" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? <><Loader size={14} className="spin" /> Importando...</> : <><Upload size={14} /> Importar Excel</>}
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+          />
         </div>
-      )}
 
+        {importStats && (
+          <div className="flex items-center justify-center gap-4 text-sm" style={{ marginBottom: '16px', padding: '10px', background: 'var(--bg-input)', borderRadius: '8px' }}>
+            <span className="flex items-center gap-1" style={{ color: 'var(--verde)' }}><CheckCircle size={14} /> Importados: {importStats.imported}</span>
+            <span className="flex items-center gap-1" style={{ color: 'var(--amarillo)' }}><AlertTriangle size={14} /> Inválidos: {importStats.invalid}</span>
+            <span className="flex items-center gap-1" style={{ color: 'var(--rojo)' }}><XCircle size={14} /> Errores: {importStats.error}</span>
+          </div>
+        )}
 
-      <div className="grid-2">
-        <div className="form-group">
-          <label>Notaría</label>
-          <input type="text" className="input-field" name="notaria" value={datos.notaria} onChange={handleChange} placeholder="Ej: Notaría Primera de Quito" />
-        </div>
-        <div className="form-group">
-          <label>Notario/a</label>
-          <input type="text" className="input-field" name="notario" value={datos.notario} onChange={handleChange} placeholder="Nombre del notario" />
-        </div>
-        
-        <div className="form-group" style={{ position: 'relative' }} ref={suggestionsRef}>
-          <label>Cliente (o Razón Social)</label>
-          <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} placeholder="Empiece a escribir para buscar en el historial..." />
-          {showSuggestions && (
-            <div style={{
-              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-              background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-              maxHeight: '200px', overflowY: 'auto'
-            }}>
-              {suggestions.map((client, i) => (
-                <div
-                  key={i}
-                  onClick={() => handleSelectClient(client)}
-                  style={{
-                    padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)',
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    transition: 'background 0.15s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <UserCheck size={16} color="var(--accent)" />
-                  <div>
-                    <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{client.cliente}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{client.cedula} {client.actividad ? `• ${client.actividad}` : ''}</div>
+        <div className="grid-2">
+          <div className="form-group">
+            <label>Notaría</label>
+            <input type="text" className="input-field" name="notaria" value={datos.notaria} onChange={handleChange} placeholder="Ej: Notaría Primera de Quito" />
+          </div>
+          <div className="form-group">
+            <label>Notario/a</label>
+            <input type="text" className="input-field" name="notario" value={datos.notario} onChange={handleChange} placeholder="Nombre del notario" />
+          </div>
+          
+          <div className="form-group" style={{ position: 'relative' }} ref={suggestionsRef}>
+            <label>Cliente / Razón Social</label>
+            <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} placeholder="Escriba para buscar en historial..." />
+            {showSuggestions && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
+                background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                maxHeight: '200px', overflowY: 'auto'
+              }}>
+                {suggestions.map((client, i) => (
+                  <div
+                    key={i}
+                    onClick={() => handleSelectClient(client)}
+                    style={{
+                      padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      transition: 'background 0.15s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <UserCheck size={16} color="var(--accent)" />
+                    <div>
+                      <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{client.cliente}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{client.cedula} {client.actividad ? `• ${client.actividad}` : ''}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="form-group">
-          <label>Cédula / RUC / Pasaporte</label>
-           <input
-             type="text"
-             className={`input-field ${validacionCedula ? (validacionCedula.valido ? 'border-verde' : 'border-rojo') : ''}`}
-             name="cedula"
-             value={datos.cedula}
-             onChange={handleChange}
-             placeholder="Ej: 1712345678001"
-           />
-           {validacionCedula && (
-             <p style={{
-               fontSize: '0.8rem',
-               marginTop: '6px',
-               color: validacionCedula.valido ? 'var(--verde)' : 'var(--rojo)',
-               display: 'flex',
-               alignItems: 'center',
-               gap: '4px'
-             }}>
-               {validacionCedula.valido ? '✅' : '❌'} {validacionCedula.mensaje}
-               {validacionCedula.tipo && <span style={{ color: 'var(--txt2)', marginLeft: '4px' }}>({validacionCedula.tipo})</span>}
-             </p>
-           )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="form-group">
+            <label>Cédula / RUC / Pasaporte</label>
+            <input
+              type="text"
+              className={`input-field ${validacionCedula ? (validacionCedula.valido ? 'border-verde' : 'border-rojo') : ''}`}
+              name="cedula"
+              value={datos.cedula}
+              onChange={handleChange}
+              placeholder="Ej: 1712345678001"
+            />
+            {validacionCedula && (
+              <p className="text-xs flex items-center gap-1 mt-2" style={{ color: validacionCedula.valido ? 'var(--verde)' : 'var(--rojo)' }}>
+                <span>{validacionCedula.valido ? <CheckCircle size={12} /> : <XCircle size={12} />}</span>
+                {validacionCedula.mensaje}
+                {validacionCedula.tipo && <span className="text-muted" style={{ marginLeft: '4px' }}>({validacionCedula.tipo})</span>}
+              </p>
+            )}
+          </div>
 
-        <div className="form-group">
-          <label>Tipo de acto notarial</label>
-          <select className="input-field" name="acto" value={datos.acto} onChange={handleChange}>
-            <option value="">-- Seleccione --</option>
-            <option value="Compraventa inmueble">Compraventa inmueble</option>
-            <option value="Constitución compañía">Constitución compañía</option>
-            <option value="Poder especial">Poder especial</option>
-            <option value="Fideicomiso">Fideicomiso</option>
-            <option value="Declaración juramentada">Declaración juramentada</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Valor de la operación (USD)</label>
-           <input type="number" className="input-field" name="valor" value={datos.valor} onChange={handleChange} min="0" />
-           {datos.valor > 0 && (
-             <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginTop: '6px' }}>
-               {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(datos.valor)}
-             </p>
-           )}
-        </div>
+          <div className="form-group">
+            <label>Tipo de acto notarial</label>
+            <select className="input-field" name="acto" value={datos.acto} onChange={handleChange}>
+              <option value="">-- Seleccione --</option>
+              <option value="Compraventa inmueble">Compraventa inmueble</option>
+              <option value="Constitución compañía">Constitución compañía</option>
+              <option value="Poder especial">Poder especial</option>
+              <option value="Fideicomiso">Fideicomiso</option>
+              <option value="Declaración juramentada">Declaración juramentada</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Valor de la operación (USD)</label>
+            <input type="number" className="input-field" name="valor" value={datos.valor} onChange={handleChange} min="0" />
+            {datos.valor > 0 && (
+              <p className="text-sm text-muted mt-2">
+                {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(datos.valor)}
+              </p>
+            )}
+          </div>
 
-        <div className="form-group">
-          <label>Origen declarado de los fondos</label>
-          <input type="text" className="input-field" name="origen" value={datos.origen} onChange={handleChange} />
-        </div>
-        <div className="form-group">
-          <label>Medio de pago</label>
-          <select className="input-field" name="medioPago" value={datos.medioPago} onChange={handleChange}>
-            <option value="">-- Seleccione --</option>
-            <option value="Efectivo">Efectivo</option>
-            <option value="Transferencia">Transferencia</option>
-            <option value="Cheque">Cheque</option>
-            <option value="Mixto">Mixto</option>
-            <option value="N/A">N/A</option>
-          </select>
-        </div>
+          <div className="form-group">
+            <label>Origen declarado de los fondos</label>
+            <input type="text" className="input-field" name="origen" value={datos.origen} onChange={handleChange} />
+          </div>
+          <div className="form-group">
+            <label>Medio de pago</label>
+            <select className="input-field" name="medioPago" value={datos.medioPago} onChange={handleChange}>
+              <option value="">-- Seleccione --</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Mixto">Mixto</option>
+              <option value="N/A">N/A</option>
+            </select>
+          </div>
 
-        <div className="form-group">
-          <label>Actividad económica del cliente</label>
-          <input type="text" className="input-field" name="actividad" value={datos.actividad} onChange={handleChange} />
+          <div className="form-group">
+            <label>Actividad económica del cliente</label>
+            <input type="text" className="input-field" name="actividad" value={datos.actividad} onChange={handleChange} />
+          </div>
         </div>
       </div>
 
-      {/* Sección: Información Adicional ROS (UAFE) */}
-      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '8px' }}>
-        <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FileText size={18} /> Información Adicional para ROS
-        </h3>
+      {/* ===== CARD 2: Datos Complementarios ROS ===== */}
+      <div className="card">
+        <h3 style={{ fontSize: '1.05rem', marginBottom: '16px' }}>Datos Complementarios para ROS</h3>
 
         <div className="grid-2">
           <div className="form-group">
@@ -546,8 +539,8 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         </div>
 
         {datos.tipoPersona === 'natural' && datos.estadoCivil === 'casado' && (
-          <div style={{ marginTop: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '6px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Información del Cónyuge</h4>
+          <div className="mt-4" style={{ padding: '12px 14px', borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
+            <h4 className="text-sm text-muted mb-2">Información del Cónyuge</h4>
             <div className="grid-2">
               <div className="form-group">
                 <label>Nombre del Cónyuge</label>
@@ -562,8 +555,8 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         )}
 
         {datos.tipoPersona === 'juridica' && (
-          <div style={{ marginTop: '15px', padding: '12px', background: 'var(--bg-input)', borderRadius: '6px' }}>
-            <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Representante Legal</h4>
+          <div className="mt-4" style={{ padding: '12px 14px', borderLeft: '2px solid rgba(255,255,255,0.1)' }}>
+            <h4 className="text-sm text-muted mb-2">Representante Legal</h4>
             <div className="grid-2">
               <div className="form-group">
                 <label>Nombre</label>
@@ -577,7 +570,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           </div>
         )}
 
-        <div className="grid-2" style={{ marginTop: '15px' }}>
+        <div className="grid-2 mt-4">
           <div className="form-group">
             <label>Fecha de la Transacción</label>
             <input type="date" className="input-field" name="fechaTransaccion" value={datos.fechaTransaccion} onChange={handleChange} />
@@ -596,106 +589,101 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             </select>
           </div>
         </div>
+      </div>
 
-        <div style={{ marginTop: '15px' }}>
-          <h4 style={{ fontSize: '0.9rem', marginBottom: '10px', color: 'var(--txt2)' }}>Forma de Pago</h4>
-          <div className="grid-2">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input type="checkbox" name="usoEfectivo" checked={datos.usoEfectivo} onChange={handleChange} />
-              ¿Usó efectivo?
-            </label>
-            {datos.usoEfectivo && (
-              <div className="form-group">
-                <label>Monto en efectivo (USD)</label>
-                <input type="number" className="input-field" name="montoEfectivo" value={datos.montoEfectivo} onChange={handleChange} min="0" />
-              </div>
-            )}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input type="checkbox" name="billetesAltaDenominacion" checked={datos.billetesAltaDenominacion} onChange={handleChange} />
-              ¿Billetes de alta denominación?
-            </label>
-            {datos.billetesAltaDenominacion && (
-              <div className="form-group">
-                <label>Monto en billetes alta denom. (USD)</label>
-                <input type="number" className="input-field" name="montoBilletesAlta" value={datos.montoBilletesAlta} onChange={handleChange} min="0" />
-              </div>
-            )}
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input type="checkbox" name="usoActivosVirtuales" checked={datos.usoActivosVirtuales} onChange={handleChange} />
-              ¿Usó activos virtuales?
-            </label>
-            {datos.usoActivosVirtuales && (
-              <div className="form-group">
-                <label>Tipo de activo virtual</label>
-                <input type="text" className="input-field" name="tipoActivoVirtual" value={datos.tipoActivoVirtual} onChange={handleChange} placeholder="Ej: Bitcoin" />
-              </div>
-            )}
-          </div>
+      {/* ===== CARD 3: Forma de Pago y Banderas ===== */}
+      <div className="card">
+        <h3 style={{ fontSize: '1.05rem', marginBottom: '12px' }}>Forma de Pago</h3>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+            <input type="checkbox" name="usoEfectivo" checked={datos.usoEfectivo} onChange={handleChange} />
+            ¿Usó efectivo?
+          </label>
+          {datos.usoEfectivo && (
+            <div className="form-group" style={{ paddingLeft: '26px' }}>
+              <label>Monto en efectivo (USD)</label>
+              <input type="number" className="input-field" name="montoEfectivo" value={datos.montoEfectivo} onChange={handleChange} min="0" />
+            </div>
+          )}
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+            <input type="checkbox" name="billetesAltaDenominacion" checked={datos.billetesAltaDenominacion} onChange={handleChange} />
+            ¿Billetes de alta denominación?
+          </label>
+          {datos.billetesAltaDenominacion && (
+            <div className="form-group" style={{ paddingLeft: '26px' }}>
+              <label>Monto en billetes alta denom. (USD)</label>
+              <input type="number" className="input-field" name="montoBilletesAlta" value={datos.montoBilletesAlta} onChange={handleChange} min="0" />
+            </div>
+          )}
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+            <input type="checkbox" name="usoActivosVirtuales" checked={datos.usoActivosVirtuales} onChange={handleChange} />
+            ¿Usó activos virtuales?
+          </label>
+          {datos.usoActivosVirtuales && (
+            <div className="form-group" style={{ paddingLeft: '26px' }}>
+              <label>Tipo de activo virtual</label>
+              <input type="text" className="input-field" name="tipoActivoVirtual" value={datos.tipoActivoVirtual} onChange={handleChange} placeholder="Ej: Bitcoin" />
+            </div>
+          )}
         </div>
 
-        <div className="grid-2" style={{ marginTop: '15px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+        <div className="flex flex-col gap-2 mt-4">
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
             <input type="checkbox" name="antecedentesPenales" checked={datos.antecedentesPenales} onChange={handleChange} />
             ¿Tiene antecedentes penales o judiciales?
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
             <input type="checkbox" name="registradoInterpolONUOFAC" checked={datos.registradoInterpolONUOFAC} onChange={handleChange} />
             ¿Registrado en INTERPOL, ONU u OFAC?
           </label>
         </div>
-      </div>
 
-      <div style={{ marginTop: '20px', padding: '15px', background: 'var(--bg-input)', borderRadius: '8px' }}>
-        <h3 style={{ fontSize: '1rem', marginBottom: '15px' }}>Banderas de Riesgo</h3>
-        
-        <div className="grid-2">
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+        <hr className="section-divider" />
+
+        <h3 style={{ fontSize: '1.05rem', marginBottom: '12px' }}>Banderas de Riesgo</h3>
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
             <input type="checkbox" name="esPep" checked={datos.esPep} onChange={handleChange} />
             ¿El cliente es PEP (Persona Expuesta Políticamente)?
           </label>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          {datos.esPep && (
+            <div className="form-group" style={{ paddingLeft: '26px' }}>
+              <label style={{ color: 'var(--accent)' }}>Detalle obligatorio de la condición PEP:</label>
+              <input
+                type="text"
+                className={`input-field ${!datos.detallePep ? 'border-rojo' : ''}`}
+                name="detallePep"
+                value={datos.detallePep || ''}
+                onChange={handleChange}
+                placeholder="Ej: Ex-Ministro de Salud (2020-2022)"
+              />
+            </div>
+          )}
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
             <input type="checkbox" name="apoderado" checked={datos.apoderado} onChange={handleChange} />
             ¿Actúa mediante apoderado?
           </label>
-
-          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
             <input type="checkbox" name="reportesPrevios" checked={datos.reportesPrevios} onChange={handleChange} />
-            ¿Tiene reportes previos ante la UAFE conocidos?
+            ¿Tiene reportes previos ante la UAFE?
           </label>
         </div>
-
-        {datos.esPep && (
-          <div className="form-group" style={{ marginTop: '15px' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--accent)', marginBottom: '8px' }}>Detalle obligatorio de la condición PEP:</label>
-            <input
-              type="text"
-              className={`input-field ${!datos.detallePep ? 'border-rojo' : ''}`}
-              name="detallePep"
-              value={datos.detallePep || ''}
-              onChange={handleChange}
-              placeholder="Ej: Ex-Ministro de Salud (2020-2022)"
-            />
-          </div>
-        )}
       </div>
 
-      <div style={{ marginTop: '20px', padding: '15px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3 style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Shield size={18} color="var(--accent)" /> Verificación en Listas Restrictivas
-          </h3>
+      {/* ===== CARD 4: Verificaciones ===== */}
+      <div className="card">
+        <div className="flex justify-between items-center flex-wrap gap-3" style={{ marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Verificación en Listas Restrictivas</h3>
           <button
-            className="btn"
-            style={{ fontSize: '0.8rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className="btn btn-secondary btn-sm"
             onClick={handleVerificarListas}
             disabled={verificando || !datos.cliente}
           >
-            {verificando ? <><Loader size={14} className="spin" /> Verificando...</> : <><Search size={14} /> Verificar Ahora</>}
+            {verificando ? <><Loader size={12} className="spin" /> Verificando...</> : <><Search size={12} /> Verificar Ahora</>}
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
           {[
             { key: 'ofac', label: 'OFAC', url: 'https://sanctionssearch.ofac.treas.gov/' },
             { key: 'onu', label: 'ONU', url: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list' },
@@ -705,41 +693,32 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             const style = getEstadoVerificacionStyle(verif.estado);
             return (
               <div key={key} style={{
-                padding: '12px', background: style.bg, borderRadius: '8px',
-                border: `1px solid ${style.color}30`, transition: 'all 0.2s'
+                padding: '10px', background: style.bg, borderRadius: '8px',
+                border: `1px solid ${style.color}20`
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: style.color }}>{style.icon} {label}</span>
-                  <span style={{ fontSize: '0.75rem', color: style.color, fontWeight: '500' }}>{style.label}</span>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm" style={{ fontWeight: '600', color: style.color }}>{style.icon} {label}</span>
+                  <span className="text-xs" style={{ color: style.color, fontWeight: '500' }}>{style.label}</span>
                 </div>
                 {verif.resultado && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginBottom: '6px', lineHeight: '1.4' }}>
-                    {verif.resultado}
-                  </p>
+                  <p className="text-xs text-muted" style={{ lineHeight: '1.3' }}>{verif.resultado}</p>
                 )}
                 {verif.coincidencias?.length > 0 && (
-                  <div style={{ marginTop: '6px', padding: '6px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--txt2)', marginBottom: '4px' }}>Coincidencias:</p>
+                  <div className="mt-1" style={{ padding: '4px 6px', background: 'rgba(0,0,0,0.15)', borderRadius: '4px' }}>
                     {verif.coincidencias.slice(0, 2).map((coin, i) => (
-                      <div key={i} style={{ fontSize: '0.75rem', color: style.color, display: 'flex', justifyContent: 'space-between' }}>
+                      <div key={i} className="text-xs flex justify-between" style={{ color: style.color }}>
                         <span>{coin.nombre}</span>
                         <span>{coin.confianza}%</span>
                       </div>
                     ))}
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <div className="flex justify-between items-center mt-2">
                   {verif.fecha && (
-                    <span style={{ fontSize: '0.7rem', color: 'var(--txt2)' }}>
-                      {new Date(verif.fecha).toLocaleDateString('es-EC')}
-                    </span>
+                    <span className="text-xs text-muted">{new Date(verif.fecha).toLocaleDateString('es-EC')}</span>
                   )}
-                  <button
-                    className="btn btn-secondary"
-                    style={{ fontSize: '0.7rem', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    onClick={() => window.open(url, '_blank')}
-                  >
-                    <ExternalLink size={12} /> Consultar
+                  <button className="btn-ghost" onClick={() => window.open(url, '_blank')}>
+                    <ExternalLink size={10} /> Consultar
                   </button>
                 </div>
               </div>
@@ -748,15 +727,17 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         </div>
       </div>
 
-      <div className="form-group" style={{ marginTop: '20px' }}>
-        <label>Observaciones generales</label>
-        <textarea className="input-field" name="observaciones" value={datos.observaciones} onChange={handleChange} rows="3" placeholder="Añada cualquier información relevante..."></textarea>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-        <button className="btn" onClick={onNext} disabled={!isComplete}>
-          Siguiente Paso
-        </button>
+      {/* ===== CARD 5: Observaciones y Siguiente ===== */}
+      <div className="card">
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Observaciones generales</label>
+          <textarea className="input-field" name="observaciones" value={datos.observaciones} onChange={handleChange} rows="3" placeholder="Añada cualquier información relevante..."></textarea>
+        </div>
+        <div className="flex justify-end mt-4">
+          <button className="btn" onClick={onNext} disabled={!isComplete}>
+            Siguiente Paso
+          </button>
+        </div>
       </div>
     </div>
   );
