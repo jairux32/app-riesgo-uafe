@@ -268,41 +268,40 @@ function AppContent() {
 
   return (
     <div className="container">
-      <header style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="flex justify-between items-center flex-wrap gap-4" style={{ marginBottom: '30px' }}>
         <div>
           <h1 style={{ color: 'var(--accent)', fontSize: '1.8rem', marginBottom: '5px' }}>Sistema de Análisis de Riesgo LA/FD</h1>
           <p style={{ color: 'var(--txt2)' }}>Para el sector notarial ecuatoriano — Metodología EBR</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className={`btn ${view === 'dashboard' ? '' : 'btn-secondary'}`} onClick={() => setView('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button className={`btn ${view === 'dashboard' ? '' : 'btn-secondary'}`} onClick={() => setView('dashboard')}>
             <LayoutDashboard size={16} /> Dashboard
           </button>
-          <button className={`btn ${view === 'wizard' ? '' : 'btn-secondary'}`} onClick={() => setView('wizard')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <button className={`btn ${view === 'wizard' ? '' : 'btn-secondary'}`} onClick={() => setView('wizard')}>
             <FileText size={16} /> Análisis
           </button>
-          <button className="btn btn-secondary" onClick={() => setView('profile')} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <button className="btn btn-secondary" onClick={() => setView('profile')}>
             <Building2 size={16} /> Perfil
           </button>
           <button
-            className="btn btn-secondary"
+            className="btn-ghost"
             onClick={() => setIsDarkMode(!isDarkMode)}
-            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
             title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           >
-            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <HelpModal />
-          <button className="btn btn-secondary" onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <LogOut size={16} /> Cerrar sesión
+          <button className="btn-ghost" onClick={logout} style={{ color: 'var(--rojo)' }}>
+            <LogOut size={18} />
           </button>
         </div>
       </header>
 
       {view === 'dashboard' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-            <button className="btn" onClick={handleMonthlyReport} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--verde)' }}>
-              <FileDown size={16} /> Generar Reporte Mensual PDF
+          <div className="flex justify-end mb-4">
+            <button className="btn btn-secondary btn-sm" onClick={handleMonthlyReport}>
+              <FileDown size={14} /> Reporte Mensual PDF
             </button>
           </div>
           <Dashboard onGenerateReport={handleMonthlyReport} />
@@ -315,7 +314,7 @@ function AppContent() {
 
       {view === 'wizard' && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+          <div className="flex justify-end mb-4">
             <CaseManager currentCase={{ datos, evaluaciones, controlesEval }} onLoadCase={(c) => { setDatos(c.datos); setEvaluaciones(c.evaluaciones); setControlesEval(c.controlesEval); }} onBatchAnalyze={handleBatchAnalyze} batchProgress={batchProgress} />
           </div>
           <WizardHeader currentStep={step} setStep={setStep} />

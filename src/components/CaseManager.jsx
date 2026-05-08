@@ -213,8 +213,8 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
 
   return (
     <>
-      <button className="btn btn-secondary" onClick={() => setIsOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <FolderOpen size={16} /> Historial
+      <button className="btn btn-secondary btn-sm" onClick={() => setIsOpen(true)}>
+        <FolderOpen size={14} /> Historial
       </button>
 
       {isOpen && (

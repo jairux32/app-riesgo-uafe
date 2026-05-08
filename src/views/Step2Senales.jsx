@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FACTORES_SENALES_UAFE, ESCALA_VALORACION, CATEGORIAS_SENALES } from '../data/constants';
-import { ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, XCircle } from 'lucide-react';
 
 export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) => {
   const [expandedFactor, setExpandedFactor] = useState(null);
@@ -62,11 +62,25 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
     return 'presente';
   };
 
+  // Estilo de píldora para botones de toggle
+  const pillBase = {
+    padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px',
+    border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
+    background: 'transparent', color: 'var(--txt2)',
+    display: 'inline-flex', alignItems: 'center', gap: '5px',
+    transition: 'all 0.15s', fontWeight: '500'
+  };
+  const pillActive = (color) => ({
+    ...pillBase,
+    background: `${color}22`, borderColor: `${color}44`, color: color
+  });
+  const pillInactive = { ...pillBase, opacity: 0.4 };
+
   return (
-    <div>
-      <div className="card" style={{ padding: '20px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{ fontSize: '0.9rem', color: 'var(--txt2)' }}>Progreso de evaluación de señales</span>
+    <div className="page-transition">
+      <div className="card card-sm">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-muted">Progreso de evaluación de señales</span>
           <span style={{ fontWeight: 'bold', color: isAllEvaluated ? 'var(--verde)' : 'var(--accent)' }}>
             {evaluatedCount} / {totalFactors}
           </span>
@@ -75,7 +89,7 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
           <div style={{ width: `${progressPercent}%`, height: '100%', background: isAllEvaluated ? 'var(--verde)' : 'var(--accent)', transition: 'width 0.3s ease', borderRadius: '4px' }} />
         </div>
         {!isAllEvaluated && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginTop: '8px' }}>
+          <p className="text-xs text-muted mt-2">
             Debe evaluar todas las {totalFactors} señales de alerta para continuar.
           </p>
         )}
@@ -91,83 +105,67 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
         }).length;
 
         return (
-        <div key={factor.id} className="card" style={{ cursor: 'pointer', marginBottom: '12px' }} onClick={() => setExpandedFactor(isExpanded ? null : factor.id)}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {isExpanded ? <ChevronUp size={20} color="var(--accent)" /> : <ChevronDown size={20} color="var(--txt2)" />}
+        <div key={factor.id} className="card" style={{ marginBottom: '12px', cursor: 'pointer' }} onClick={() => setExpandedFactor(isExpanded ? null : factor.id)}>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              {isExpanded ? <ChevronUp size={18} color="var(--accent)" /> : <ChevronDown size={18} color="var(--txt2)" />}
               <div>
-                <span style={{ fontSize: '1.1rem', marginRight: '8px' }}>{getCategoriaIcon(factor.id)}</span>
-                <span style={{ fontWeight: 'bold' }}>{factor.nombre}</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--txt2)', marginLeft: '10px' }}>
-                  ({evaluatedInFactor}/{totalInFactor} evaluadas
-                  {presentesInFactor > 0 && <span style={{ color: 'var(--rojo)', marginLeft: '6px' }}>• {presentesInFactor} detectadas</span>})
+                <span style={{ fontSize: '1rem', marginRight: '6px' }}>{getCategoriaIcon(factor.id)}</span>
+                <span style={{ fontWeight: '600' }}>{factor.nombre}</span>
+                <span className="text-xs text-muted" style={{ marginLeft: '8px' }}>
+                  ({evaluatedInFactor}/{totalInFactor}
+                  {presentesInFactor > 0 && <span style={{ color: 'var(--rojo)', marginLeft: '4px' }}>• {presentesInFactor} detectadas</span>})
                 </span>
               </div>
             </div>
-            <span className="badge" style={{ background: 'var(--bg-input)' }}>
+            <span className="text-xs text-muted" style={{ background: 'var(--bg-input)', padding: '2px 8px', borderRadius: '10px' }}>
               Peso: {factor.peso}x
             </span>
           </div>
           
           {isExpanded && (
-            <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.05)' }} onClick={(e) => e.stopPropagation()}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', marginBottom: '15px' }}>
-                {factor.descripcion}
-              </p>
+            <div className="mt-4" style={{ paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.04)' }} onClick={(e) => e.stopPropagation()}>
+              <p className="text-sm text-muted mb-4">{factor.descripcion}</p>
               
               {factor.subcriterios.map((sub) => {
                 const status = getSenalStatus(sub.id);
                 const score = getScoreForSenal(sub.id);
                 const evalSub = evaluaciones[sub.id] || { prob: 0, imp: 1 };
+                const isPresent = status === 'presente';
                 
                 return (
                   <div key={sub.id} style={{ 
-                    marginBottom: '12px', 
-                    padding: '12px', 
-                    background: status === 'presente' ? 'rgba(239, 68, 68, 0.08)' : 'var(--bg-input)', 
+                    marginBottom: '10px', padding: '10px 12px', 
+                    background: isPresent ? 'rgba(239, 68, 68, 0.06)' : 'var(--bg-input)', 
                     borderRadius: '6px',
-                    border: status === 'presente' ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid transparent',
+                    border: `1px solid ${isPresent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.04)'}`,
                     transition: 'all 0.2s'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--txt2)', fontFamily: 'monospace', minWidth: '40px' }}>
-                          {sub.id}
-                        </span>
-                        <span style={{ fontSize: '0.9rem' }}>{sub.pregunta}</span>
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-start gap-2" style={{ flex: 1 }}>
+                        <span className="text-xs text-muted" style={{ fontFamily: 'monospace', minWidth: '38px', paddingTop: '2px' }}>{sub.id}</span>
+                        <span className="text-sm" style={{ lineHeight: '1.4' }}>{sub.pregunta}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div className="flex gap-1" style={{ flexShrink: 0 }}>
                         <button
-                          className={`btn ${status === 'no_presente' ? 'btn-secondary' : ''}`}
-                          style={{ 
-                            padding: '4px 12px', 
-                            fontSize: '0.75rem',
-                            opacity: status === 'no_presente' ? 1 : 0.5,
-                            background: status === 'no_presente' ? 'var(--verde)' : undefined
-                          }}
+                          style={status === 'no_presente' ? pillActive('var(--verde)') : pillInactive}
                           onClick={() => handleToggleSenal(sub.id, false)}
                         >
-                          <XCircle size={12} /> No
+                          <XCircle size={11} /> No
                         </button>
                         <button
-                          className={`btn ${status === 'presente' ? '' : 'btn-secondary'}`}
-                          style={{ 
-                            padding: '4px 12px', 
-                            fontSize: '0.75rem',
-                            opacity: status === 'presente' ? 1 : 0.5,
-                            background: status === 'presente' ? 'var(--rojo)' : undefined
-                          }}
+                          style={status === 'presente' ? pillActive('var(--rojo)') : pillInactive}
                           onClick={() => handleToggleSenal(sub.id, true)}
                         >
-                          <AlertTriangle size={12} /> Sí
+                          <AlertTriangle size={11} /> Sí
                         </button>
                       </div>
                     </div>
                     
-                    {status === 'presente' && (
-                      <div style={{ marginTop: '8px', paddingLeft: '48px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--txt2)', minWidth: '70px' }}>Gravedad:</span>
+                    {isPresent && (
+                      <div className="mt-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted" style={{ minWidth: '55px' }}>Gravedad:</span>
                           <input
                             type="range"
                             min="1"
@@ -177,21 +175,19 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
                             style={{ flex: 1, accentColor: 'var(--rojo)' }}
                           />
                           <span style={{ 
-                            fontWeight: 'bold', 
-                            fontSize: '0.9rem', 
+                            fontWeight: 'bold', fontSize: '0.85rem', 
                             color: score >= 4 ? 'var(--rojo)' : score >= 2 ? 'var(--naranja)' : 'var(--amarillo)',
-                            minWidth: '30px',
-                            textAlign: 'center'
+                            minWidth: '20px', textAlign: 'center'
                           }}>
                             {evalSub.imp}
                           </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--txt2)', minWidth: '80px' }}>
+                          <span className="text-xs text-muted" style={{ minWidth: '70px' }}>
                             {ESCALA_VALORACION.find(e => e.valor === evalSub.imp)?.etiqueta || ''}
                           </span>
                         </div>
-                        <div style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--rojo)', fontWeight: '500' }}>
+                        <p className="text-xs mt-1" style={{ color: 'var(--rojo)', fontWeight: '500' }}>
                           Score: {score} pts
-                        </div>
+                        </p>
                       </div>
                     )}
                   </div>
@@ -203,22 +199,22 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
         );
       })}
 
-      <div className="card" style={{ marginTop: '20px', marginBottom: '20px', background: 'var(--bg-input)' }}>
-        <h3 style={{ fontSize: '0.9rem', marginBottom: '10px' }}>Plantillas rápidas (evaluar todas las señales)</h3>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => applyTemplate('bajo')}>
-            <CheckCircle2 size={14} /> Perfil Bajo Riesgo
+      <div className="card card-sm" style={{ border: '1px dashed rgba(255,255,255,0.1)', marginTop: '4px', marginBottom: '20px' }}>
+        <h3 className="text-sm text-muted mb-2">Plantillas rápidas</h3>
+        <div className="flex gap-2 flex-wrap">
+          <button className="btn btn-secondary btn-sm" onClick={() => applyTemplate('bajo')}>
+            Perfil Bajo
           </button>
-          <button className="btn btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => applyTemplate('estandar')}>
+          <button className="btn btn-secondary btn-sm" onClick={() => applyTemplate('estandar')}>
             Perfil Estándar
           </button>
-          <button className="btn btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => applyTemplate('alto')}>
-            <AlertTriangle size={14} /> Perfil Alto Riesgo
+          <button className="btn btn-secondary btn-sm" onClick={() => applyTemplate('alto')}>
+            <AlertTriangle size={12} /> Perfil Alto
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+      <div className="flex justify-between">
         <button className="btn btn-secondary" onClick={onPrev}>Paso Anterior</button>
         <button className="btn" onClick={onNext} disabled={!isAllEvaluated}>
           {isAllEvaluated ? 'Siguiente Paso' : `Faltan ${totalFactors - evaluatedCount} señales`}
