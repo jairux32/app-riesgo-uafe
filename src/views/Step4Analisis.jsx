@@ -333,7 +333,11 @@ export const Step4Analisis = ({
                           <p style={{ fontWeight: 'bold' }}>Artículos Aplicables:</p>
                           <ul style={{ paddingLeft: '20px' }}>
                             {auditData.legalFoundation.articles.map((article, idx) => (
-                              <li key={idx}><strong>{article.articulo}</strong>: {article.aplicacion}</li>
+                              <li key={idx}>
+                                <strong>{article.norma ? `${article.norma} — ` : ''}{article.articulo}{article.numeral ? ` Num. ${article.numeral}` : ''}</strong>
+                                {article.texto_referencia && <span style={{ display: 'block', fontSize: '0.85rem', color: '#666' }}>"{article.texto_referencia}"</span>}
+                                <span style={{ display: 'block' }}>{article.aplicacion_caso}</span>
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -343,7 +347,10 @@ export const Step4Analisis = ({
                           <p style={{ fontWeight: 'bold' }}>Resoluciones Aplicables:</p>
                           <ul style={{ paddingLeft: '20px' }}>
                             {auditData.legalFoundation.resolutions.map((res, idx) => (
-                              <li key={idx}><strong>{res.resolucion}</strong>: {res.aplicacion}</li>
+                              <li key={idx}>
+                                <strong>{res.resolucion}{res.articulo ? ` — ${res.articulo}` : ''}</strong>
+                                <span style={{ display: 'block' }}>{res.aplicacion_caso}</span>
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -370,6 +377,8 @@ export const Step4Analisis = ({
                         <div key={idx} style={{ padding: '8px 10px', marginBottom: '6px', background: '#f8f9fa', borderLeft: '3px solid #333' }}>
                           <p><strong>{ob.obligacion}</strong></p>
                           {ob.plazo && <p style={{ fontSize: '0.85rem', color: '#666' }}>Plazo: {ob.plazo}</p>}
+                          {ob.procedimiento && <p style={{ fontSize: '0.85rem', color: '#666' }}>Procedimiento: {ob.procedimiento}</p>}
+                          {ob.responsable && <p style={{ fontSize: '0.85rem', color: '#666' }}>Responsable: {ob.responsable}</p>}
                           {ob.consecuencia && <p style={{ fontSize: '0.85rem', color: '#666' }}>Consecuencia: {ob.consecuencia}</p>}
                         </div>
                       ))}
@@ -379,12 +388,14 @@ export const Step4Analisis = ({
 
                 <h3>V. EVALUACIÓN DE CONTROLES INTERNOS</h3>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
-                  <p><strong>Efectividad Global:</strong> {auditData.controls.effectiveness * 100}%</p>
+                  <p><strong>Efectividad Global:</strong> {Math.round(auditData.controls.effectiveness * 100)}%</p>
                   {auditData.controls.effective.length > 0 && (
                     <div style={{ marginTop: '8px' }}>
                       <p style={{ fontWeight: '600', color: 'var(--verde)' }}>Controles Efectivos:</p>
                       <ul style={{ paddingLeft: '20px' }}>
-                        {auditData.controls.effective.map((c, idx) => <li key={idx}>{c}</li>)}
+                        {auditData.controls.effective.map((c, idx) => (
+                          <li key={idx}><strong>{c.nombre || c}</strong>{c.evaluacion ? `: ${c.evaluacion}` : ''}</li>
+                        ))}
                       </ul>
                     </div>
                   )}
@@ -392,7 +403,12 @@ export const Step4Analisis = ({
                     <div style={{ marginTop: '8px' }}>
                       <p style={{ fontWeight: '600', color: 'var(--naranja)' }}>Controles Deficientes:</p>
                       <ul style={{ paddingLeft: '20px' }}>
-                        {auditData.controls.deficient.map((c, idx) => <li key={idx}>{c}</li>)}
+                        {auditData.controls.deficient.map((c, idx) => (
+                          <li key={idx}>
+                            <strong>{c.nombre || c}</strong>{c.evaluacion ? `: ${c.evaluacion}` : ''}
+                            {c.recomendacion && <span style={{ display: 'block', fontSize: '0.85rem', color: '#666' }}>→ {c.recomendacion}</span>}
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   )}
@@ -426,7 +442,13 @@ export const Step4Analisis = ({
                     <div style={{ marginTop: '10px' }}>
                       <p style={{ fontWeight: '600' }}>Acciones Inmediatas:</p>
                       <ul style={{ paddingLeft: '20px' }}>
-                        {auditData.recommendation.immediateActions.map((a, idx) => <li key={idx}>{a}</li>)}
+                        {auditData.recommendation.immediateActions.map((a, idx) => (
+                          <li key={idx}>
+                            <strong>{a.accion || a}</strong>
+                            {a.plazo && <span style={{ fontSize: '0.85rem', color: '#666' }}> — Plazo: {a.plazo}</span>}
+                            {a.responsable && <span style={{ fontSize: '0.85rem', color: '#666' }}> | Responsable: {a.responsable}</span>}
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   )}
@@ -441,6 +463,47 @@ export const Step4Analisis = ({
                   {auditData.recommendation.followUpRequired && (
                     <p style={{ marginTop: '8px', fontWeight: '600', color: '#333' }}>Requiere Seguimiento — Próxima revisión: {auditData.recommendation.nextReview}</p>
                   )}
+                </div>
+
+                {auditData.evidence.length > 0 && (
+                  <>
+                    <h3>VIII. EVIDENCIAS</h3>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr style={{ background: '#f0f0f0' }}>
+                            <th style={{ padding: '6px', textAlign: 'left', borderBottom: '1px solid #ccc' }}>Tipo</th>
+                            <th style={{ padding: '6px', textAlign: 'left', borderBottom: '1px solid #ccc' }}>Descripción</th>
+                            <th style={{ padding: '6px', textAlign: 'left', borderBottom: '1px solid #ccc' }}>Fuente</th>
+                            <th style={{ padding: '6px', textAlign: 'center', borderBottom: '1px solid #ccc' }}>Fiabilidad</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {auditData.evidence.map((ev, idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                              <td style={{ padding: '6px' }}>{ev.tipo}</td>
+                              <td style={{ padding: '6px' }}>{ev.descripcion}</td>
+                              <td style={{ padding: '6px', color: '#666' }}>{ev.fuente}</td>
+                              <td style={{ padding: '6px', textAlign: 'center', fontWeight: '600', color: ev.fiabilidad === 'alta' ? 'var(--verde)' : ev.fiabilidad === 'media' ? 'var(--amarillo)' : 'var(--rojo)' }}>
+                                {ev.fiabilidad}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+
+                <div style={{ marginTop: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '4px', fontFamily: 'sans-serif', fontSize: '0.8rem', color: '#666' }}>
+                  <strong>IX. TRAZABILIDAD</strong>
+                  <p style={{ marginTop: '4px' }}>
+                    Factores evaluados: {auditData.traction.factorsEvaluated.join(', ')} |
+                    Señales verificadas: {auditData.traction.signalsChecked} |
+                    Señales activadas: {auditData.traction.signalsActivated} |
+                    Artículos citados: {auditData.traction.articlesCited} |
+                    Metodología: {auditData.traction.methodology}
+                  </p>
                 </div>
               </div>
             </div>

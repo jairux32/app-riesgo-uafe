@@ -31,12 +31,27 @@ export const transformAuditForDisplay = (auditData) => {
     },
 
     // Obligations with deadlines
-    obligations: auditData.obligaciones_activadas || [],
+    obligations: (auditData.obligaciones_activadas || []).map(ob => ({
+      obligacion: ob.obligacion,
+      plazo: ob.plazo,
+      procedimiento: ob.procedimiento,
+      responsable: ob.responsable,
+      consecuencia: ob.consecuencia_incumplimiento
+    })),
 
     // Controls evaluation
     controls: {
-      effective: auditData.evaluacion_controles?.controles_efectivos || [],
-      deficient: auditData.evaluacion_controles?.controles_deficientes || [],
+      effective: (auditData.evaluacion_controles?.controles_efectivos || []).map(c => ({
+        id: c.id,
+        nombre: c.nombre,
+        evaluacion: c.evaluacion
+      })),
+      deficient: (auditData.evaluacion_controles?.controles_deficientes || []).map(c => ({
+        id: c.id,
+        nombre: c.nombre,
+        evaluacion: c.evaluacion,
+        recomendacion: c.recomendacion
+      })),
       criticalGaps: auditData.evaluacion_controles?.brechas_criticas || [],
       effectiveness: auditData.evaluacion_controles?.efectividad_global || 0
     },
