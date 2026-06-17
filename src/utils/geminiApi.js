@@ -1,4 +1,5 @@
 import { CONTEXTO_LEGAL_COMPLETO_ECUADOR, CONTROLES_INTERNOS } from '../data/constants';
+import { AUDIT_RESPONSE_SCHEMA } from './auditSchema';
 
 const GEMINI_MODEL = 'gemini-2.5-flash';
 
@@ -53,38 +54,28 @@ ${controlesEvaluados.map(c => `  • ${c.nombre}: ${c.existe ? 'Existe' : 'NO ex
 
 INSTRUCCIÓN:
 Basándote EXCLUSIVAMENTE en la normativa ecuatoriana vigente detallada arriba,
-genera un análisis jurídico-normativo del caso en el siguiente formato:
+genera un análisis jurídico-normativo del caso en formato JSON estructurado.
 
-## 1. DICTAMEN DE RIESGO
-Emite un dictamen formal sobre el nivel de riesgo LA/FD de este caso, 
-fundamentado en los datos y scores calculados.
+El JSON debe incluir EXACTAMENTE las siguientes secciones:
 
-## 2. SEÑALES DE ALERTA IDENTIFICADAS
-Lista las señales de alerta concretas presentes en este caso, citando para 
-cada una la norma ecuatoriana que la sustenta. Si no hay señales claras, indícalo.
+1. "meta": Metadata del análisis (versión, fecha, modelo, confianza)
+2. "dictamen": Dictamen formal con niveles de riesgo y resumen ejecutivo
+3. "senales_alerta_identificadas": Array de señales de alerta detectadas con evidencia y norma
+4. "fundamento_legal": Artículos y resoluciones aplicables con aplicación al caso
+5. "obligaciones_activadas": Obligaciones concretas para la notaría con plazos
+6. "evaluacion_controles": Evaluación de controles internos (efectivos, deficientes, brechas)
+7. "analisis_tipologia": Tipologías de lavado detectadas y factores amplificadores/atenuantes
+8. "ros": Análisis sobre si amerita Reporte de Operación Sospechosa
+9. "recomendacion_final": Decisión clara (ELEVAR_CON_DILIGENCIAS, SOLICITAR_INFO, o NO_ELEVAR)
+10. "evidencias": Lista de evidencias que soportan el análisis
+11. "trazabilidad": Metadatos del análisis (factores evaluados, señales verificadas, artículos citados)
 
-## 3. FUNDAMENTO LEGAL APLICABLE
-Cita los artículos específicos de la Ley, Reglamento y Resoluciones UAFE 
-que aplican a este caso concreto.
-
-## 4. OBLIGACIONES ACTIVADAS PARA LA NOTARÍA
-Describe de forma concreta y accionable qué debe hacer la notaría en este caso,
-con plazos y procedimientos específicos según la normativa ecuatoriana.
-
-## 5. RECOMENDACIÓN FINAL
-Emite una recomendación clara:
-- ELEVAR LA ESCRITURA con las diligencias indicadas, O
-- SOLICITAR INFORMACIÓN ADICIONAL antes de proceder, O  
-- NO ELEVAR LA ESCRITURA por riesgo inaceptable
-
-## 6. SOBRE EL REPORTE DE OPERACIÓN SOSPECHOSA (ROS)
-${scores.inherente >= 15 ?
-      'Analiza si este caso amerita o podría ameritar un ROS a la UAFE, según los criterios de la Resolución UAFE-DG-2023-0689 y la Ley vigente. Indica el procedimiento.' :
-      'Indica si podría escalar a ROS ante un cambio en las circunstancias.'}
-
-Recuerda: Tu análisis debe ser estrictamente jurídico, objetivo y basado en 
-la normativa ecuatoriana vigente. No inventes hechos, solo analiza los datos 
-proporcionados. Usa lenguaje formal apropiado para un documento legal notarial.
+IMPORTANTE:
+- Usa EXACTAMENTE los códigos de señales de alerta del catálogo (SA01, SA05, etc.)
+- Cita artículos específicos de la Ley Orgánica 2024 y resoluciones UAFE
+- Sé estrictamente jurídico, objetivo y basado en normativa ecuatoriana vigente
+- No inventes hechos, solo analiza los datos proporcionados
+- El JSON debe ser válido y seguir el esquema proporcionado
 `;
 };
 
@@ -97,7 +88,9 @@ export const analizarConGemini = async (promptText) => {
     generationConfig: {
       temperature: 0.2,
       topP: 0.8,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
+      responseMimeType: "application/json",
+      responseSchema: AUDIT_RESPONSE_SCHEMA,
     },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
@@ -122,5 +115,10 @@ export const analizarConGemini = async (promptText) => {
   const data = await response.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Gemini no devolvió texto en la respuesta');
-  return text;
+
+  try {
+    return JSON.parse(text);
+  } catch (parseError) {
+    throw new Error(`Error parsing Gemini response as JSON: ${parseError.message}`, { cause: parseError });
+  }
 };

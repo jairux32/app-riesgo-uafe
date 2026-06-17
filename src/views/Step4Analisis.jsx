@@ -1,15 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import DOMPurify from 'dompurify';
 import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, Shield } from 'lucide-react';
 import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
-import { marked } from 'marked';
 import { exportToPDF, exportToExcel, exportROSPDF } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { SignatureModal } from '../components/SignatureModal';
+import { transformAuditForDisplay, formatConfidence } from '../utils/auditTransformer';
 
 export const Step4Analisis = ({
   datos, setDatos, scores, controlesResult, factoresResult, evaluaciones,
@@ -102,11 +101,7 @@ export const Step4Analisis = ({
     }
   };
 
-  const renderMarkdown = (text) => {
-    if (!text) return { __html: '' };
-    const rawHtml = marked.parse(text);
-    return { __html: DOMPurify.sanitize(rawHtml) };
-  };
+  const auditData = analysisResult ? transformAuditForDisplay(analysisResult) : null;
 
   return (
     <div>
@@ -264,7 +259,7 @@ export const Step4Analisis = ({
           </div>
         )}
 
-          {analysisResult && (
+          {auditData && (
             <div style={{ 
               display: 'flex', 
               justifyContent: 'center', 
@@ -286,8 +281,168 @@ export const Step4Analisis = ({
                   fontFamily: 'serif',
                   textAlign: 'justify'
                 }}
-                dangerouslySetInnerHTML={renderMarkdown(analysisResult)}
-              />
+              >
+                <h2>DICTAMEN DE ANÁLISIS DE RIESGO LA/FD</h2>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '0.85rem', color: '#666', fontFamily: 'sans-serif' }}>
+                  <span>Fecha: {new Date(auditData.header.fecha).toLocaleDateString('es-EC')}</span>
+                  <span>Modelo: {auditData.header.modelo}</span>
+                  <span>Confianza: {formatConfidence(auditData.header.confianza)}</span>
+                </div>
+
+                <h3>I. DICTAMEN EJECUTIVO</h3>
+                <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                  <p><strong>Nivel de Riesgo Inherente:</strong> {auditData.riskLevels.inherent}</p>
+                  <p><strong>Nivel de Riesgo Residual:</strong> {auditData.riskLevels.residual}</p>
+                  <p><strong>Clasificación Final:</strong> {auditData.riskLevels.classification}</p>
+                  <p style={{ marginTop: '10px' }}>{auditData.riskLevels.summary}</p>
+                </div>
+
+                {auditData.alertSignals && Object.entries(auditData.alertSignals).some(([, signals]) => signals.length > 0) && (
+                  <>
+                    <h3>II. SEÑALES DE ALERTA IDENTIFICADAS</h3>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                      {Object.entries(auditData.alertSignals).map(([category, signals]) => {
+                        if (signals.length === 0) return null;
+                        const categoryLabels = {
+                          identidad: 'Identidad', corporativa: 'Corporativa', transaccional: 'Transaccional',
+                          internacional: 'Internacional', bienes_raices: 'Bienes Raíces', activos_virtuales: 'Activos Virtuales', otra: 'Otra'
+                        };
+                        return (
+                          <div key={category} style={{ marginBottom: '12px' }}>
+                            <p style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>{categoryLabels[category] || category}</p>
+                            {signals.map((signal, idx) => (
+                              <div key={idx} style={{ padding: '6px 10px', marginBottom: '4px', borderLeft: `3px solid ${signal.severidad === 'critica' ? 'var(--rojo)' : signal.severidad === 'alta' ? 'var(--naranja)' : signal.severidad === 'media' ? 'var(--amarillo)' : 'var(--verde)'}`, background: '#f8f9fa' }}>
+                                <span style={{ fontWeight: '600' }}>{signal.codigo}</span>: {signal.descripcion}
+                                {signal.norma && <span style={{ color: '#666', fontSize: '0.8rem' }}> — {signal.norma}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                {auditData.legalFoundation.articles.length > 0 && (
+                  <>
+                    <h3>III. FUNDAMENTO LEGAL</h3>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                      {auditData.legalFoundation.articles.length > 0 && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <p style={{ fontWeight: 'bold' }}>Artículos Aplicables:</p>
+                          <ul style={{ paddingLeft: '20px' }}>
+                            {auditData.legalFoundation.articles.map((article, idx) => (
+                              <li key={idx}><strong>{article.articulo}</strong>: {article.aplicacion}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {auditData.legalFoundation.resolutions.length > 0 && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <p style={{ fontWeight: 'bold' }}>Resoluciones Aplicables:</p>
+                          <ul style={{ paddingLeft: '20px' }}>
+                            {auditData.legalFoundation.resolutions.map((res, idx) => (
+                              <li key={idx}><strong>{res.resolucion}</strong>: {res.aplicacion}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {auditData.legalFoundation.gafiatCriteria.length > 0 && (
+                        <div>
+                          <p style={{ fontWeight: 'bold' }}>Criterios GAFIAT:</p>
+                          <ul style={{ paddingLeft: '20px' }}>
+                            {auditData.legalFoundation.gafiatCriteria.map((crit, idx) => (
+                              <li key={idx}><strong>{crit.criterio}</strong>: {crit.aplicacion}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {auditData.obligations.length > 0 && (
+                  <>
+                    <h3>IV. OBLIGACIONES ACTIVADAS</h3>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                      {auditData.obligations.map((ob, idx) => (
+                        <div key={idx} style={{ padding: '8px 10px', marginBottom: '6px', background: '#f8f9fa', borderLeft: '3px solid #333' }}>
+                          <p><strong>{ob.obligacion}</strong></p>
+                          {ob.plazo && <p style={{ fontSize: '0.85rem', color: '#666' }}>Plazo: {ob.plazo}</p>}
+                          {ob.consecuencia && <p style={{ fontSize: '0.85rem', color: '#666' }}>Consecuencia: {ob.consecuencia}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <h3>V. EVALUACIÓN DE CONTROLES INTERNOS</h3>
+                <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
+                  <p><strong>Efectividad Global:</strong> {auditData.controls.effectiveness * 100}%</p>
+                  {auditData.controls.effective.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <p style={{ fontWeight: '600', color: 'var(--verde)' }}>Controles Efectivos:</p>
+                      <ul style={{ paddingLeft: '20px' }}>
+                        {auditData.controls.effective.map((c, idx) => <li key={idx}>{c}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {auditData.controls.deficient.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <p style={{ fontWeight: '600', color: 'var(--naranja)' }}>Controles Deficientes:</p>
+                      <ul style={{ paddingLeft: '20px' }}>
+                        {auditData.controls.deficient.map((c, idx) => <li key={idx}>{c}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {auditData.controls.criticalGaps.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <p style={{ fontWeight: '600', color: 'var(--rojo)' }}>Brechas Críticas:</p>
+                      <ul style={{ paddingLeft: '20px' }}>
+                        {auditData.controls.criticalGaps.map((c, idx) => <li key={idx}>{c}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {auditData.ros.required && (
+                  <>
+                    <h3>VI. ANÁLISIS ROS</h3>
+                    <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', padding: '12px', background: '#fef2f2', borderLeft: '4px solid var(--rojo)' }}>
+                      <p style={{ fontWeight: 'bold', color: 'var(--rojo)' }}>AMERITA REPORTE DE OPERACIÓN SOSPECHOSA</p>
+                      <p style={{ marginTop: '6px' }}>Probabilidad de escalamiento: {auditData.ros.probability * 100}%</p>
+                      <p style={{ marginTop: '6px' }}>{auditData.ros.justification}</p>
+                      <p style={{ marginTop: '6px' }}><strong>Procedimiento:</strong> {auditData.ros.procedure}</p>
+                    </div>
+                  </>
+                )}
+
+                <h3>VII. RECOMENDACIÓN FINAL</h3>
+                <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', padding: '12px', border: '2px solid #333', borderRadius: '4px' }}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1rem', textTransform: 'uppercase' }}>{auditData.recommendation.decision.replace(/_/g, ' ')}</p>
+                  <p style={{ marginTop: '8px' }}>{auditData.recommendation.justification}</p>
+                  {auditData.recommendation.immediateActions.length > 0 && (
+                    <div style={{ marginTop: '10px' }}>
+                      <p style={{ fontWeight: '600' }}>Acciones Inmediatas:</p>
+                      <ul style={{ paddingLeft: '20px' }}>
+                        {auditData.recommendation.immediateActions.map((a, idx) => <li key={idx}>{a}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {auditData.recommendation.conditions.length > 0 && (
+                    <div style={{ marginTop: '8px' }}>
+                      <p style={{ fontWeight: '600' }}>Condiciones para Proceder:</p>
+                      <ul style={{ paddingLeft: '20px' }}>
+                        {auditData.recommendation.conditions.map((c, idx) => <li key={idx}>{c}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {auditData.recommendation.followUpRequired && (
+                    <p style={{ marginTop: '8px', fontWeight: '600', color: '#333' }}>Requiere Seguimiento — Próxima revisión: {auditData.recommendation.nextReview}</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

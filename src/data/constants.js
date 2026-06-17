@@ -448,3 +448,39 @@ export async function cargarCatalogo(nombre) {
     return [];
   }
 }
+
+// JSON Schema constants for Gemini API structured responses
+export const GEMINI_JSON_CONFIG = {
+  responseMimeType: "application/json",
+  maxOutputTokens: 8192
+};
+
+// Decision enum values for recommendation
+export const RECOMMENDATION_DECISIONS = {
+  ELEVAR_CON_DILIGENCIAS: 'ELEVAR_CON_DILIGENCIAS',
+  SOLICITAR_INFO: 'SOLICITAR_INFO',
+  NO_ELEVAR: 'NO_ELEVAR'
+};
+
+// Severity levels for alert signals
+export const ALERT_SEVERITY = {
+  BAJA: 'baja',
+  MEDIA: 'media',
+  ALTA: 'alta',
+  CRITICA: 'critica'
+};
+
+// Evidence types
+export const EVIDENCE_TYPES = {
+  DOCUMENTO: 'documento',
+  VERIFICACION: 'verificacion',
+  COMPORTAMIENTO: 'comportamiento',
+  DATOS_EXTERNOS: 'datos_externos'
+};
+
+// Reliability levels
+export const RELIABILITY_LEVELS = {
+  ALTA: 'alta',
+  MEDIA: 'media',
+  BAJA: 'baja'
+};
