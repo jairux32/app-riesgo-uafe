@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyC36cgKZEJAHIz8xZpg00wiKCLnABv3Y9M',
@@ -11,5 +12,23 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// App Check con reCAPTCHA v3. Solo se inicializa si hay site key configurada:
+// sin ella la app sigue funcionando, pero la Function rechazará las llamadas
+// cuando ENFORCE_APP_CHECK=true.
+const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
+
+if (appCheckSiteKey) {
+  const debugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
+  if (import.meta.env.DEV && debugToken) {
+    globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken === 'true' ? true : debugToken;
+  }
+
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 export const auth = getAuth(app);
 export default app;

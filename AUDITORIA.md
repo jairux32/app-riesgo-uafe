@@ -420,7 +420,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25` y los siguientes de dependencias. Verificación actual: `npm test` 53/53, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139` y los de seguridad/validación. Verificación actual: `npm test` 61/61, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -430,14 +430,15 @@ Aplicado en los commits `c1af54c`, `e909d25` y los siguientes de dependencias. V
 | Deriva cliente/servidor del contexto legal | **Corregido** | `functions/legalContext.js` replicado y test anti-deriva |
 | Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio” |
 | PII pública (`clientes.json`) | **Corregido** | Retirado de `public/`; carga manual desde archivo local; `data-local/` ignorado |
-| Reglas Firestore demasiado abiertas | **Mitigado** | `list/get` exigen `userId`; `audit_logs` append-only. Falta probar con emulador |
-| `analyzeCase` abierta a Internet | **Corregido** | Bearer token verificado, POST, CORS restringido y límites de prompt/tokens. Falta rate limiting/App Check |
+| Reglas Firestore demasiado abiertas | **Corregido** | `list/get` exigen `userId`; `audit_logs`/`audit_heads` solo los escribe la Function. Falta probar con emulador |
+| `analyzeCase` abierta a Internet | **Corregido** | Bearer token con revocación, POST, CORS, límites y rate limit por usuario. App Check opcional disponible (`ENFORCE_APP_CHECK=true`) |
 | Efectivo > 100 SBU | **Corregido** | Bloqueo en `Step1Datos` + validación de medio de pago desde USD 10.000 |
 | Duplicados, offline y Dashboard | **Corregido** | Guardado por `updateCase`, pendientes visibles/actualizables, navegación real, análisis IA persistido |
 | Parser de 56 señales | **Parcial** | Inicializa las 56; las reglas heurísticas cubren 14. Las no detectadas quedan en 0 explícito |
 | `xlsx@0.18.5` con CVEs sin parche npm | **Corregido** | Migrado a SheetJS 0.20.3 (tarball oficial) más overrides de `websocket-driver`, `zod` y `@grpc/grpc-js`; `npm audit` en 0 |
 | Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
-| Audit trail server-side con hash | **Pendiente** | Los logs del cliente siguen siendo forjables |
+| Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
+| Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
 | DDC/BF, RESU/NO-RESU y ROS/NO-ROS como workflow | **Pendiente** | Hoy son recomendaciones del dictamen, no estados del sistema |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**

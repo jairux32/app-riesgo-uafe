@@ -36,6 +36,7 @@ npm run test:watch # Tests en modo watch
    ```
 3. Para notificaciones push, generar VAPID key en Firebase Console y agregarla a `.env`
 4. Opcional: definir `ALLOWED_ORIGINS` (separados por coma) para restringir CORS de `analyzeCase`
+5. Opcional: registrar App Check (reCAPTCHA v3) en Firebase Console, poner `VITE_APPCHECK_SITE_KEY` en `.env` y `ENFORCE_APP_CHECK=true` en Functions
 
 ## Arquitectura
 
@@ -62,8 +63,9 @@ npm run test:watch # Tests en modo watch
 
 ### Backend
 - `functions/index.js`:
-  - `analyzeCase` (`onRequest`) — Proxy autenticado (Bearer token) hacia Groq
+  - `analyzeCase` (`onRequest`) — Proxy autenticado (Bearer token) hacia Groq, con rate limit por usuario y App Check opcional
   - `notifyHighRiskCase` (`onDocumentCreated`) — Notificación push para riesgo ALTO
+  - `auditCaseChanges` (`onDocumentWritten`) — Audit trail server-side con cadena de hashes SHA-256
 - `functions/legalContext.js` — Copia del contexto legal inyectado como system prompt
 
 ### Persistencia
@@ -76,11 +78,12 @@ npm run test:watch # Tests en modo watch
 La base de clientes **no se publica** en el hosting. `data-local/` está ignorado por git y la carga se hace manualmente desde la UI (archivo JSON local → IndexedDB).
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (53 tests):
+Tests con **vitest** + **@testing-library/react** (61 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte y límite de efectivo
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
+- `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA
 
 ## Despliegue
 La carpeta `dist/` se despliega en **Firebase Hosting**. CI/CD vía GitHub Actions (`.github/workflows/`).

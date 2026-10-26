@@ -1,10 +1,11 @@
 const { onRequest } = require('firebase-functions/v2/https');
-const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getAuth } = require('firebase-admin/auth');
 const { initializeApp } = require('firebase-admin/app');
+const crypto = require('node:crypto');
 const { CONTEXTO_LEGAL_COMPLETO_ECUADOR } = require('./legalContext');
 
 initializeApp();
@@ -16,6 +17,37 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // Límites de entrada: evitan abuso de cuota y prompts desmesurados.
 const MAX_PROMPT_CHARS = 30000;
 const MAX_OUTPUT_TOKENS = 6000;
+
+// Rate limit best-effort por instancia. Para un límite distribuido y exacto
+// habría que usar Firestore/Redis; esto frena el abuso trivial sin añadir
+// latencia ni lecturas a cada llamada.
+const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 20);
+const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 10 * 60 * 1000);
+const intentosPorUsuario = new Map();
+
+function excedeLimite(uid) {
+  const ahora = Date.now();
+  const registro = intentosPorUsuario.get(uid);
+
+  if (!registro || ahora - registro.inicio > RATE_LIMIT_WINDOW_MS) {
+    intentosPorUsuario.set(uid, { inicio: ahora, cuenta: 1 });
+    return false;
+  }
+
+  registro.cuenta += 1;
+
+  if (intentosPorUsuario.size > 5000) {
+    for (const [clave, valor] of intentosPorUsuario) {
+      if (ahora - valor.inicio > RATE_LIMIT_WINDOW_MS) intentosPorUsuario.delete(clave);
+    }
+  }
+
+  return registro.cuenta > RATE_LIMIT_MAX;
+}
+
+// App Check opcional: activar con ENFORCE_APP_CHECK=true cuando la app ya
+// tenga registrado su proveedor (reCAPTCHA v3) en Firebase Console.
+const APP_CHECK_REQUERIDO = process.env.ENFORCE_APP_CHECK === 'true';
 
 // Orígenes permitidos. Configurar ALLOWED_ORIGINS (separados por coma) con el
 // dominio real de la notaría; por defecto solo se aceptan localhost y los
@@ -52,10 +84,22 @@ exports.analyzeCase = onRequest(
         return;
       }
 
+      let decoded;
       try {
-        await getAuth().verifyIdToken(tokenMatch[1]);
+        // El segundo argumento comprueba revocación de tokens/sesión.
+        decoded = await getAuth().verifyIdToken(tokenMatch[1], true);
       } catch {
         res.status(401).json({ error: 'Token inválido o expirado' });
+        return;
+      }
+
+      if (APP_CHECK_REQUERIDO && !req.app) {
+        res.status(401).json({ error: 'App Check requerido' });
+        return;
+      }
+
+      if (excedeLimite(decoded.uid)) {
+        res.status(429).json({ error: 'Demasiadas solicitudes. Intente más tarde.' });
         return;
       }
 
@@ -161,5 +205,78 @@ exports.notifyHighRiskCase = onDocumentCreated(
     } catch (err) {
       console.error('Error enviando notificación:', err.message);
     }
+  }
+);
+
+// Audit trail server-side con cadena de hashes.
+// Cada escritura en `cases/{caseId}` genera un registro inmutable en
+// `audit_logs` y actualiza la cabeza de la cadena en `audit_heads/{caseId}`.
+// El cliente no puede escribir en ninguna de las dos colecciones.
+const hashAuditoria = (partes) =>
+  crypto.createHash('sha256').update(partes.join('|')).digest('hex');
+
+exports.auditCaseChanges = onDocumentWritten(
+  { document: 'cases/{caseId}', region: 'us-central1' },
+  async (event) => {
+    const before = event.data.before;
+    const after = event.data.after;
+    const caseId = event.params.caseId;
+
+    const action = !before.exists
+      ? 'CASO_CREADO'
+      : !after.exists
+        ? 'CASO_ELIMINADO'
+        : 'CASO_ACTUALIZADO';
+
+    const snapshot = after.exists ? after : before;
+    const data = snapshot.data() || {};
+    const userId = data.userId;
+
+    if (!userId) return;
+
+    const detalles = {
+      cliente: data.datos?.cliente || null,
+      acto: data.datos?.acto || null,
+      estado: data.datos?.estado || null,
+      score: data.inherentScore ?? null
+    };
+
+    const db = getFirestore();
+    const headRef = db.collection('audit_heads').doc(caseId);
+    const logRef = db.collection('audit_logs').doc();
+
+    await db.runTransaction(async (tx) => {
+      const headSnap = await tx.get(headRef);
+      const prevHash = headSnap.exists
+        ? (headSnap.get('lastHash') || 'GENESIS')
+        : 'GENESIS';
+      const timestampIso = new Date().toISOString();
+      const hash = hashAuditoria([
+        caseId,
+        action,
+        timestampIso,
+        prevHash,
+        JSON.stringify(detalles)
+      ]);
+
+      tx.set(logRef, {
+        caseId,
+        userId,
+        action,
+        details: detalles,
+        source: 'server',
+        timestampIso,
+        prevHash,
+        hash,
+        timestamp: FieldValue.serverTimestamp()
+      });
+
+      tx.set(headRef, {
+        caseId,
+        userId,
+        lastHash: hash,
+        updatedAt: FieldValue.serverTimestamp()
+      });
+    });
   }
 );

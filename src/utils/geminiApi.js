@@ -1,6 +1,7 @@
 import { getAuth } from 'firebase/auth';
 import app from '../firebase/config';
 import { CONTROLES_INTERNOS } from '../data/constants';
+import { validarRespuestaAuditoria } from './auditValidator';
 
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
   || 'https://us-central1-app-riesgo-uafe.cloudfunctions.net/analyzeCase';
@@ -192,8 +193,19 @@ export const analizarConGemini = async (promptText) => {
   if (!text) throw new Error('El servidor no devolvió respuesta de IA');
 
   try {
-    return JSON.parse(text);
+    const data = JSON.parse(text);
+    const { valido, errores } = validarRespuestaAuditoria(data);
+
+    if (!valido) {
+      // Un dictamen incompleto no debe llegar al PDF ni usarse para decidir.
+      throw new Error(
+        `La IA devolvió un dictamen incompleto (${errores.length} error(es)): ${errores.slice(0, 5).join('; ')}`
+      );
+    }
+
+    return data;
   } catch (parseError) {
+    if (parseError.message.startsWith('La IA devolvió')) throw parseError;
     throw new Error(`Error al procesar respuesta de IA: ${parseError.message}`, { cause: parseError });
   }
 };

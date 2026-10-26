@@ -23,20 +23,21 @@ service cloud.firestore {
         && request.auth.uid == userId;
     }
 
-    // El audit log es append-only. El cliente no puede modificarlo ni borrarlo.
-    // Nota: para no repudio real debe escribirse desde Cloud Functions; esta
-    // regla solo impide la alteración posterior.
+    // El audit log lo escribe únicamente la Cloud Function `auditCaseChanges`
+    // (Admin SDK, que no pasa por estas reglas). El cliente solo puede leer.
     match /audit_logs/{documentId} {
       allow list: if request.auth != null
         && resource.data.userId == request.auth.uid;
       allow get: if request.auth != null
         && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasAll(['userId', 'action', 'timestamp'])
-        && request.resource.data.action is string
-        && request.resource.data.action.size() <= 80;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
+    }
+
+    // Cabeza de la cadena de hashes de cada caso. Solo la Function la escribe.
+    match /audit_heads/{caseId} {
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
     }
 
     match /users/{userId} {

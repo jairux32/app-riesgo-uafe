@@ -5,15 +5,12 @@ import {
   updateCaseInFirestore
 } from '../firebase/firestore';
 import { isOnline, savePendingCase, getPendingCases, markCaseSynced } from './offlineSync';
-import { logAuditChange, AUDIT_ACTIONS } from '../firebase/auditStore';
 import toast from 'react-hot-toast';
 
 let currentUserId = null;
-let currentUserEmail = null;
 
-export const setUserId = (userId, email = '') => {
+export const setUserId = (userId) => {
   currentUserId = userId;
-  currentUserEmail = email;
 };
 
 export const checkDuplicateCase = async (datos) => {
@@ -60,16 +57,9 @@ export const saveCase = async (caseData) => {
       return null;
     }
     const result = await saveCaseToFirestore(caseData, currentUserId);
-    
-    if (result?.id) {
-      await logAuditChange(result.id, currentUserId, currentUserEmail, AUDIT_ACTIONS.CASE_CREATED, {
-        cliente: caseData.datos?.cliente,
-        cedula: caseData.datos?.cedula,
-        acto: caseData.datos?.acto,
-        score: caseData.evaluaciones ? 'con evaluación' : 'sin evaluación'
-      });
-    }
-    
+
+    // El audit trail se escribe server-side con onDocumentWritten: el cliente
+    // no puede crear ni alterar `audit_logs` (ver firestore.rules).
     return result;
   } catch (err) {
     console.error('Error guardando caso:', err);

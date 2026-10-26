@@ -41,6 +41,7 @@ npm run test:watch # Tests in watch mode
 - `excelParser.js` — Parser reportes UAFE + auto-evaluación de las 56 señales
 - `exportUtils.js` — Barrel re-export: `excelExport.js`, `pdfExport.js`, `rosExport.js`
 - `auditSchema.js` — JSON Schema para salida estructurada del modelo
+- `auditValidator.js` — Valida el dictamen del modelo contra el schema antes de usarlo
 - `auditTransformer.js` — Transforma JSON del modelo a formato display
 - `alertasInteligentes.js` — Alertas de portfolio (estancados, recurrentes, vencidos)
 - `sanctionsCheck.js` — Screening con Levenshtein; `no_configurado` si no hay fuente
@@ -61,8 +62,9 @@ npm run test:watch # Tests in watch mode
 - `messaging.js` — Notificaciones push (FCM)
 
 ### Backend (functions/)
-- `analyzeCase` (`onRequest`) — Proxy autenticado hacia Groq con `defineSecret('GROQ_API_KEY')`; exige Bearer token, CORS restringido y límites de prompt/tokens
+- `analyzeCase` (`onRequest`) — Proxy autenticado hacia Groq con `defineSecret('GROQ_API_KEY')`; exige Bearer token, CORS restringido, rate limit por usuario y App Check opcional (`ENFORCE_APP_CHECK=true`)
 - `notifyHighRiskCase` (`onDocumentCreated`) — Push notification cuando score ≥ 20
+- `auditCaseChanges` (`onDocumentWritten`) — Escribe `audit_logs` y `audit_heads` con cadena de hashes SHA-256; el cliente no puede escribir esas colecciones
 - `legalContext.js` — Contexto legal inyectado como system prompt (copia de `constants.js`)
 
 ## Key Features (Advanced)
@@ -76,7 +78,8 @@ npm run test:watch # Tests in watch mode
 ## Important Constraints
 - **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen.
 - **API Key**: `GROQ_API_KEY` es un secreto de Cloud Functions (`defineSecret`). NUNCA exponer en el cliente.
-- **Auth**: `analyzeCase` verifica el ID token de Firebase; el cliente envía `Authorization: Bearer <token>`.
+- **Auth**: `analyzeCase` verifica el ID token de Firebase (incluida revocación) y aplica rate limit en memoria (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`); el cliente envía `Authorization: Bearer <token>`.
+- **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.
 - **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
@@ -87,7 +90,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext (53 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator (61 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -95,3 +98,4 @@ npm run test:watch # Tests in watch mode
 - `src/test/calculations.test.js` — Riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Levenshtein/similarity/listas/estados
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
+- `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA

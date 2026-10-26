@@ -671,6 +671,7 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
                       <span style={{ fontWeight: '500', fontSize: '0.9rem' }}>
                         {log.action === 'CASO_CREADO' ? '📝 Caso creado' :
                          log.action === 'CASO_ACTUALIZADO' ? '✏️ Caso actualizado' :
+                         log.action === 'CASO_ELIMINADO' ? '🗑️ Caso eliminado' :
                          log.action === 'ANALISIS_GENERADO' ? '🤖 Análisis generado' :
                          log.action === 'EXPORTADO_PDF' ? '📄 PDF exportado' :
                          log.action === 'FIRMADO' ? '✍️ Firmado' :
