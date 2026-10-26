@@ -43,3 +43,26 @@ export const listarArchivosEvidencia = async () => {
   const db = await getDB();
   return db.getAllKeys(STORE);
 };
+
+/**
+ * Lista los metadatos de los archivos guardados (id, fecha y tamaño) sin
+ * devolver el contenido. Se usa para auditar el almacenamiento y detectar
+ * archivos que ya no están referenciados por ningún caso.
+ */
+export const listarEvidenciasLocales = async () => {
+  const db = await getDB();
+  const registros = [];
+  let cursor = await db.transaction(STORE).store.openCursor();
+
+  while (cursor) {
+    const valor = cursor.value || {};
+    registros.push({
+      id: String(cursor.key),
+      guardadoEn: valor.guardadoEn || null,
+      tamano: Number(valor.blob?.size) || 0
+    });
+    cursor = await cursor.continue();
+  }
+
+  return registros;
+};

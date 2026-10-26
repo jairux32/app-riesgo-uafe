@@ -65,6 +65,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/revisionCoincidencias.js` — Ficha de descarte o confirmación de coincidencias
 - `src/utils/evidencias.js` — Expediente documental con hash SHA-256 y verificación de integridad
 - `src/utils/evidenciasDB.js` — Archivos de evidencia en IndexedDB (solo en el dispositivo)
+- `src/utils/purgaEvidencias.js` — Detección y purga de archivos de evidencia huérfanos
 - `src/utils/perfilTransaccional.js` — Perfil del cliente y detección de desviaciones (monto, acto, pago, origen, frecuencia)
 - `src/utils/capacitacion.js` — Registro de la capacitación anual: horas, participantes, vigencia y evidencia con hash
 - `src/utils/calidadModelo.js` — Tablero de calidad, cobertura de IA, señales de calibración y tiempo de cierre
@@ -102,11 +103,13 @@ El perfil de la notaría permite registrar cada jornada de capacitación con tem
 ### Evidencias documentales
 Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda solo en el dispositivo (IndexedDB) y el caso conserva el nombre, tipo, tamaño y hash; el hash también se exporta y queda en el audit trail. La app puede verificar que el archivo no cambió, pero no certifica su autenticidad ni sustituye la revisión del notario.
 
+El perfil incluye un mantenimiento del almacenamiento local: compara los archivos guardados con las referencias de los casos, los borradores pendientes y las capacitaciones, y muestra qué quedó huérfano. No borra nada sin confirmación y respeta un periodo de gracia de 7 días, porque un archivo recién cargado puede pertenecer a un caso que todavía no se guardó. Al borrar el archivo, el caso conserva el hash pero ya no se puede verificar el documento.
+
 ## CI
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (229 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (245 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -115,6 +118,7 @@ Tests con **vitest** + **@testing-library/react** (229 tests de unidad):
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
+- `src/test/purgaEvidencias.test.js` — Archivos huérfanos, periodo de gracia y purga
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos

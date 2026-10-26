@@ -361,7 +361,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Módulo de capacitación con registro y evidencias~~: registro por jornada con horas, participantes, responsable y certificado o lista de asistencia con hash SHA-256; vigencia anual calculada y alerta de horas.
 - ~~Tests de reglas con emulador~~: `tests/rules/` cubre aislamiento por usuario, filtro `userId` y audit trail server-only; el CI ejecuta `npm run test:rules` además de lint, tests, auditorías y build. Faltan e2e y observabilidad.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
-- Evaluación de impacto en protección de datos y política de retención, incluida la purga de archivos de evidencia huérfanos en IndexedDB.
+- ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
 
 ---
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 229/229 + 13 de reglas, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los 19 commits posteriores a `c1af54c`, de `e909d25` a `0f12c98`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`) y tests de reglas (`0f12c98`). Verificación actual: `npm test` 245/245 + 13 de reglas, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|

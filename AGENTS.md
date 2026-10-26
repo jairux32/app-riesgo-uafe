@@ -53,6 +53,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - `revisionCoincidencias.js` — Ficha de descarte/confirmación y bloqueo de DDC
 - `evidencias.js` — Expediente documental, hash SHA-256 y verificación de integridad
 - `evidenciasDB.js` — Archivos de evidencia en IndexedDB (nunca se suben a la nube)
+- `purgaEvidencias.js` — Detección y purga de archivos de evidencia huérfanos con periodo de gracia
 - `perfilTransaccional.js` — Perfil del cliente y desviaciones de monto, acto, pago, origen y frecuencia
 - `capacitacion.js` — Registros de capacitación anual, horas, participantes, vigencia y evidencia con hash
 - `calidadModelo.js` — Tablero de calidad: distribución, señales de calibración, versiones de IA y tiempos de cierre
@@ -98,7 +99,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
 - **Screening con snapshots**: Importación de listas OFAC/ONU/UK/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
 - **Ficha de falsos positivos**: toda coincidencia `posible`/`coincidencia` exige responsable, fecha y justificación antes de completar la DDC; se exporta y queda en el audit trail
-- **Evidencias documentales**: cada archivo se identifica con su hash SHA-256; el archivo queda en IndexedDB y el hash en el caso, el PDF/Excel/ROS y el audit trail. La app verifica integridad, pero no certifica autenticidad
+- **Evidencias documentales**: cada archivo se identifica con su hash SHA-256; el archivo queda en IndexedDB y el hash en el caso, el PDF/Excel/ROS y el audit trail. La app verifica integridad, pero no certifica autenticidad. La purga de archivos huérfanos es manual, con vista previa, confirmación y periodo de gracia de 7 días
 - **Perfil transaccional**: compara la operación con el historial del cliente (monto, acto, medio de pago, origen y frecuencia); muestra desviaciones en Step1 y en las alertas del portfolio, y las registra en el dictamen y el audit trail
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
 - **Capacitación anual**: registro detallado por jornada (tema, horas, participantes, facilitador y responsable) con certificado o lista de asistencia identificada por hash SHA-256; la vigencia usa el registro más reciente y el campo simple queda como respaldo
@@ -113,7 +114,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo (229 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias (245 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 
 ## Testing
@@ -129,6 +130,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
+- `src/test/purgaEvidencias.test.js` — Archivos huérfanos, periodo de gracia y purga
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos de cierre

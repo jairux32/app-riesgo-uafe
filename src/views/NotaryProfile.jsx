@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { saveNotaryProfile, getNotaryProfile } from '../firebase/profileStore';
 import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
 import { CapacitacionPanel } from '../components/CapacitacionPanel';
+import { MantenimientoEvidencias } from '../components/MantenimientoEvidencias';
 import { Building2, UserCheck, Save, RefreshCw, ShieldCheck } from 'lucide-react';
 
 export const NotaryProfile = ({ onClose }) => {
@@ -202,6 +203,8 @@ export const NotaryProfile = ({ onClose }) => {
           Al activar esta opción, el sistema le recordará generar el reporte de cumplimiento mensual al inicio de cada mes.
         </p>
       </div>
+
+      <MantenimientoEvidencias userId={user?.uid} perfil={profile} />
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px', gap: '10px' }}>
         <button className="btn btn-secondary" onClick={loadProfile} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
