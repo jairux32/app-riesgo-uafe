@@ -1,6 +1,7 @@
 import { validarDDC } from './validators';
 import { describirCadenaPropiedad } from './beneficiarioFinal';
 import { describirRevisiones } from './revisionCoincidencias';
+import { describirEvidencias } from './evidencias';
 
 export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
   const { jsPDF } = await import('jspdf');
@@ -118,6 +119,11 @@ export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
   seccionC.push([
     'Revision de coincidencias en listas',
     describirRevisiones(datos.verificaciones || {})
+  ]);
+
+  seccionC.push([
+    'Evidencias documentales (SHA-256)',
+    describirEvidencias(datos.evidencias || [])
   ]);
 
   seccionC.push([

@@ -293,6 +293,24 @@ exports.auditCaseChanges = onDocumentWritten(
     detalles.coincidenciasRevisadas = coincidencias.filter(c => c.decision).length;
     detalles.coincidenciasConfirmadas = coincidencias.filter(c => c.decision === 'confirmado').length;
     detalles.revisionCoincidencias = coincidencias;
+
+    // Expediente documental: el audit trail conserva los hashes SHA-256 para
+    // demostrar qué archivos sustentaron la diligencia sin almacenar su
+    // contenido (que permanece solo en el dispositivo del usuario).
+    const evidencias = Array.isArray(data.datos?.evidencias) ? data.datos.evidencias : [];
+    const hashSha256 = /^[a-f0-9]{64}$/;
+    detalles.evidencias = {
+      total: evidencias.length,
+      tipos: [...new Set(evidencias.map(e => e?.tipo).filter(Boolean))],
+      hashesValidos: evidencias.filter(e => hashSha256.test(String(e?.hash || ''))).length,
+      archivos: evidencias.map(e => ({
+        tipo: e?.tipo || null,
+        nombre: e?.nombre || null,
+        hash: e?.hash || null,
+        tamano: Number(e?.tamano) || 0,
+        cargadaEn: e?.cargadaEn || null
+      }))
+    };
     detalles.ddcCompleta = Boolean(
       ddc.identificacion
       && ddc.proposito

@@ -314,7 +314,7 @@ Scheduler diario → Cloud Function de ingesta
 | Requisito | Estado en código | Riesgo | Recomendación |
 |---|---|---|---|
 | Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score colapsado | **Alto** | Corregir fórmula y documentar metodología |
-| DDC y beneficiario final (arts. 47, 92) | Campos de BF y checklist DDC bloqueante; faltan evidencias documentales | **Medio** | Carga de evidencias y hash (P2) |
+| DDC y beneficiario final (arts. 47, 92) | Checklist DDC bloqueante, BF con cadena de propiedad y expediente de evidencias con hash SHA-256 | **Bajo** | Verificación periódica de integridad |
 | PEP y listas restrictivas | Snapshots locales de OFAC/ONU/UK/PEP con versión, fecha y hash; estados `no_configurado`/`no_encontrado`/`posible`/`coincidencia` | **Medio** | Carga periódica de listas y revisión humana documentada |
 | Señales no deducibles del reporte | 20 señales marcadas como manuales en Step2 | **Bajo** | Entrevista y documentación soporte |
 | RESU/NO-RESU (USD 10.000; 15/10 días) | Calculadora de plazos y seguimiento (estado, responsable, envío, acuse) | **Medio** | Integración real con SISLAFT (P2) |
@@ -357,11 +357,11 @@ Scheduler diario → Cloud Function de ingesta
 
 - Perfil transaccional y monitoreo continuo de desviaciones.
 - Calibración del modelo con ROS históricos y tablero de calidad (FP/FN, tiempo de cierre).
-- Gestión documental con evidencias y hash.
+- ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
 - Módulo de capacitación con registro y evidencias.
 - Tests de reglas con emulador, e2e, observabilidad y CI completo.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
-- Evaluación de impacto en protección de datos y política de retención.
+- Evaluación de impacto en protección de datos y política de retención, incluida la purga de archivos de evidencia huérfanos en IndexedDB.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
 
 ---
@@ -372,7 +372,7 @@ Scheduler diario → Cloud Function de ingesta
 2. **Motor de knock-outs** separado del score: reglas duras que fuerzan EDD reforzada o impiden protocolizar.
 3. **Perfil transaccional + monitoreo** — comparar cada operación contra el perfil declarado y alertar desviaciones.
 4. **ROS asistido** con narrativa, anexos y campos alineados a la Res. 2026-0007, más calendario de plazos.
-5. **Expediente digital con evidencias** — escrituras, identificaciones, avalúos, origen de fondos, con hash y sello temporal.
+5. ~~**Expediente digital con evidencias** — escrituras, identificaciones, avalúos, origen de fondos, con hash y sello temporal~~: implementado con SHA-256 local; falta el sello temporal de un tercero de confianza.
 6. **Formulario de cliente** (PEP, origen de fondos, BF) que alimente el caso y quede firmado.
 7. **Re-screening automático** al actualizar una lista, con cola de revisión y ficha de descarte de falsos positivos.
 8. **Tablero de calidad del modelo** — precisión, falsos positivos, casos estancados, tiempos de cierre.
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 145/145, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 164/164, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -441,7 +441,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
 | Versionado del dictamen | **Corregido** | `_meta` con modelo, `promptVersion`, `contextoVersion` y fecha; se muestra en Step4, se exporta en PDF/Excel y queda en `audit_logs` |
-| DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y BF para personas jurídicas con cadena de propiedad y participación efectiva; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
+| DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante, BF con cadena de propiedad y participación efectiva, y evidencias documentales con hash SHA-256; todo se incluye en prompt, PDF, Excel, ROS y audit trail. Falta sello temporal de tercero |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
 | Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; no bloquea operaciones |
 

@@ -3,6 +3,7 @@ import { calculateInherentRisk } from './calculations';
 import { validarDDC } from './validators';
 import { filasCadenaPropiedad } from './beneficiarioFinal';
 import { describirRevisiones } from './revisionCoincidencias';
+import { filasEvidencias } from './evidencias';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 const setCols = (ws, widths) => {
@@ -116,6 +117,11 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['UK', estadoVerificacion('uk')],
     ['PEP UAFE', estadoVerificacion('uafe')],
     ['Revisión de coincidencias', describirRevisiones(datos.verificaciones || {})],
+    ['Evidencias documentales', `${(datos.evidencias || []).length} archivo(s) con hash SHA-256`],
+    ...filasEvidencias(datos.evidencias || []).map(fila => [
+      `${fila.tipo} — ${fila.nombre} (${fila.tamano})`,
+      `SHA-256 ${fila.hash}`
+    ]),
     [''],
     ['OBSERVACIONES', datos.observaciones || 'Ninguna'],
     [''],

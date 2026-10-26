@@ -29,6 +29,7 @@ const initialState = {
     beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
     cadenaPropiedad: [],
     ddc: { ...DDC_INICIAL },
+    evidencias: [],
     fechaConstitucion: '',
     fechaTransaccion: '',
     tipoTransaccion: '',

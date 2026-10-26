@@ -1,6 +1,7 @@
 import { validarDDC } from './validators';
 import { describirCadenaPropiedad } from './beneficiarioFinal';
 import { describirRevisiones } from './revisionCoincidencias';
+import { describirEvidencias } from './evidencias';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
@@ -143,6 +144,19 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
     y += 5;
   }
   y += 1;
+
+  const evidencias = Array.isArray(datos.evidencias) ? datos.evidencias : [];
+  if (evidencias.length > 0) {
+    doc.text(`Evidencias documentales (${evidencias.length}) — hash SHA-256:`, 15, y);
+    y += 5;
+    const evidenciaLineas = doc.splitTextToSize(describirEvidencias(evidencias), 180);
+    for (const linea of evidenciaLineas) {
+      addPageIfNeeded(8);
+      doc.text(linea, 15, y);
+      y += 4;
+    }
+    y += 2;
+  }
 
   const obligaciones = calcularObligaciones(datos, {
     scoreInherente: scores.inherente,

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { Upload, Loader, UserCheck, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, Database } from 'lucide-react';
+import { Upload, Loader, UserCheck, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, Database, Paperclip } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
@@ -21,6 +21,7 @@ import { ClientSearchModal } from '../components/ClientSearchModal';
 import { GestionListasModal } from '../components/GestionListasModal';
 import { CadenaPropiedad } from '../components/CadenaPropiedad';
 import { RevisionCoincidenciaModal } from '../components/RevisionCoincidenciaModal';
+import { EvidenciasPanel } from '../components/EvidenciasPanel';
 import { NIVEL_PROPIEDAD_INICIAL } from '../utils/beneficiarioFinal';
 import {
   requiereRevision,
@@ -46,6 +47,7 @@ const aplicarResetVerificaciones = (prev) => ({
   beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
   cadenaPropiedad: [],
   ddc: { ...DDC_INICIAL },
+  evidencias: [],
   verificaciones: verificacionesPendientes()
 });
 
@@ -209,6 +211,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           ...siguiente,
           beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
           cadenaPropiedad: [],
+          evidencias: [],
           ddc: {
             ...(prev.ddc || DDC_INICIAL),
             beneficiarioFinal: false
@@ -1251,7 +1254,24 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         )}
       </div>
 
-      {/* ===== CARD 6: Observaciones y Siguiente ===== */}
+      {/* ===== CARD 6: Evidencias documentales ===== */}
+      <div className="card">
+        <h2 style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)' }}>
+          <Paperclip size={20} /> Evidencias documentales
+        </h2>
+        <p className="text-sm text-muted" style={{ marginTop: 0 }}>
+          Adjunte los documentos que sustentan la debida diligencia. Cada archivo se identifica con su
+          hash SHA-256, que queda en el caso y en el audit trail, de modo que se pueda comprobar que no
+          cambió. Los archivos no se suben a la nube: permanecen en este dispositivo.
+        </p>
+        <EvidenciasPanel
+          evidencias={datos.evidencias || []}
+          tipoPersona={datos.tipoPersona}
+          onChange={(evidencias) => setDatos(prev => ({ ...prev, evidencias }))}
+        />
+      </div>
+
+      {/* ===== CARD 7: Observaciones y Siguiente ===== */}
       <div className="card">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Observaciones generales</label>
