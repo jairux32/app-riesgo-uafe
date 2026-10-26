@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FACTORES_SENALES_UAFE, ESCALA_VALORACION, CATEGORIAS_SENALES } from '../data/constants';
+import { FACTORES_SENALES_UAFE, ESCALA_VALORACION, CATEGORIAS_SENALES, SENALES_SIN_AUTOEVALUACION } from '../data/constants';
 import { ChevronDown, ChevronUp, AlertTriangle, XCircle } from 'lucide-react';
 
 export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) => {
@@ -147,7 +147,28 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex items-start gap-2" style={{ flex: 1 }}>
                         <span className="text-xs text-muted" style={{ fontFamily: 'monospace', minWidth: '38px', paddingTop: '2px' }}>{sub.id}</span>
+                        {SENALES_SIN_AUTOEVALUACION.includes(sub.id) && (
+                          <span
+                            className="text-xs"
+                            title="No se deduce del reporte importado: requiere revisión manual"
+                            style={{
+                              padding: '1px 6px', borderRadius: '8px', whiteSpace: 'nowrap',
+                              background: 'rgba(148,163,184,0.12)', color: 'var(--txt2)'
+                            }}
+                          >
+                            manual
+                          </span>
+                        )}
                         <span className="text-sm" style={{ lineHeight: '1.4' }}>{sub.pregunta}</span>
+                        {evalSub.motivo && (
+                          <span
+                            className="text-xs"
+                            title="Sugerencia generada a partir del archivo importado"
+                            style={{ color: 'var(--accent)', cursor: 'help' }}
+                          >
+                            ⓘ
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-1" style={{ flexShrink: 0 }}>
                         <button
@@ -191,6 +212,11 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
                         <p className="text-xs mt-1" style={{ color: 'var(--rojo)', fontWeight: '500' }}>
                           Score: {score} pts
                         </p>
+                        {evalSub.motivo && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--txt2)', margin: 0 }}>
+                            Sugerencia automática: {evalSub.motivo}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

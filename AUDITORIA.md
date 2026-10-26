@@ -316,6 +316,7 @@ Scheduler diario → Cloud Function de ingesta
 | Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score colapsado | **Alto** | Corregir fórmula y documentar metodología |
 | DDC y beneficiario final (arts. 47, 92) | Campos de BF y checklist DDC bloqueante; faltan evidencias documentales | **Medio** | Carga de evidencias y hash (P2) |
 | PEP y listas restrictivas | Snapshots locales de OFAC/ONU/PEP con versión, fecha y hash; estados `no_configurado`/`no_encontrado`/`posible`/`coincidencia` | **Medio** | Carga periódica de listas y revisión humana documentada |
+| Señales no deducibles del reporte | 20 señales marcadas como manuales en Step2 | **Bajo** | Entrevista y documentación soporte |
 | RESU/NO-RESU (USD 10.000; 15/10 días) | Calculadora de plazos y seguimiento (estado, responsable, envío, acuse) | **Medio** | Integración real con SISLAFT (P2) |
 | ROS/NO-ROS (5+3 días; reserva art. 62) | Panel de seguimiento con plazo, prórroga, estado y acuse; el PDF ROS sigue siendo el documento a presentar | **Medio** | Firma electrónica y acuse automatizado (P2) |
 | Conservación 10 años y trazabilidad | Solo `CASE_CREATED`; logs forjables | **Alto** | Audit trail server-side con hash |
@@ -348,7 +349,7 @@ Scheduler diario → Cloud Function de ingesta
 - Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse.
 - Corregir duplicados, offline, Dashboard, filtro OFAC y reporte mensual.
 - ~~Screening real OFAC + ONU + UK con snapshots versionados~~: implementado para OFAC, ONU y lista PEP interna con hash; falta UK y la ficha de descarte de falsos positivos.
-- Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas.
+- ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - Módulo de beneficiario final con cadena de propiedad.
 - Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento.
 
@@ -420,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 98/98, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 111/111, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -434,7 +435,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | `analyzeCase` abierta a Internet | **Corregido** | Bearer token con revocación, POST, CORS, límites y rate limit por usuario. App Check opcional disponible (`ENFORCE_APP_CHECK=true`) |
 | Efectivo > 100 SBU | **Corregido** | Bloqueo en `Step1Datos` + validación de medio de pago desde USD 10.000 |
 | Duplicados, offline y Dashboard | **Corregido** | Guardado por `updateCase`, pendientes visibles/actualizables, navegación real, análisis IA persistido |
-| Parser de 56 señales | **Parcial** | Inicializa las 56; las reglas heurísticas cubren 14. Las no detectadas quedan en 0 explícito |
+| Parser de 56 señales | **Corregido (parcial)** | Inicializa las 56; 36 se auto-evalúan con reglas trazables y motivo visible, 20 se marcan como manuales porque requieren documentos o entrevista |
 | `xlsx@0.18.5` con CVEs sin parche npm | **Corregido** | Migrado a SheetJS 0.20.3 (tarball oficial) más overrides de `websocket-driver`, `zod` y `@grpc/grpc-js`; `npm audit` en 0 |
 | Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |

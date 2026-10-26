@@ -424,6 +424,32 @@ export const SENALES_ALERTA_UAFE = [
   { codigo: 'SA201', descripcion: 'Otra señal de alerta no contemplada en el catálogo', categoria: 'otra' }
 ];
 
+// Señales que el reporte UAFE no permite deducir: dependen de documentos,
+// historial o entrevista. Se dejan en 0 y la UI las marca como manuales para
+// que el analista no las confunda con una verificación automática negativa.
+export const SENALES_SIN_AUTOEVALUACION = [
+  'SA04', // múltiples documentos de identidad
+  'SA06', // actúa por tercero sin transparencia
+  'SA09', // estructura familiar o laboral poco clara
+  'SA14', // accionistas sin capacidad económica visible
+  'SA15', // cambios frecuentes de accionistas
+  'SA16', // beneficiario final difícil de identificar
+  'SA18', // objeto social amplio o genérico
+  'SA20', // desconoce su propia actividad
+  'SA22', // incremento repentino de volumen
+  'SA35', // retiro inmediato tras transferencias
+  'SA38', // depósitos de múltiples personas
+  'SA39', // depósitos fuera del área habitual
+  'SA40', // ventas vs. depósitos en efectivo
+  'SA46', // domicilio en otro país
+  'SA50', // sedes en zonas de baja supervisión
+  'SA76', // empresas pantalla para adquirir propiedades
+  'SA77', // pagos por terceros no vinculados
+  'SA79', // incongruencia actividad/inmueble
+  'SA93', // alto valor en cripto en cortos períodos
+  'SA201' // otra señal no contemplada
+];
+
 export const CATEGORIAS_SENALES = [
   { id: 'identidad', label: 'Identidad y Comportamiento', icon: '👤' },
   { id: 'corporativa', label: 'Estructura Corporativa', icon: '🏢' },

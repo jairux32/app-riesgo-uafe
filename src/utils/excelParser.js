@@ -4,12 +4,33 @@ import { FACTORES_SENALES_UAFE } from '../data/constants';
 /**
  * Asigna valores de riesgo basados en señales de alerta UAFE (sistema v2.4)
  * En el nuevo sistema: prob = 0|1 (presente/no presente), imp = gravedad 1-5
+ *
+ * `contexto` indica qué columnas existen realmente en el archivo importado:
+ * así no se activan señales por un dato que simplemente no venía en el reporte.
  */
-const autoEvaluateRisk = (datos) => {
+const normalizar = (valor) => String(valor || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase();
+
+const ACTOS_INMUEBLE = /compraventa|donacion|hipoteca|particion|adjudicacion|usufructo|arrendamiento|promesa/;
+const ACTOS_NO_INMUEBLE = /vehiculo|automotor|acciones|participaciones|maquinaria|bien mueble|empresa/;
+
+
+const SECTORES_ELECTRONICOS = /salud|medic|educaci|tecnolog|informatic|consultor|profesional|financ|seguro|juridic/;
+const JURISDICCIONES_RIESGO = /pais(es)? sancionad|jurisdiccion(es)? (de )?(alto riesgo|sancionad)|corea del norte|iran|siria|cuba|rusia/;
+
+export const autoEvaluateRisk = (datos, contexto = {}) => {
   const evaluaciones = {};
   const valor = parseFloat(datos.valor) || 0;
-  const actividad = (datos.actividad || '').toLowerCase();
-  const acto = (datos.acto || '').toLowerCase();
+  const actividad = normalizar(datos.actividad);
+  const acto = normalizar(datos.acto);
+  const origen = normalizar(datos.origen);
+  const medioPago = normalizar(datos.medioPago);
+  const observaciones = normalizar(datos.observaciones);
+  const texto = `${origen} ${medioPago} ${observaciones}`;
+  const esJuridica = datos.tipoPersona === 'juridica';
+  const inmueble = ACTOS_INMUEBLE.test(acto) && !ACTOS_NO_INMUEBLE.test(acto);
 
   // Inicializar todas las señales como no detectadas (prob=0, gravedad=1)
   FACTORES_SENALES_UAFE.forEach(factor => {
@@ -18,78 +39,130 @@ const autoEvaluateRisk = (datos) => {
     });
   });
 
-  // Reglas heurísticas → activar señales específicas con gravedad apropiada
+  const activar = (id, imp, motivo) => {
+    if (!evaluaciones[id]) return;
+    evaluaciones[id] = { prob: 1, imp, motivo };
+  };
 
-  // SA07: Perfil económico no acorde a sus operaciones (PEP)
+  // ===== Identidad y comportamiento =====
+  if (/se niega a (proporcionar|entregar)|no proporciona (informacion|document)|resiste/.test(observaciones)) {
+    activar('SA01', 4, 'Observaciones indican resistencia a entregar información');
+  }
+  if (/inconsisten|contradictor/.test(observaciones)) {
+    activar('SA02', 4, 'Observaciones registran información inconsistente');
+  }
+  if (/(direccion|telefono|domicilio) (fals|no verificable|imposible)/.test(observaciones)) {
+    activar('SA03', 4, 'Domicilio o teléfono no verificable según observaciones');
+  }
+  if (/nervios|evasiv/.test(observaciones)) {
+    activar('SA05', 3, 'Actitud evasiva registrada en observaciones');
+  }
   if (datos.esPep) {
-    evaluaciones.SA07 = { prob: 1, imp: 5 };
+    activar('SA07', 5, 'Cliente PEP: exige debida diligencia reforzada');
   }
-
-  // SA08: Relación con antecedentes penales o notoriedad negativa (reportes previos)
   if (datos.reportesPrevios) {
-    evaluaciones.SA08 = { prob: 1, imp: 5 };
+    activar('SA08', 5, 'Reportes previos ante la UAFE');
   }
-
-  // SA10: Uso frecuente de apoderados para operaciones simples
   if (datos.apoderado) {
-    evaluaciones.SA10 = { prob: 1, imp: 3 };
+    activar('SA10', 3, 'Uso de apoderado para la operación');
   }
 
-  // SA12: Empresa recién constituida con altos volúmenes de operación
-  if ((acto.includes('constitución') || acto.includes('constitucion')) && valor > 50000) {
-    evaluaciones.SA12 = { prob: 1, imp: 4 };
+  // ===== Estructura corporativa =====
+  if (acto.includes('constitucion') && valor > 50000) {
+    activar('SA12', 4, 'Empresa recién constituida con alto volumen de operación');
   }
-
-  // SA13: Estructura accionaria compleja o poco transparente (fideicomiso)
+  if (esJuridica && contexto.tieneActividad !== false && !actividad) {
+    activar('SA11', 3, 'Persona jurídica sin actividad económica declarada');
+  }
   if (acto.includes('fideicomiso')) {
-    evaluaciones.SA13 = { prob: 1, imp: 4 };
+    activar('SA13', 4, 'Operación con fideicomiso');
+  }
+  if (/domicilio virtual|sede virtual|oficina virtual/.test(observaciones)) {
+    activar('SA17', 4, 'Domicilio o sede virtual');
+  }
+  if (/se niega a (entregar|proporcionar) (estados financieros|documentacion contable)/.test(observaciones)) {
+    activar('SA19', 4, 'Se negó a entregar estados financieros');
   }
 
-  // SA21: Operaciones que no guardan relación con la actividad declarada
-  if (actividad.includes('construcción') || actividad.includes('construccion') ||
-      actividad.includes('minería') || actividad.includes('mineria') ||
-      actividad.includes('exportación') || actividad.includes('exportacion')) {
-    evaluaciones.SA21 = { prob: 1, imp: 4 };
+  // ===== Patrones transaccionales =====
+  if (actividad && acto && !inmueble &&
+      (actividad.includes('construccion') || actividad.includes('mineria') || actividad.includes('exportacion'))) {
+    activar('SA21', 4, 'Actividad declarada poco compatible con el acto notarial');
   }
-
-  // SA23: Fragmentación de operaciones para evitar reportes (valor mediano)
+  if (/alto riesgo|jurisdiccion de riesgo/.test(texto)) {
+    activar('SA28', 4, 'Referencia a jurisdicción de alto riesgo');
+  }
+  if (/tercero|tercera persona|pago por (otro|otra)/.test(texto)) {
+    activar('SA29', 3, 'Pago realizado por un tercero');
+  }
+  if (/contraparte (desconocid|no identificad)/.test(observaciones)) {
+    activar('SA30', 3, 'Contraparte desconocida o no identificada');
+  }
   if (valor > 10000 && valor <= 50000) {
-    evaluaciones.SA23 = { prob: 1, imp: 2 };
+    activar('SA23', 2, 'Monto entre USD 10.000 y 50.000 (posible fragmentación)');
   }
-
-  // SA31: Depósitos significativos en efectivo sin causa aparente
   if (datos.usoEfectivo && valor > 10000) {
-    evaluaciones.SA31 = { prob: 1, imp: 4 };
+    activar('SA31', 4, 'Efectivo significativo sin causa aparente');
+  }
+  if (datos.usoEfectivo && SECTORES_ELECTRONICOS.test(actividad)) {
+    activar('SA33', 3, 'Uso dominante de efectivo en un sector electrónico');
+  }
+  if (/billetes? (mal estado|alta denominacion)|denominaciones altas/.test(observaciones)) {
+    activar('SA34', 2, 'Billetes de alta denominación o en mal estado');
+  }
+  if (datos.usoEfectivo && /cheque|pagare|letra de cambio|titulo valor/.test(acto)) {
+    activar('SA36', 4, 'Compra de instrumento negociable con efectivo');
   }
 
-  // SA42: Uso de paraísos fiscales sin razón comercial clara
-  if (actividad.includes('offshore') || actividad.includes('paraíso') || actividad.includes('paraiso')) {
-    evaluaciones.SA42 = { prob: 1, imp: 5 };
+  // ===== Internacional y jurisdicción =====
+  if (JURISDICCIONES_RIESGO.test(texto)) {
+    activar('SA41', 5, 'País sancionado o no cooperante');
+  }
+  if (/paraiso|offshore|off-shore/.test(texto)) {
+    activar('SA42', 5, 'Uso de paraíso fiscal sin razón comercial');
+  }
+  if (/multiples monedas|varias monedas/.test(observaciones)) {
+    activar('SA48', 2, 'Uso de múltiples monedas');
   }
 
-  // SA71: Compra de inmuebles a nombre de terceros (apoderado + compraventa)
-  if (datos.apoderado && acto.includes('compraventa')) {
-    evaluaciones.SA71 = { prob: 1, imp: 4 };
+  // ===== Bienes raíces =====
+  if (datos.apoderado && inmueble) {
+    activar('SA71', 4, 'Compra de inmueble a nombre de terceros (apoderado)');
+  }
+  if (datos.usoEfectivo && inmueble && valor > 50000) {
+    activar('SA72', 5, 'Pago en efectivo significativo por bienes raíces');
+  }
+  if (inmueble && valor > 100000) {
+    activar('SA73', 3, 'Valor alto que puede no corresponder al precio de mercado');
+  }
+  if (/reventa (rapida|inmediata)|vendido (dias|meses) despues/.test(observaciones)) {
+    activar('SA74', 3, 'Reventa rápida del inmueble');
+  }
+  if (datos.reportesPrevios && inmueble && valor > 50000) {
+    activar('SA75', 4, 'Compras múltiples en corto período');
+  }
+  if (/permuta|canje|trueque/.test(acto)) {
+    activar('SA78', 3, 'Esquema de permuta o canje');
+  }
+  if (/(segunda|tercera) hipoteca|cancelacion(es)? de hipoteca/.test(observaciones)) {
+    activar('SA80', 2, 'Hipotecas o cancelaciones frecuentes sobre el mismo bien');
   }
 
-  // SA72: Pagos en efectivo significativos por bienes raíces
-  if (datos.usoEfectivo && acto.includes('compraventa') && valor > 50000) {
-    evaluaciones.SA72 = { prob: 1, imp: 5 };
-  }
-
-  // SA73: Precio de venta muy inferior o superior al de mercado (valor muy alto)
-  if (valor > 100000) {
-    evaluaciones.SA73 = { prob: 1, imp: 3 };
-  }
-
-  // SA75: Compras múltiples en un corto período de tiempo (reportes previos + valor alto)
-  if (datos.reportesPrevios && valor > 50000) {
-    evaluaciones.SA75 = { prob: 1, imp: 4 };
-  }
-
-  // SA91: Uso intensivo de criptomonedas sin justificación comercial
+  // ===== Activos virtuales =====
   if (datos.usoActivosVirtuales) {
-    evaluaciones.SA91 = { prob: 1, imp: 4 };
+    activar('SA91', 4, 'Uso intensivo de criptoactivos sin justificación comercial');
+    if (/no regulad|sin regulacion|exchange|plataforma/.test(texto)) {
+      activar('SA92', 3, 'Operación con plataforma no regulada');
+    }
+    if (datos.usoEfectivo) {
+      activar('SA97', 4, 'Conversión inmediata de criptoactivos a efectivo');
+    }
+    if (/ip (de|en) (pais|jurisdiccion)|vpn/.test(observaciones)) {
+      activar('SA99', 3, 'Operación desde IP de país de alto riesgo');
+    }
+    if (valor > 100000) {
+      activar('SA100', 4, 'Volumen en criptoactivos no acorde al perfil');
+    }
   }
 
   return evaluaciones;
@@ -192,6 +265,8 @@ export const parseUAFEExcel = async (file) => {
               origen: String(row[colMap.origen] || '').trim(),
               medioPago: String(row[colMap.medioPago] || '').trim(),
               actividad: String(row[colMap.actividad] || '').trim(),
+              tipoPersona: String(row[colMap.cedula] || '').trim().length === 13 ? 'juridica' : 'natural',
+              nacionalidad: 'ECU',
               esPep: /si|yes|true|1/i.test(String(row[colMap.esPep])),
               detallePep: String(row[colMap.observaciones] || '').trim(),
               apoderado: /si|yes|true|1/i.test(String(row[colMap.apoderado])),
@@ -202,9 +277,13 @@ export const parseUAFEExcel = async (file) => {
               usoActivosVirtuales: /cripto|crypto|bitcoin|virtual/i.test(String(row[colMap.origen] || '')),
             };
 
+            const contexto = {
+              tieneActividad: colMap.actividad !== -1
+            };
+
             return {
               datos,
-              evaluaciones: autoEvaluateRisk(datos),
+              evaluaciones: autoEvaluateRisk(datos, contexto),
               controlesEval: {}
             };
           });

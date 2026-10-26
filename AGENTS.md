@@ -38,7 +38,7 @@ npm run test:watch # Tests in watch mode
 - `storage.js` — Fachada Firestore + IndexedDB (offline-first)
 - `calculations.js` — Scores inherente y residual (probabilidad 5/1, pesos normalizados)
 - `geminiApi.js` — Cliente de la Cloud Function de análisis (Bearer token)
-- `excelParser.js` — Parser reportes UAFE + auto-evaluación de las 56 señales
+- `excelParser.js` — Parser reportes UAFE + auto-evaluación de 36 señales; 20 declaradas manuales
 - `exportUtils.js` — Barrel re-export: `excelExport.js`, `pdfExport.js`, `rosExport.js`
 - `auditSchema.js` — JSON Schema para salida estructurada del modelo
 - `auditValidator.js` — Valida el dictamen del modelo contra el schema antes de usarlo
@@ -72,7 +72,7 @@ npm run test:watch # Tests in watch mode
 
 ## Key Features (Advanced)
 - **Excel Importer**: Procesa reportes UAFE con mapeo dinámico de columnas + auto-evaluación
-- **Auto-Evaluation**: Sugiere valores de riesgo basados en reglas (monto, PEP, actividad, señales UAFE)
+- **Auto-Evaluation**: Sugiere valores con motivo trazable en 36 señales; 20 quedan marcadas como manuales
 - **Batch Processing**: Análisis secuencial de múltiples casos desde el historial
 - **Legal Export**: PDF con dictamen formal, bloques de firma, ROS estructurado
 - **Offline**: IndexedDB para casos pendientes, sincronización automática al reconectar
@@ -97,7 +97,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB (98 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser (111 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -109,3 +109,4 @@ npm run test:watch # Tests in watch mode
 - `src/test/obligaciones.test.js` — Plazos de RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia de los requisitos institucionales
 - `src/test/listasDB.test.js` — Parseo de listas restrictivas CSV/JSON
+- `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE
