@@ -1,6 +1,7 @@
 import { FACTORES_RIESGO, CONTROLES_INTERNOS, NIVELES_RIESGO } from '../data/constants';
 import { calculateInherentRisk } from './calculations';
 import { validarDDC } from './validators';
+import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 const setCols = (ws, widths) => {
   ws['!cols'] = widths.map(w => ({ wch: w }));
@@ -31,6 +32,15 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     return String(estado).toUpperCase();
   };
 
+  const obligaciones = calcularObligaciones(datos, {
+    scoreInherente: scores.inherente,
+    analisis: geminiAnalysis,
+    fechaConocimiento: datos.reportes?.ros?.fechaConocimiento
+  });
+  const reportes = combinarReportes(obligaciones, datos.reportes);
+  const reporteResu = reportes.resu;
+  const reporteRos = reportes.ros;
+
   // ==================== 1. PORTADA ====================
   const ws1 = XLSX.utils.aoa_to_sheet([
     ['SISTEMA DE ANALISIS DE RIESGO LA/FD'],
@@ -55,7 +65,9 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Debida Diligencia Requerida:', scores.diligencia],
     ['Beneficiario Final:', beneficiarioTexto],
     ['Debida Diligencia (art. 47):', ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`],
-    ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UAFE: ${estadoVerificacion('uafe')}`]
+    ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UAFE: ${estadoVerificacion('uafe')}`],
+    ['Reporte SISLAFT - RESU/NO-RESU:', `${reporteResu.tipo} — ${reporteResu.fechaLimite} — ${reporteResu.estado}`],
+    ['Reporte SISLAFT - ROS/NO-ROS:', `${reporteRos.tipo} — ${reporteRos.fechaLimite} — ${reporteRos.estado}`]
   ]);
 
   setCols(ws1, [30, 25, 30]);

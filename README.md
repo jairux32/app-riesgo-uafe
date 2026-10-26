@@ -59,6 +59,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/exportUtils.js` — Barrel: excelExport, pdfExport, rosExport
 - `src/utils/sanctionsCheck.js` — Screening de listas (sin fuentes ficticias)
 - `src/utils/validators.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
+- `src/utils/obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
 ### Backend
@@ -78,8 +79,9 @@ npm run test:watch # Tests en modo watch
 La base de clientes **no se publica** en el hosting. `data-local/` está ignorado por git y la carga se hace manualmente desde la UI (archivo JSON local → IndexedDB).
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (66 tests):
+Tests con **vitest** + **@testing-library/react** (82 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
+- `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

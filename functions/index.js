@@ -254,6 +254,10 @@ exports.auditCaseChanges = onDocumentWritten(
       && (!esJuridica || (ddc.beneficiarioFinal && beneficiario.nombre && beneficiario.cedula))
     );
 
+    const reportes = data.datos?.reportes || {};
+    detalles.reporteResu = reportes.resu?.estado || null;
+    detalles.reporteRos = reportes.ros?.estado || null;
+
     const db = getFirestore();
     const headRef = db.collection('audit_heads').doc(caseId);
     const logRef = db.collection('audit_logs').doc();

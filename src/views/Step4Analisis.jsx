@@ -8,6 +8,7 @@ import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { SignatureModal } from '../components/SignatureModal';
+import { ObligacionesPanel } from '../components/ObligacionesPanel';
 import { transformAuditForDisplay, formatConfidence } from '../utils/auditTransformer';
 import { updateCaseAnalysis } from '../utils/storage';
 
@@ -612,6 +613,14 @@ export const Step4Analisis = ({
           </div>
         </div>
       </div>
+
+      <ObligacionesPanel
+        datos={datos}
+        setDatos={setDatos}
+        scores={scores}
+        analysisResult={analysisResult}
+        caseId={caseId}
+      />
 
       <div className="card" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
         <button className="btn" onClick={handleExportPDF}>

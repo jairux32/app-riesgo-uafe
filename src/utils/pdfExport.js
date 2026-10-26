@@ -1,4 +1,5 @@
 import { validarDDC } from './validators';
+import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
   doc.setFontSize(12);
@@ -118,6 +119,23 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   }
   doc.text(`Listas: OFAC ${estadoVerificacion('ofac')} | ONU ${estadoVerificacion('onu')} | UAFE ${estadoVerificacion('uafe')}`, 15, y);
   y += 5;
+
+  const obligaciones = calcularObligaciones(datos, {
+    scoreInherente: scores.inherente,
+    analisis: geminiAnalysis,
+    fechaConocimiento: datos.reportes?.ros?.fechaConocimiento
+  });
+  const reportes = combinarReportes(obligaciones, datos.reportes);
+  const reporteResu = reportes.resu;
+  const reporteRos = reportes.ros;
+  const obligacionesLineas = doc.splitTextToSize(
+    `Reportes SISLAFT: ${reporteResu.tipo} (${reporteResu.fechaLimite}, ${reporteResu.estado}) | ${reporteRos.tipo} (${reporteRos.fechaLimite}, ${reporteRos.estado})`,
+    180
+  );
+  for (const linea of obligacionesLineas) {
+    doc.text(linea, 15, y);
+    y += 5;
+  }
   y += 5;
 
   doc.setFontSize(11);

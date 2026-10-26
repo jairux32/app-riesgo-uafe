@@ -46,6 +46,7 @@ npm run test:watch # Tests in watch mode
 - `alertasInteligentes.js` — Alertas de portfolio (estancados, recurrentes, vencidos)
 - `sanctionsCheck.js` — Screening con Levenshtein; `no_configurado` si no hay fuente
 - `validators.js` — Cédula/RUC/pasaporte + límite de efectivo (100 SBU)
+- `obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
@@ -83,6 +84,7 @@ npm run test:watch # Tests in watch mode
 - **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
 - **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas; se incluye en el prompt, PDF, Excel, ROS y audit trail
+- **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
@@ -91,7 +93,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator (66 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones (82 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -100,3 +102,4 @@ npm run test:watch # Tests in watch mode
 - `src/test/sanctionsCheck.test.js` — Levenshtein/similarity/listas/estados
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
 - `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA
+- `src/test/obligaciones.test.js` — Plazos de RESU/NO-RESU y ROS/NO-ROS
