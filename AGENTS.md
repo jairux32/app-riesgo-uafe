@@ -104,6 +104,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
+- CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias (164 tests)
 
 ## Testing

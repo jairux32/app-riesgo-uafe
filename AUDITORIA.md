@@ -359,7 +359,7 @@ Scheduler diario → Cloud Function de ingesta
 - Calibración del modelo con ROS históricos y tablero de calidad (FP/FN, tiempo de cierre).
 - ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
 - Módulo de capacitación con registro y evidencias.
-- Tests de reglas con emulador, e2e, observabilidad y CI completo.
+- Tests de reglas con emulador, e2e y observabilidad; el CI de calidad ya ejecuta lint, tests, auditorías y build en cada push/PR y bloquea el deploy si falla.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - Evaluación de impacto en protección de datos y política de retención, incluida la purga de archivos de evidencia huérfanos en IndexedDB.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.

@@ -90,6 +90,9 @@ Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt 
 ### Evidencias documentales
 Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda solo en el dispositivo (IndexedDB) y el caso conserva el nombre, tipo, tamaño y hash; el hash también se exporta y queda en el audit trail. La app puede verificar que el archivo no cambió, pero no certifica su autenticidad ni sustituye la revisión del notario.
 
+## CI
+Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
+
 ## Testing
 Tests con **vitest** + **@testing-library/react** (164 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
