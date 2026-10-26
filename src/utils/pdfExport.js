@@ -145,6 +145,23 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   }
   y += 1;
 
+  const evaluacionPerfil = datos.perfilTransaccionalEvaluacion;
+  if (evaluacionPerfil) {
+    const perfilTexto = evaluacionPerfil.nivel === 'normal'
+      ? 'Sin desviaciones frente al perfil histórico del cliente.'
+      : (evaluacionPerfil.alertas || []).map(a => a.mensaje).join(' ');
+    const perfilLineas = doc.splitTextToSize(
+      `Perfil transaccional: ${evaluacionPerfil.nivel || 'sin evaluar'}${perfilTexto ? ` — ${perfilTexto}` : ''}`,
+      180
+    );
+    for (const linea of perfilLineas) {
+      addPageIfNeeded(8);
+      doc.text(linea, 15, y);
+      y += 4;
+    }
+    y += 2;
+  }
+
   const evidencias = Array.isArray(datos.evidencias) ? datos.evidencias : [];
   if (evidencias.length > 0) {
     doc.text(`Evidencias documentales (${evidencias.length}) — hash SHA-256:`, 15, y);

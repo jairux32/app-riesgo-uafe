@@ -4,6 +4,7 @@
  */
 
 import { calculateInherentRisk } from './calculations';
+import { construirPerfilTransaccional, evaluarDesviaciones } from './perfilTransaccional';
 
 const DIAS_ESTANCAMIENTO = 7;
 const DIAS_VENCIMIENTO_UAFE = 10; // Plazo para reportar desde aprobación (simulado)
@@ -109,6 +110,40 @@ export function generarAlertas(cases) {
     }
   });
 
+  // 5. Desviaciones frente al perfil transaccional del cliente
+  const porCliente = new Map();
+  cases.forEach(c => {
+    const clave = String(c.datos?.cedula || '').trim() || c.datos?.cliente?.trim().toLowerCase();
+    if (!clave) return;
+    if (!porCliente.has(clave)) porCliente.set(clave, []);
+    porCliente.get(clave).push(c);
+  });
+
+  porCliente.forEach(lista => {
+    if (lista.length < 2) return;
+    lista.forEach(caso => {
+      const perfil = construirPerfilTransaccional(lista, {
+        cedula: caso.datos?.cedula,
+        cliente: caso.datos?.cliente,
+        excluirCaseId: caso.id
+      });
+      if (!perfil.suficiente) return;
+
+      const evaluacion = evaluarDesviaciones(caso.datos || {}, perfil);
+      if (evaluacion.nivel === 'normal' || evaluacion.nivel === 'sin_perfil') return;
+
+      alertas.push({
+        tipo: 'desviacion_perfil',
+        prioridad: evaluacion.nivel === 'atipico' ? 'alta' : 'media',
+        casoId: caso.id,
+        cliente: caso.datos?.cliente || 'Sin nombre',
+        mensaje: evaluacion.alertas.map(a => a.mensaje).join(' '),
+        accion: 'Documentar el origen de la desviación o evaluar el ROS',
+        desviaciones: evaluacion.alertas
+      });
+    });
+  });
+
   // Ordenar por prioridad
   const prioridadOrden = { alta: 0, media: 1, baja: 2 };
   alertas.sort((a, b) => prioridadOrden[a.prioridad] - prioridadOrden[b.prioridad]);
@@ -125,6 +160,7 @@ export function getAlertaStyle(tipo) {
     recurrente_alto_riesgo: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: '🔴' },
     vencimiento_uafe: { color: '#dc2626', bg: 'rgba(220,38,38,0.15)', icon: '🚨' },
     verificacion_pendiente: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '⚠️' },
+    desviacion_perfil: { color: '#f97316', bg: 'rgba(249,115,22,0.1)', icon: '📈' },
   };
   return styles[tipo] || { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', icon: 'ℹ️' };
 }

@@ -22,6 +22,11 @@ import { GestionListasModal } from '../components/GestionListasModal';
 import { CadenaPropiedad } from '../components/CadenaPropiedad';
 import { RevisionCoincidenciaModal } from '../components/RevisionCoincidenciaModal';
 import { EvidenciasPanel } from '../components/EvidenciasPanel';
+import {
+  construirPerfilTransaccional,
+  evaluarDesviaciones,
+  describirPerfil
+} from '../utils/perfilTransaccional';
 import { NIVEL_PROPIEDAD_INICIAL } from '../utils/beneficiarioFinal';
 import {
   requiereRevision,
@@ -51,12 +56,13 @@ const aplicarResetVerificaciones = (prev) => ({
   verificaciones: verificacionesPendientes()
 });
 
-export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
+export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext, caseId }) => {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importStats, setImportStats] = useState(null);
   const [clientHistory, setClientHistory] = useState([]);
+  const [portfolioCases, setPortfolioCases] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const suggestionsRef = useRef(null);
@@ -134,6 +140,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   useEffect(() => {
     const loadClientHistory = async () => {
       const cases = await getAllCases();
+      setPortfolioCases(cases);
       const uniqueClients = new Map();
       cases.forEach(c => {
         if (c.datos?.cedula && !uniqueClients.has(c.datos.cedula)) {
@@ -314,6 +321,31 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     toast.success(`Cliente ${clientData.cliente} cargado desde base de datos`, { icon: '👤' });
   };
 
+  const handleNext = () => {
+    // Se guarda una foto de la comparación con el perfil para que el dictamen,
+    // las exportaciones y el audit trail puedan citar la desviación evaluada.
+    const evaluacion = {
+      evaluadoEn: new Date().toISOString(),
+      nivel: desviacionPerfil.nivel,
+      alertas: desviacionPerfil.alertas,
+      perfil: perfilTransaccional.suficiente
+        ? {
+            totalOperaciones: perfilTransaccional.totalOperaciones,
+            montoPromedio: perfilTransaccional.montoPromedio,
+            montoMediana: perfilTransaccional.montoMediana,
+            montoMaximo: perfilTransaccional.montoMaximo,
+            operacionesPorMes: perfilTransaccional.operacionesPorMes
+          }
+        : null
+    };
+
+    setDatos(prev => ({
+      ...prev,
+      perfilTransaccionalEvaluacion: perfilTransaccional.suficiente ? evaluacion : null
+    }));
+    onNext();
+  };
+
   const handleCadenaChange = (indice, campo, valor) => {
     setDatos(prev => {
       const cadena = [...(prev.cadenaPropiedad || [])];
@@ -462,6 +494,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
 
   const validacionMedioPago = validarMedioPago(datos.valor, datos.medioPago);
   const ddcResultado = validarDDC(datos);
+  // El historial del notario es pequeño (decenas o cientos de casos): se
+  // recalcula en cada render para no pelear con el compilador de React.
+  const perfilTransaccional = construirPerfilTransaccional(portfolioCases, {
+    cedula: datos.cedula,
+    cliente: datos.cliente,
+    excluirCaseId: caseId
+  });
+  const desviacionPerfil = evaluarDesviaciones(datos, perfilTransaccional);
   const estadosVerificaciones = Object.values(datos.verificaciones || {})
     .map(verificacion => verificacion?.estado);
   const hayErrorVerificacion = estadosVerificaciones.includes('error')
@@ -1049,6 +1089,44 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             ¿Tiene reportes previos ante la UAFE?
           </label>
         </div>
+
+        {perfilTransaccional.suficiente && (
+          <div
+            className="mt-4"
+            style={{
+              padding: '10px',
+              borderRadius: '6px',
+              background: 'var(--bg-input)',
+              borderLeft: `3px solid ${
+                desviacionPerfil.nivel === 'atipico'
+                  ? 'var(--rojo)'
+                  : desviacionPerfil.nivel === 'observar'
+                    ? 'var(--naranja, #f97316)'
+                    : 'var(--verde)'
+              }`
+            }}
+          >
+            <p className="text-sm" style={{ margin: 0, fontWeight: 600 }}>
+              Perfil transaccional del cliente
+            </p>
+            <p className="text-xs text-muted" style={{ margin: '4px 0 0' }}>
+              {describirPerfil(perfilTransaccional)}
+            </p>
+            {desviacionPerfil.alertas.length > 0 ? (
+              <ul className="text-xs" style={{ margin: '6px 0 0', paddingLeft: '18px' }}>
+                {desviacionPerfil.alertas.map(alerta => (
+                  <li key={alerta.codigo} style={{ color: alerta.severidad === 'alta' ? 'var(--rojo)' : 'var(--naranja, #f97316)' }}>
+                    {alerta.mensaje}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs" style={{ margin: '6px 0 0', color: 'var(--verde)' }}>
+                La operación se mantiene dentro del perfil histórico del cliente.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ===== CARD 4: Verificaciones ===== */}
@@ -1278,7 +1356,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           <textarea className="input-field" name="observaciones" value={datos.observaciones} onChange={handleChange} rows="3" placeholder="Añada cualquier información relevante..."></textarea>
         </div>
         <div className="flex justify-end mt-4">
-          <button className="btn" onClick={onNext} disabled={!isComplete}>
+          <button className="btn" onClick={handleNext} disabled={!isComplete}>
             Siguiente Paso
           </button>
         </div>

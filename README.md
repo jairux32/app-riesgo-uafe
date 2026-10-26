@@ -65,6 +65,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/revisionCoincidencias.js` — Ficha de descarte o confirmación de coincidencias
 - `src/utils/evidencias.js` — Expediente documental con hash SHA-256 y verificación de integridad
 - `src/utils/evidenciasDB.js` — Archivos de evidencia en IndexedDB (solo en el dispositivo)
+- `src/utils/perfilTransaccional.js` — Perfil del cliente y detección de desviaciones (monto, acto, pago, origen, frecuencia)
 - `src/utils/beneficiarioFinal.js` — Cadena de propiedad y participación efectiva (art. 92)
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
@@ -87,6 +88,9 @@ La base de clientes **no se publica** en el hosting. `data-local/` está ignorad
 ### Trazabilidad del dictamen
 Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt (`PROMPT_VERSION` en `src/utils/geminiApi.js`), la versión del contexto legal (`LEGAL_CONTEXT_VERSION` en `functions/index.js`) y la fecha de generación. La metadata se muestra en Step4, se incluye en el PDF/Excel y queda en el audit trail (`audit_logs`). Al cambiar el prompt o el contexto legal hay que subir la versión correspondiente.
 
+### Perfil transaccional
+Con las operaciones previas del mismo cliente se calcula su perfil (promedio, máximo, actos, medios de pago, origen y frecuencia). La app compara la operación en curso y alerta desviaciones de monto, acto, medio de pago, origen o frecuencia; el notario decide si las documenta o evalúa un ROS. El resultado se guarda al avanzar de paso y se incluye en el prompt, el PDF, el Excel y el audit trail.
+
 ### Evidencias documentales
 Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda solo en el dispositivo (IndexedDB) y el caso conserva el nombre, tipo, tamaño y hash; el hash también se exporta y queda en el audit trail. La app puede verificar que el archivo no cambió, pero no certifica su autenticidad ni sustituye la revisión del notario.
 
@@ -94,7 +98,7 @@ Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda sol
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (164 tests):
+Tests con **vitest** + **@testing-library/react** (180 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -103,6 +107,7 @@ Tests con **vitest** + **@testing-library/react** (164 tests):
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
+- `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

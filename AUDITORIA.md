@@ -355,7 +355,7 @@ Scheduler diario → Cloud Function de ingesta
 
 ### P2 — 3–12 meses
 
-- Perfil transaccional y monitoreo continuo de desviaciones.
+- ~~Perfil transaccional y monitoreo continuo de desviaciones~~: perfil por cliente (monto, acto, pago, origen y frecuencia), alertas en Step1 y en el portfolio, y registro en el dictamen y el audit trail.
 - Calibración del modelo con ROS históricos y tablero de calidad (FP/FN, tiempo de cierre).
 - ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
 - Módulo de capacitación con registro y evidencias.
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 164/164, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 180/180, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|

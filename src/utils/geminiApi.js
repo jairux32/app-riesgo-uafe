@@ -112,6 +112,14 @@ Devuelve EXCLUSIVAMENTE un JSON válido (sin texto adicional, sin markdown) con 
 }
 `;
 
+const describirPerfilGuardado = (evaluacion) => {
+  if (!evaluacion) return 'No evaluado.';
+  const mensajes = (evaluacion.alertas || []).map(a => a.mensaje).join(' ');
+  if (evaluacion.nivel === 'normal') return 'Sin desviaciones frente al perfil histórico del cliente.';
+  if (!evaluacion.nivel) return 'No evaluado.';
+  return `Nivel ${evaluacion.nivel}${mensajes ? ` — ${mensajes}` : ''}`;
+};
+
 export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
   const controlesEvaluados = controlesResult.lista.map(c => {
     const ctrl = CONTROLES_INTERNOS.find(i => i.id === c.id);
@@ -150,6 +158,7 @@ DATOS DEL ACTO NOTARIAL:
 - Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | UK: ${describirVerificacion(datos, 'uk')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
 - Revisión de coincidencias: ${describirRevisiones(datos.verificaciones || {})}${resumenRevisiones(datos.verificaciones || {}).confirmadas.length > 0 ? ' — hay coincidencias confirmadas, evalúe ROS' : ''}
 - Evidencias documentales: ${describirEvidencias(datos.evidencias || [], { hashCompleto: false })}
+- Perfil transaccional: ${describirPerfilGuardado(datos.perfilTransaccionalEvaluacion)}
 - Reportes previos UAFE: ${datos.reportesPrevios ? 'Sí' : 'No'}
 - Observaciones: ${datos.observaciones || 'Ninguna'}
 

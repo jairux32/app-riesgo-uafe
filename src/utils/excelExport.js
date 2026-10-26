@@ -117,6 +117,9 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['UK', estadoVerificacion('uk')],
     ['PEP UAFE', estadoVerificacion('uafe')],
     ['Revisión de coincidencias', describirRevisiones(datos.verificaciones || {})],
+    ['Perfil transaccional', datos.perfilTransaccionalEvaluacion
+      ? `${datos.perfilTransaccionalEvaluacion.nivel || 'sin evaluar'}${(datos.perfilTransaccionalEvaluacion.alertas || []).length ? ` — ${(datos.perfilTransaccionalEvaluacion.alertas || []).map(a => a.mensaje).join(' ')}` : ''}`
+      : 'No evaluado'],
     ['Evidencias documentales', `${(datos.evidencias || []).length} archivo(s) con hash SHA-256`],
     ...filasEvidencias(datos.evidencias || []).map(fila => [
       `${fila.tipo} — ${fila.nombre} (${fila.tamano})`,

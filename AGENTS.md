@@ -52,6 +52,7 @@ npm run test:watch # Tests in watch mode
 - `revisionCoincidencias.js` — Ficha de descarte/confirmación y bloqueo de DDC
 - `evidencias.js` — Expediente documental, hash SHA-256 y verificación de integridad
 - `evidenciasDB.js` — Archivos de evidencia en IndexedDB (nunca se suben a la nube)
+- `perfilTransaccional.js` — Perfil del cliente y desviaciones de monto, acto, pago, origen y frecuencia
 - `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
@@ -95,6 +96,7 @@ npm run test:watch # Tests in watch mode
 - **Screening con snapshots**: Importación de listas OFAC/ONU/UK/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
 - **Ficha de falsos positivos**: toda coincidencia `posible`/`coincidencia` exige responsable, fecha y justificación antes de completar la DDC; se exporta y queda en el audit trail
 - **Evidencias documentales**: cada archivo se identifica con su hash SHA-256; el archivo queda en IndexedDB y el hash en el caso, el PDF/Excel/ROS y el audit trail. La app verifica integridad, pero no certifica autenticidad
+- **Perfil transaccional**: compara la operación con el historial del cliente (monto, acto, medio de pago, origen y frecuencia); muestra desviaciones en Step1 y en las alertas del portfolio, y las registra en el dictamen y el audit trail
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
@@ -105,7 +107,7 @@ npm run test:watch # Tests in watch mode
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias (164 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional (180 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -120,4 +122,5 @@ npm run test:watch # Tests in watch mode
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
+- `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

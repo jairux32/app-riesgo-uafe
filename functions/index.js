@@ -294,6 +294,16 @@ exports.auditCaseChanges = onDocumentWritten(
     detalles.coincidenciasConfirmadas = coincidencias.filter(c => c.decision === 'confirmado').length;
     detalles.revisionCoincidencias = coincidencias;
 
+    // Comparación con el perfil transaccional del cliente, si se evaluó.
+    const evaluacionPerfil = data.datos?.perfilTransaccionalEvaluacion;
+    if (evaluacionPerfil) {
+      detalles.perfilTransaccional = {
+        nivel: evaluacionPerfil.nivel || null,
+        alertas: (evaluacionPerfil.alertas || []).map(a => a?.codigo).filter(Boolean),
+        evaluadoEn: evaluacionPerfil.evaluadoEn || null
+      };
+    }
+
     // Expediente documental: el audit trail conserva los hashes SHA-256 para
     // demostrar qué archivos sustentaron la diligencia sin almacenar su
     // contenido (que permanece solo en el dispositivo del usuario).
