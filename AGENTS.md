@@ -60,6 +60,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - `calidadModelo.js` — Tablero de calidad: distribución, señales de calibración, versiones de IA y tiempos de cierre
 - `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
+- `observabilidad.js` — Redacción de PII, contexto permitido y envío opcional de errores a `logClientError`
 - `sincronizacion.js` — Atribución de borradores por usuario, reintentos idempotentes y detección de duplicados
 - `monthlyReport.js` — Reporte mensual PDF
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
@@ -77,6 +78,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 
 ### Backend (functions/)
 - `analyzeCase` (`onRequest`) — Proxy autenticado hacia Groq con `defineSecret('GROQ_API_KEY')`; exige Bearer token, CORS restringido, rate limit por usuario y App Check opcional (`ENFORCE_APP_CHECK=true`)
+- `logClientError` (`onRequest`) — Recibe errores del cliente sin exigir sesión: valida el evento, lo redacta, limita el tamaño a 16 KB y aplica rate limit por IP; escribe una línea JSON en Cloud Logging con `severity` y atribuye el evento al usuario si el ID token es válido.
 - `notifyHighRiskCase` (`onDocumentCreated`) — Push notification cuando score ≥ 20
 - `auditCaseChanges` (`onDocumentWritten`) — Escribe `audit_logs` y `audit_heads` con cadena de hashes SHA-256; el cliente no puede escribir esas colecciones
 - `legalContext.js` — Contexto legal inyectado como system prompt (copia de `constants.js`)
@@ -95,7 +97,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **API Key**: `GROQ_API_KEY` es un secreto de Cloud Functions (`defineSecret`). NUNCA exponer en el cliente.
 - **Auth**: `analyzeCase` verifica el ID token de Firebase (incluida revocación) y aplica rate limit en memoria (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`); el cliente envía `Authorization: Bearer <token>`.
 - **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.
-- **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
+- **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`). `VITE_LOG_ENDPOINT` habilita el envío de errores a `logClientError`.
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
 - **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas, con cadena de propiedad editable y participación efectiva calculada; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
@@ -117,7 +119,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - `tests/e2e/` se ejecuta solo con `npm run test:e2e` (Playwright + emuladores de Auth y Firestore); el CI tiene un job `e2e` independiente que bloquea el deploy.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion (262 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad (290 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 - Tests e2e en `tests/e2e/` (2 tests): login, wizard completo, exportación PDF y persistencia del caso
 
@@ -139,4 +141,5 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos de cierre
+- `src/test/observabilidad.test.js` — Redacción de PII, contexto permitido, deduplicación y límites
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

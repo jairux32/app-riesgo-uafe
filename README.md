@@ -39,11 +39,12 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 3. Para notificaciones push, generar VAPID key en Firebase Console y agregarla a `.env`
 4. Opcional: definir `ALLOWED_ORIGINS` (separados por coma) para restringir CORS de `analyzeCase`
 5. Opcional: registrar App Check (reCAPTCHA v3) en Firebase Console, poner `VITE_APPCHECK_SITE_KEY` en `.env` y `ENFORCE_APP_CHECK=true` en Functions
+6. Opcional: desplegar `logClientError` y poner su URL en `VITE_LOG_ENDPOINT` para recibir los errores del cliente en Cloud Logging (ver Observabilidad)
 
 ## Arquitectura
 
 ### Frontend
-- **Entry**: `src/main.jsx` — BrowserRouter + AuthProvider + Service Worker
+- **Entry**: `src/main.jsx` — ErrorBoundary + BrowserRouter + AuthProvider + Service Worker
 - **Router**: `src/App.jsx` — Rutas `/` (wizard), `/dashboard`, `/profile`
 - **Estado de caso**: `src/context/CaseContext.jsx` — Context + useState + useMemo
 - **Auth**: `src/context/AuthContext.jsx` — Firebase Auth
@@ -108,11 +109,24 @@ Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda sol
 
 El perfil incluye un mantenimiento del almacenamiento local: compara los archivos guardados con las referencias de los casos, los borradores pendientes y las capacitaciones, y muestra qué quedó huérfano. No borra nada sin confirmación y respeta un periodo de gracia de 7 días, porque un archivo recién cargado puede pertenecer a un caso que todavía no se guardó. Al borrar el archivo, el caso conserva el hash pero ya no se puede verificar el documento.
 
+## Observabilidad
+Los errores no controlados del navegador, los fallos de la IA, de exportación y de sincronización se registran con `src/utils/observabilidad.js`. Antes de registrar o enviar nada se aplican dos barreras: una redacción de correos, identificaciones y tokens, y una lista blanca de claves de contexto técnico. El prompt, el dictamen y los datos del cliente nunca salen del navegador.
+
+Sin `VITE_LOG_ENDPOINT` los eventos solo van a la consola y a una cola en memoria de 50 elementos (útil en desarrollo). Para centralizarlos, desplegar la Function `logClientError` y definir:
+
+```bash
+VITE_LOG_ENDPOINT=https://us-central1-<proyecto>.cloudfunctions.net/logClientError
+```
+
+La Function no exige sesión —un error puede ocurrir antes del login— pero valida el evento, vuelve a redactarlo, limita el tamaño a 16 KB y aplica un rate limit por IP (`LOG_RATE_LIMIT_MAX`, por defecto 60 por minuto). Si llega un ID token válido, el evento queda atribuido al usuario. Cada traza es una línea JSON con `severity`, `logType` y campos técnicos, legible directamente en Cloud Logging.
+
+`analyzeCase` registra además una traza por llamada: resultado (`ok`, `rechazado`, `error_proveedor`, `sin_contenido`, `excepcion`), motivo, código HTTP, modelo, versión del prompt y duración. No registra el contenido del prompt ni del dictamen.
+
 ## CI
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (262 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (290 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -126,6 +140,7 @@ Tests con **vitest** + **@testing-library/react** (262 tests de unidad):
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos
+- `src/test/observabilidad.test.js` — Redacción de PII, contexto permitido, deduplicación y límites
 
 ### Flujo e2e
 `npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, más guardar el caso y verlo reflejado en el Dashboard. La IA no se prueba: la Cloud Function no corre en local.

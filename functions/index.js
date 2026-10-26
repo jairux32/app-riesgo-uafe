@@ -72,11 +72,141 @@ const CORS_ORIGINS = ORIGENES_CONFIGURADOS.length > 0
       /^https:\/\/[a-z0-9-]+\.firebaseapp\.com$/
     ];
 
+// Trazas estructuradas: una línea JSON por evento, que Cloud Logging indexa
+// como jsonPayload. Nunca se registra el prompt, el dictamen ni datos del
+// cliente: solo métricas y motivos técnicos.
+function traza(severity, campos) {
+  console.log(JSON.stringify({ severity, logType: 'analyzeCase', ...campos }));
+}
+
+// --- Registro de errores del cliente -------------------------------------
+//
+// La app puede enviar errores no controlados para poder diagnosticarlos sin
+// pedirle al usuario que abra la consola. El endpoint es público (los errores
+// ocurren antes del login), así que se defiende con:
+//
+// - lista blanca de campos: no se acepta texto libre ni el caso;
+// - redacción de identificaciones, correos y tokens, por si algo se coló;
+// - límite de tamaño y rate limit por IP;
+// - atribución opcional por ID token, sin bloquear el evento si expiró.
+
+const LOG_RATE_LIMIT_MAX = Number(process.env.LOG_RATE_LIMIT_MAX || 60);
+const LOG_RATE_LIMIT_WINDOW_MS = Number(process.env.LOG_RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const MAX_EVENTO_BYTES = 16 * 1024;
+const intentosLogPorIp = new Map();
+
+const NIVELES_LOG = ['error', 'warn', 'info'];
+const CLAVES_CONTEXTO_LOG = [
+  'etapa', 'operacion', 'accion', 'codigo', 'codigoHttp', 'duracionMs',
+  'modelo', 'promptVersion', 'contextoVersion', 'tipo', 'total', 'intentos',
+  'online', 'paso', 'proveedor', 'motivo', 'recurso', 'sincronizados',
+  'pendientes', 'caseId', 'nivelRiesgo'
+];
+
+const redactarLog = (valor) => String(valor ?? '')
+  .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer [token]')
+  .replace(/(api[_-]?key|token|password|contrase(?:n|ñ)a|clave)\s*[:=]\s*[^\s,;]+/gi, '$1=[oculto]')
+  .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[correo]')
+  .replace(/\b\d{10,13}\b/g, '[identificacion]');
+
+const textoLog = (valor, maximo) => {
+  if (typeof valor !== 'string') return null;
+  const limpio = redactarLog(valor).trim();
+  if (!limpio) return null;
+  return limpio.length > maximo ? `${limpio.slice(0, maximo)}…` : limpio;
+};
+
+const limitarContextoLog = (contexto) => {
+  if (!contexto || typeof contexto !== 'object' || Array.isArray(contexto)) return {};
+
+  const resultado = {};
+  let tamano = 0;
+
+  for (const clave of CLAVES_CONTEXTO_LOG) {
+    if (!Object.prototype.hasOwnProperty.call(contexto, clave)) continue;
+
+    const valor = contexto[clave];
+    let normalizado = null;
+
+    if (typeof valor === 'number' && Number.isFinite(valor)) normalizado = valor;
+    else if (typeof valor === 'boolean') normalizado = valor;
+    else if (typeof valor === 'string') normalizado = textoLog(valor, 200);
+    else if (Array.isArray(valor)) {
+      normalizado = valor
+        .slice(0, 10)
+        .map(item => (typeof item === 'string' || typeof item === 'number'
+          ? (typeof item === 'number' ? item : textoLog(item, 200))
+          : null))
+        .filter(item => item !== null);
+    }
+
+    if (normalizado === null) continue;
+
+    const costo = JSON.stringify({ [clave]: normalizado }).length;
+    if (tamano + costo > 1500) break;
+
+    resultado[clave] = normalizado;
+    tamano += costo;
+  }
+
+  return resultado;
+};
+
+/**
+ * Devuelve el evento saneado o `null` si no es un error legible. No confía en
+ * nada de lo que llega: el formato lo controla el cliente.
+ */
+function validarEventoCliente(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+
+  const mensaje = textoLog(body.mensaje, 500);
+  if (!mensaje) return null;
+
+  return {
+    nivel: NIVELES_LOG.includes(body.nivel) ? body.nivel : 'error',
+    origen: textoLog(body.origen, 40) || 'cliente',
+    mensaje,
+    nombreError: textoLog(body.nombreError, 80),
+    stack: textoLog(body.stack, 2000),
+    contexto: limitarContextoLog(body.contexto),
+    idSesion: textoLog(body.idSesion, 64),
+    ruta: textoLog(body.ruta, 200),
+    agente: textoLog(body.agente, 120),
+    version: textoLog(body.version, 40),
+    ocurridoEnCliente: textoLog(body.ocurridoEn, 40)
+  };
+}
+
+function excedeLimiteLog(ip) {
+  const ahora = Date.now();
+  const clave = String(ip || 'sin-ip');
+  const registro = intentosLogPorIp.get(clave);
+
+  if (!registro || ahora - registro.inicio > LOG_RATE_LIMIT_WINDOW_MS) {
+    intentosLogPorIp.set(clave, { inicio: ahora, cuenta: 1 });
+    return false;
+  }
+
+  registro.cuenta += 1;
+
+  if (intentosLogPorIp.size > 5000) {
+    for (const [otraClave, valor] of intentosLogPorIp) {
+      if (ahora - valor.inicio > LOG_RATE_LIMIT_WINDOW_MS) intentosLogPorIp.delete(otraClave);
+    }
+  }
+
+  return registro.cuenta > LOG_RATE_LIMIT_MAX;
+}
+
 exports.analyzeCase = onRequest(
   { secrets: [GROQ_API_KEY], region: 'us-central1', cors: CORS_ORIGINS },
   async (req, res) => {
+    const inicio = Date.now();
+    let uid = null;
+
     try {
       if (req.method !== 'POST') {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'metodo', duracionMs: Date.now() - inicio });
         res.status(405).json({ error: 'Método no permitido' });
         return;
       }
@@ -86,6 +216,7 @@ exports.analyzeCase = onRequest(
       const tokenMatch = /^Bearer\s+(.+)$/i.exec(authHeader);
 
       if (!tokenMatch) {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'sin_token', duracionMs: Date.now() - inicio });
         res.status(401).json({ error: 'No autenticado' });
         return;
       }
@@ -95,16 +226,21 @@ exports.analyzeCase = onRequest(
         // El segundo argumento comprueba revocación de tokens/sesión.
         decoded = await getAuth().verifyIdToken(tokenMatch[1], true);
       } catch {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'token_invalido', duracionMs: Date.now() - inicio });
         res.status(401).json({ error: 'Token inválido o expirado' });
         return;
       }
 
+      uid = decoded.uid;
+
       if (APP_CHECK_REQUERIDO && !req.app) {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'app_check', uid, duracionMs: Date.now() - inicio });
         res.status(401).json({ error: 'App Check requerido' });
         return;
       }
 
       if (excedeLimite(decoded.uid)) {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'rate_limit', uid, duracionMs: Date.now() - inicio });
         res.status(429).json({ error: 'Demasiadas solicitudes. Intente más tarde.' });
         return;
       }
@@ -112,16 +248,28 @@ exports.analyzeCase = onRequest(
       const { prompt, generationConfig, promptVersion } = req.body || {};
 
       if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+        traza('WARNING', { resultado: 'rechazado', motivo: 'prompt_invalido', uid, duracionMs: Date.now() - inicio });
         res.status(400).json({ error: 'Prompt is required' });
         return;
       }
 
       if (prompt.length > MAX_PROMPT_CHARS) {
+        traza('WARNING', {
+          resultado: 'rechazado',
+          motivo: 'prompt_largo',
+          uid,
+          total: prompt.length,
+          duracionMs: Date.now() - inicio
+        });
         res.status(413).json({
           error: `Prompt demasiado largo (máximo ${MAX_PROMPT_CHARS} caracteres)`
         });
         return;
       }
+
+      const versionPrompt = typeof promptVersion === 'string' && promptVersion.length <= 50
+        ? promptVersion
+        : PROMPT_VERSION_POR_DEFECTO;
 
       const apiKey = GROQ_API_KEY.value();
 
@@ -154,6 +302,13 @@ exports.analyzeCase = onRequest(
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         const msg = err.error?.message || response.statusText;
+        traza('ERROR', {
+          resultado: 'error_proveedor',
+          motivo: String(msg).slice(0, 200),
+          codigoHttp: response.status,
+          uid,
+          duracionMs: Date.now() - inicio
+        });
         res.status(response.status).json({ error: `Groq API error: ${msg}` });
         return;
       }
@@ -162,25 +317,113 @@ exports.analyzeCase = onRequest(
       const text = data.choices?.[0]?.message?.content;
 
       if (!text) {
+        traza('ERROR', {
+          resultado: 'sin_contenido',
+          motivo: 'respuesta_vacia',
+          uid,
+          duracionMs: Date.now() - inicio
+        });
         res.status(500).json({ error: 'Groq no devolvió contenido' });
         return;
       }
+
+      traza('INFO', {
+        resultado: 'ok',
+        uid,
+        modelo: GROQ_MODEL,
+        promptVersion: versionPrompt,
+        contextoVersion: LEGAL_CONTEXT_VERSION,
+        total: text.length,
+        duracionMs: Date.now() - inicio
+      });
 
       res.json({
         text,
         meta: {
           modelo: GROQ_MODEL,
           contextoVersion: LEGAL_CONTEXT_VERSION,
-          promptVersion: typeof promptVersion === 'string' && promptVersion.length <= 50
-            ? promptVersion
-            : PROMPT_VERSION_POR_DEFECTO,
+          promptVersion: versionPrompt,
           generadoEn: new Date().toISOString()
         }
       });
     } catch (error) {
+      traza('ERROR', {
+        resultado: 'excepcion',
+        motivo: String(error.message).slice(0, 200),
+        uid,
+        duracionMs: Date.now() - inicio
+      });
       console.error('Error en analyzeCase:', error);
       res.status(500).json({ error: `Analysis failed: ${error.message}` });
     }
+  }
+);
+
+// Registro de errores del cliente. No requiere sesión (un fallo puede ocurrir
+// antes del login), pero el evento se sanea y se acota; si llega un ID token
+// válido se atribuye al usuario. El cuerpo del caso nunca se acepta.
+exports.logClientError = onRequest(
+  { region: 'us-central1', cors: CORS_ORIGINS },
+  async (req, res) => {
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Método no permitido' });
+      return;
+    }
+
+    const ip = req.ip || String(req.get('x-forwarded-for') || '').split(',')[0].trim();
+
+    if (excedeLimiteLog(ip)) {
+      res.status(429).json({ error: 'Demasiadas solicitudes' });
+      return;
+    }
+
+    const declarado = Number(req.get('content-length'));
+    if (Number.isFinite(declarado) && declarado > MAX_EVENTO_BYTES) {
+      res.status(413).json({ error: 'Evento demasiado grande' });
+      return;
+    }
+
+    if (!req.body || typeof req.body !== 'object') {
+      res.status(400).json({ error: 'Evento inválido' });
+      return;
+    }
+
+    if (Buffer.byteLength(JSON.stringify(req.body), 'utf8') > MAX_EVENTO_BYTES) {
+      res.status(413).json({ error: 'Evento demasiado grande' });
+      return;
+    }
+
+    const evento = validarEventoCliente(req.body);
+    if (!evento) {
+      res.status(400).json({ error: 'Evento inválido' });
+      return;
+    }
+
+    let uid = null;
+    const tokenMatch = /^Bearer\s+(.+)$/i.exec(req.get('authorization') || '');
+    if (tokenMatch) {
+      try {
+        // Sin comprobar revocación: un error no debe perderse ni demorar por
+        // una consulta extra, y el peor caso es atribuirlo a una sesión vieja.
+        uid = (await getAuth().verifyIdToken(tokenMatch[1])).uid;
+      } catch {
+        uid = null;
+      }
+    }
+
+    const severity = evento.nivel === 'error'
+      ? 'ERROR'
+      : evento.nivel === 'warn' ? 'WARNING' : 'INFO';
+
+    console.log(JSON.stringify({
+      severity,
+      logType: 'cliente',
+      uid,
+      ...evento,
+      ocurridoEn: new Date().toISOString()
+    }));
+
+    res.status(204).end();
   }
 );
 

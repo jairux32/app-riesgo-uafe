@@ -363,7 +363,8 @@ Scheduler diario → Cloud Function de ingesta
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
-- ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF y guardado del caso. Falta observabilidad de errores del cliente y de Functions.
+- ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF y guardado del caso.
+- ~~Observabilidad de errores del cliente y trazas de Functions~~: `observabilidad.js` redacta PII y limita el contexto a claves técnicas; `logClientError` recibe los eventos sin exigir sesión, con validación, tamaño máximo y rate limit por IP; `analyzeCase` deja una traza JSON por llamada (resultado, código HTTP, modelo, versión y duración) sin registrar el prompt ni el dictamen. Sin `VITE_LOG_ENDPOINT` los eventos quedan solo en la consola.
 
 ---
 
@@ -422,7 +423,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los 19 commits posteriores a `c1af54c`, de `e909d25` a `0f12c98`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`) y tests de reglas (`0f12c98`). Verificación actual: `npm test` 245/245 + 13 de reglas, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los 21 commits posteriores a `c1af54c`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`), tests de reglas (`0f12c98`), purga de evidencias (`89d2b08`), offline y duplicados (`b8fe95e`), e2e con Playwright (`a7c0de5`) y observabilidad. Verificación actual: `npm test` 290/290 + 13 de reglas + 2 e2e, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|

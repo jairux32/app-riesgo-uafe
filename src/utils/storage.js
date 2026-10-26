@@ -6,6 +6,7 @@ import {
 } from '../firebase/firestore';
 import { isOnline, savePendingCase, getPendingCases, markCaseSynced, updatePendingCase } from './offlineSync';
 import { claveDuplicado, conIdCliente, planDeSincronizacion } from './sincronizacion';
+import { registrarEvento } from './observabilidad';
 import toast from 'react-hot-toast';
 
 let currentUserId = null;
@@ -150,6 +151,12 @@ export const syncPendingCases = async () => {
       casosEnNube = await getUserCases(currentUserId);
     } catch (err) {
       console.error('No se pudo consultar la nube; se reintentará la sincronización:', err);
+      registrarEvento({
+        nivel: 'warn',
+        origen: 'sincronizacion',
+        error: err,
+        contexto: { etapa: 'consulta_nube', pendientes: pendientes.length, online: isOnline() }
+      });
       return;
     }
 
@@ -181,6 +188,16 @@ export const syncPendingCases = async () => {
         synced++;
       } catch (err) {
         console.error('Error sincronizando caso:', err);
+        registrarEvento({
+          nivel: 'error',
+          origen: 'sincronizacion',
+          error: err,
+          contexto: {
+            etapa: 'subida',
+            caseId: pendiente.clientCaseId || null,
+            online: isOnline()
+          }
+        });
       }
     }
 

@@ -6,6 +6,7 @@ import { describirCadenaPropiedad, evaluarCadenaPropiedad } from './beneficiario
 import { describirRevisiones, resumenRevisiones } from './revisionCoincidencias';
 import { describirEvidencias } from './evidencias';
 import { validarRespuestaAuditoria } from './auditValidator';
+import { registrarEvento } from './observabilidad';
 
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
   || 'https://us-central1-app-riesgo-uafe.cloudfunctions.net/analyzeCase';
@@ -195,7 +196,7 @@ IMPORTANTE:
 `;
 };
 
-export const analizarConGemini = async (promptText) => {
+const solicitarAnalisis = async (promptText) => {
   const auth = getAuth(app);
   if (!auth.currentUser) {
     throw new Error('Debe iniciar sesión para usar el análisis con IA');
@@ -222,7 +223,9 @@ export const analizarConGemini = async (promptText) => {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(err.error || `Error HTTP ${response.status}`);
+    const error = new Error(err.error || `Error HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
   }
 
   const result = await response.json();
@@ -250,6 +253,28 @@ export const analizarConGemini = async (promptText) => {
   } catch (parseError) {
     if (parseError.message.startsWith('La IA devolvió')) throw parseError;
     throw new Error(`Error al procesar respuesta de IA: ${parseError.message}`, { cause: parseError });
+  }
+};
+
+/**
+ * Envuelve la llamada para dejar traza del fallo (sin el prompt ni datos del
+ * caso) y relanzar el error que ya maneja la interfaz.
+ */
+export const analizarConGemini = async (promptText) => {
+  try {
+    return await solicitarAnalisis(promptText);
+  } catch (error) {
+    registrarEvento({
+      nivel: 'error',
+      origen: 'ia',
+      error,
+      contexto: {
+        etapa: 'analisis',
+        promptVersion: PROMPT_VERSION,
+        codigoHttp: Number(error?.status) || null
+      }
+    });
+    throw error;
   }
 };
 

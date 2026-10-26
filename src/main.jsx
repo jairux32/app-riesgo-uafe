@@ -4,6 +4,17 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
+import { ErrorBoundary } from './components/ErrorBoundary.jsx'
+import { auth } from './firebase/config.js'
+import { instalarObservabilidad } from './utils/observabilidad.js'
+
+// Los errores del cliente se registran siempre en la consola. Si se define
+// VITE_LOG_ENDPOINT (la Function `logClientError`), también se envían a Cloud
+// Logging con el ID token de la sesión, sin datos del caso.
+instalarObservabilidad({
+  endpoint: import.meta.env.VITE_LOG_ENDPOINT || undefined,
+  obtenerToken: () => auth.currentUser?.getIdToken() || null
+})
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -23,10 +34,12 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>,
 )

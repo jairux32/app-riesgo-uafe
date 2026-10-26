@@ -11,6 +11,7 @@ import { SignatureModal } from '../components/SignatureModal';
 import { ObligacionesPanel } from '../components/ObligacionesPanel';
 import { transformAuditForDisplay, formatConfidence } from '../utils/auditTransformer';
 import { updateCaseAnalysis } from '../utils/storage';
+import { registrarEvento } from '../utils/observabilidad';
 
 const safeFirstClass = (colorClass) =>
   typeof colorClass === 'string' ? colorClass.split(' ')[0] : '';
@@ -64,6 +65,12 @@ export const Step4Analisis = ({
     } catch (err) {
       toast.error('Error al generar PDF: ' + err.message);
       console.error("Error exportando PDF:", err);
+      registrarEvento({
+        nivel: 'error',
+        origen: 'exportacion',
+        error: err,
+        contexto: { etapa: 'pdf', recurso: 'dictamen' }
+      });
     }
   };
 
@@ -92,6 +99,12 @@ export const Step4Analisis = ({
     } catch (err) {
       toast.error('Error al generar Excel: ' + err.message);
       console.error("Error exportando Excel:", err);
+      registrarEvento({
+        nivel: 'error',
+        origen: 'exportacion',
+        error: err,
+        contexto: { etapa: 'excel', recurso: 'dictamen' }
+      });
     }
   };
 
@@ -104,6 +117,12 @@ export const Step4Analisis = ({
     } catch (err) {
       toast.error('Error al generar ROS: ' + err.message);
       console.error("Error exportando ROS:", err);
+      registrarEvento({
+        nivel: 'error',
+        origen: 'exportacion',
+        error: err,
+        contexto: { etapa: 'ros', recurso: 'reporte' }
+      });
     }
   };
 
