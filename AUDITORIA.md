@@ -416,4 +416,33 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ---
 
+## 16. Estado de las correcciones (actualización posterior)
+
+Aplicado en los commits `c1af54c` y `e909d25`. Verificación actual: `npm test` 53/53, `npm run lint` 0 errores (4 warnings preexistentes) y `npm run build` OK.
+
+| Hallazgo | Estado | Nota |
+|---|---|---|
+| Scoring colapsado (máx. real 5/25) | **Corregido** | Señal presente = prob. 5, ausente = 1; mezcla 50% media + 50% máximo por factor; pesos normalizados por su suma real |
+| Residual mal calculado | **Corregido** | Denominador fijo de 10 controles y reducción máxima del 50% |
+| Contexto legal desactualizado | **Corregido** | Ley LA/FT 2024, Reglamento D.E. 298, COIP 317/318 derogado, sanciones 1–10/11–20/21–40 SBU, retención 10 años, efectivo 100 SBU = USD 48.200 |
+| Deriva cliente/servidor del contexto legal | **Corregido** | `functions/legalContext.js` replicado y test anti-deriva |
+| Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio” |
+| PII pública (`clientes.json`) | **Corregido** | Retirado de `public/`; carga manual desde archivo local; `data-local/` ignorado |
+| Reglas Firestore demasiado abiertas | **Mitigado** | `list/get` exigen `userId`; `audit_logs` append-only. Falta probar con emulador |
+| `analyzeCase` abierta a Internet | **Corregido** | Bearer token verificado, POST, CORS restringido y límites de prompt/tokens. Falta rate limiting/App Check |
+| Efectivo > 100 SBU | **Corregido** | Bloqueo en `Step1Datos` + validación de medio de pago desde USD 10.000 |
+| Duplicados, offline y Dashboard | **Corregido** | Guardado por `updateCase`, pendientes visibles/actualizables, navegación real, análisis IA persistido |
+| Parser de 56 señales | **Parcial** | Inicializa las 56; las reglas heurísticas cubren 14. Las no detectadas quedan en 0 explícito |
+| `xlsx@0.18.5` con CVEs sin parche npm | **Pendiente** | Migrar a `exceljs` o SheetJS 0.20.x desde el CDN oficial |
+| Audit trail server-side con hash | **Pendiente** | Los logs del cliente siguen siendo forjables |
+| DDC/BF, RESU/NO-RESU y ROS/NO-ROS como workflow | **Pendiente** | Hoy son recomendaciones del dictamen, no estados del sistema |
+
+**Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
+
+1. Purgar copias del antiguo `clientes.json` en cachés CDN, `dist/` y respaldos; rotar cualquier credencial que haya estado expuesta.
+2. Desplegar `firestore.rules` y las Functions juntas: el cliente ya envía el token, pero una Function vieja seguiría aceptando llamadas sin él.
+3. Configurar `ALLOWED_ORIGINS` con el dominio real de la notaría.
+
+---
+
 *Este informe es técnico y no constituye asesoría legal. Los umbrales, plazos y requisitos deben validarse con el oficial de cumplimiento y un abogado ecuatoriano antes de convertirlos en reglas duras del sistema.*
