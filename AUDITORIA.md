@@ -313,16 +313,16 @@ Scheduler diario → Cloud Function de ingesta
 
 | Requisito | Estado en código | Riesgo | Recomendación |
 |---|---|---|---|
-| Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score colapsado | **Alto** | Corregir fórmula y documentar metodología |
+| Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score por señal 0/1 → 5/1, impacto y peso normalizado; tablero de calidad con señales de sub/sobrestimación y tiempo de cierre | **Medio** | Acumular ROS históricos etiquetados para calibrar pesos |
 | DDC y beneficiario final (arts. 47, 92) | Checklist DDC bloqueante, BF con cadena de propiedad y expediente de evidencias con hash SHA-256 | **Bajo** | Verificación periódica de integridad |
 | PEP y listas restrictivas | Snapshots locales de OFAC/ONU/UK/PEP con versión, fecha y hash; estados `no_configurado`/`no_encontrado`/`posible`/`coincidencia` | **Medio** | Carga periódica de listas y revisión humana documentada |
 | Señales no deducibles del reporte | 20 señales marcadas como manuales en Step2 | **Bajo** | Entrevista y documentación soporte |
 | RESU/NO-RESU (USD 10.000; 15/10 días) | Calculadora de plazos y seguimiento (estado, responsable, envío, acuse) | **Medio** | Integración real con SISLAFT (P2) |
 | ROS/NO-ROS (5+3 días; reserva art. 62) | Panel de seguimiento con plazo, prórroga, estado y acuse; el PDF ROS sigue siendo el documento a presentar | **Medio** | Firma electrónica y acuse automatizado (P2) |
-| Conservación 10 años y trazabilidad | Solo `CASE_CREATED`; logs forjables | **Alto** | Audit trail server-side con hash |
+| Conservación 10 años y trazabilidad | Audit trail server-side con SHA-256 encadenado; el cliente solo lee | **Medio** | Política de retención, respaldo y verificación periódica |
 | Protección de datos (LOPDP) | JSON público + `sessionStorage` | **Crítico** | Retirar JSON, controlar acceso, cifrar |
 | Código SISLAFT, OC, Manual, EBR anual | Panel en el perfil con fechas de designación, manual, EBR y capacitación, y alertas de vencimiento | **Bajo** | Confirmar requisitos en el portal UAFE |
-| Capacitación (Res. 2024-0621) | Inexistente | **Medio** | Registro con evidencias |
+| Capacitación (Res. 2024-0621) | Registro por jornada con horas, participantes, responsable y certificado con hash SHA-256; vigencia anual calculada | **Bajo** | Cargar el plan anual y conservar certificados |
 | Prohibición de efectivo > 100 SBU | No implementada | **Alto** | Bloqueo en el flujo de protocolización |
 | Gobierno de IA y no repudio | Salida validada y versionada: `_meta` con modelo, prompt, contexto legal y fecha, visible en Step4, PDF/Excel y audit trail | **Bajo** | Mantener el versionado al cambiar prompt o contexto |
 
@@ -356,7 +356,7 @@ Scheduler diario → Cloud Function de ingesta
 ### P2 — 3–12 meses
 
 - ~~Perfil transaccional y monitoreo continuo de desviaciones~~: perfil por cliente (monto, acto, pago, origen y frecuencia), alertas en Step1 y en el portfolio, y registro en el dictamen y el audit trail.
-- Calibración del modelo con ROS históricos y tablero de calidad (FP/FN, tiempo de cierre).
+- ~~Tablero de calidad del modelo~~: cruza score y decisión de reporte para señalar posibles subestimaciones y sobreestimaciones, riesgo alto sin decisión, ROS vencidos, cobertura de IA, versiones y tiempo de cierre. Falta acumular ROS históricos etiquetados para calibrar pesos.
 - ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
 - ~~Módulo de capacitación con registro y evidencias~~: registro por jornada con horas, participantes, responsable y certificado o lista de asistencia con hash SHA-256; vigencia anual calculada y alerta de horas.
 - Tests de reglas con emulador, e2e y observabilidad; el CI de calidad ya ejecuta lint, tests, auditorías y build en cada push/PR y bloquea el deploy si falla.
@@ -375,7 +375,7 @@ Scheduler diario → Cloud Function de ingesta
 5. ~~**Expediente digital con evidencias** — escrituras, identificaciones, avalúos, origen de fondos, con hash y sello temporal~~: implementado con SHA-256 local; falta el sello temporal de un tercero de confianza.
 6. **Formulario de cliente** (PEP, origen de fondos, BF) que alimente el caso y quede firmado.
 7. **Re-screening automático** al actualizar una lista, con cola de revisión y ficha de descarte de falsos positivos.
-8. **Tablero de calidad del modelo** — precisión, falsos positivos, casos estancados, tiempos de cierre.
+8. ~~**Tablero de calidad del modelo** — precisión, falsos positivos, casos estancados, tiempos de cierre~~: implementado como señales de revisión, no como tasas reales de FP/FN mientras no haya verdad de referencia.
 9. **Integración con el sistema notarial** (API) para no duplicar captura.
 10. **Modo multi-notaría** con roles (notario, oficial de cumplimiento, analista) y separación de deberes.
 
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 210/210, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 229/229, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|

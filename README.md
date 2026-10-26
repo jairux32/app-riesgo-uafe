@@ -67,6 +67,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/evidenciasDB.js` — Archivos de evidencia en IndexedDB (solo en el dispositivo)
 - `src/utils/perfilTransaccional.js` — Perfil del cliente y detección de desviaciones (monto, acto, pago, origen, frecuencia)
 - `src/utils/capacitacion.js` — Registro de la capacitación anual: horas, participantes, vigencia y evidencia con hash
+- `src/utils/calidadModelo.js` — Tablero de calidad, cobertura de IA, señales de calibración y tiempo de cierre
 - `src/utils/beneficiarioFinal.js` — Cadena de propiedad y participación efectiva (art. 92)
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
@@ -92,6 +93,9 @@ Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt 
 ### Perfil transaccional
 Con las operaciones previas del mismo cliente se calcula su perfil (promedio, máximo, actos, medios de pago, origen y frecuencia). La app compara la operación en curso y alerta desviaciones de monto, acto, medio de pago, origen o frecuencia; el notario decide si las documenta o evalúa un ROS. El resultado se guarda al avanzar de paso y se incluye en el prompt, el PDF, el Excel y el audit trail.
 
+### Calidad y calibración del modelo
+El Dashboard cruza el score con la decisión de reporte registrada (ROS/NO-ROS) y muestra señales de posible subestimación (score bajo con ROS enviado) o sobreestimación (score alto con NO-ROS), además de casos de riesgo alto sin decisión de reporte, ROS vencidos, cobertura de dictamen IA, versiones usadas y tiempo de cierre. No calcula falsos positivos o negativos reales porque no hay una verdad de referencia etiquetada: son señales para revisión humana.
+
 ### Capacitación anual
 El perfil de la notaría permite registrar cada jornada de capacitación con tema, fecha, horas, modalidad, facilitador, participantes, responsable y el hash SHA-256 del certificado o la lista de asistencia. La app calcula la vigencia anual con el registro más reciente, acumula las horas de los últimos 12 meses y muestra una alerta —no un bloqueo— cuando están por debajo de la referencia interna. El campo simple de fecha se conserva para perfiles anteriores y se toma la fecha más reciente entre ambos. El certificado permanece en el dispositivo (IndexedDB).
 
@@ -102,7 +106,7 @@ Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda sol
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (210 tests):
+Tests con **vitest** + **@testing-library/react** (229 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -113,6 +117,7 @@ Tests con **vitest** + **@testing-library/react** (210 tests):
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
+- `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

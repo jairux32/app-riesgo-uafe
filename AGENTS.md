@@ -54,6 +54,7 @@ npm run test:watch # Tests in watch mode
 - `evidenciasDB.js` — Archivos de evidencia en IndexedDB (nunca se suben a la nube)
 - `perfilTransaccional.js` — Perfil del cliente y desviaciones de monto, acto, pago, origen y frecuencia
 - `capacitacion.js` — Registros de capacitación anual, horas, participantes, vigencia y evidencia con hash
+- `calidadModelo.js` — Tablero de calidad: distribución, señales de calibración, versiones de IA y tiempos de cierre
 - `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
@@ -100,6 +101,7 @@ npm run test:watch # Tests in watch mode
 - **Perfil transaccional**: compara la operación con el historial del cliente (monto, acto, medio de pago, origen y frecuencia); muestra desviaciones en Step1 y en las alertas del portfolio, y las registra en el dictamen y el audit trail
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
 - **Capacitación anual**: registro detallado por jornada (tema, horas, participantes, facilitador y responsable) con certificado o lista de asistencia identificada por hash SHA-256; la vigencia usa el registro más reciente y el campo simple queda como respaldo
+- **Calidad y calibración**: el Dashboard cruza score y decisión de reporte para señalar posibles subestimaciones (score bajo con ROS) y sobreestimaciones (score alto con NO-ROS), además de riesgo alto sin decisión, ROS vencidos, cobertura de IA, versiones y tiempo de cierre; no son tasas reales de FP/FN
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
@@ -109,7 +111,7 @@ npm run test:watch # Tests in watch mode
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion (210 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo (229 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -126,4 +128,5 @@ npm run test:watch # Tests in watch mode
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
+- `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos de cierre
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

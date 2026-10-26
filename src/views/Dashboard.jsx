@@ -9,6 +9,7 @@ import { calculateInherentRisk } from '../utils/calculations';
 import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download, Bell } from 'lucide-react';
 import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../utils/alertasInteligentes';
 import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
+import { CalidadModeloPanel } from '../components/CalidadModeloPanel';
 import { ESTADOS_CASO } from '../data/constants';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
@@ -19,6 +20,7 @@ export const Dashboard = ({ onGenerateReport }) => {
   const { loadCase, setStep } = useCase();
   const navigate = useNavigate();
   const [cases, setCases] = useState([]);
+  const [allCases, setAllCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('month');
   const [riskFilter, setRiskFilter] = useState('all');
@@ -40,6 +42,7 @@ export const Dashboard = ({ onGenerateReport }) => {
       const allCases = await getUserCases(user.uid);
       const profile = await getNotaryProfile(user.uid).catch(() => null);
       setPerfil(profile);
+      setAllCases(allCases);
       const now = new Date();
       let filtered = allCases;
 
@@ -303,6 +306,16 @@ export const Dashboard = ({ onGenerateReport }) => {
             ) : <p style={{ color: 'var(--txt2)', textAlign: 'center' }}>Sin datos en este periodo</p>}
           </div>
         </div>
+      </div>
+
+      <div style={{ marginBottom: '20px' }}>
+        <CalidadModeloPanel
+          casos={allCases}
+          onAbrirCaso={(id, paso) => {
+            const caso = allCases.find(item => item.id === id);
+            if (caso) abrirCaso(caso, paso);
+          }}
+        />
       </div>
 
       {/* Alertas Inteligentes */}
