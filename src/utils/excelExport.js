@@ -1,5 +1,6 @@
 import { FACTORES_RIESGO, CONTROLES_INTERNOS, NIVELES_RIESGO } from '../data/constants';
 import { calculateInherentRisk } from './calculations';
+import { validarDDC } from './validators';
 
 const setCols = (ws, widths) => {
   ws['!cols'] = widths.map(w => ({ wch: w }));
@@ -18,6 +19,17 @@ const subheaderStyle = { font: { bold: true }, fill: { fgColor: { rgb: '112233' 
 export const exportToExcel = async (datos, scores, factoresResult, controlesResult, geminiAnalysis) => {
   const XLSX = await import('xlsx');
   const wb = XLSX.utils.book_new();
+  const ddc = validarDDC(datos);
+  const beneficiario = datos.beneficiarioFinal || {};
+  const beneficiarioTexto = datos.tipoPersona === 'juridica'
+    ? `${beneficiario.nombre || 'N/A'} — ${beneficiario.cedula || 'N/A'} — ${beneficiario.porcentaje || 'N/A'}%${beneficiario.esPep ? ' — PEP' : ''}`
+    : 'No aplica (persona natural)';
+  const estadoVerificacion = (clave) => {
+    const estado = datos.verificaciones?.[clave]?.estado;
+    if (!estado || estado === 'pendiente') return 'PENDIENTE';
+    if (estado === 'no_configurado') return 'SIN FUENTE CONFIGURADA';
+    return String(estado).toUpperCase();
+  };
 
   // ==================== 1. PORTADA ====================
   const ws1 = XLSX.utils.aoa_to_sheet([
@@ -40,7 +52,10 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Riesgo Residual', `${controlesResult.residual}/25`, controlesResult.nivelResidual],
     ['Efectividad Controles:', `${Math.round(controlesResult.efectividadPromedio * 100)}%`],
     [''],
-    ['Debida Diligencia Requerida:', scores.diligencia]
+    ['Debida Diligencia Requerida:', scores.diligencia],
+    ['Beneficiario Final:', beneficiarioTexto],
+    ['Debida Diligencia (art. 47):', ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`],
+    ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UAFE: ${estadoVerificacion('uafe')}`]
   ]);
 
   setCols(ws1, [30, 25, 30]);
@@ -79,11 +94,17 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Reportes Previos UAFE?', datos.reportesPrevios ? 'SI' : 'NO'],
     [''],
     ['VERIFICACIONES'],
-    ['OFAC', datos.ofac ? 'VERIFICADO' : 'No verificado'],
-    ['ONU', datos.onu ? 'VERIFICADO' : 'No verificado'],
-    ['PEP UAFE', datos.pepUafe ? 'VERIFICADO' : 'No verificado'],
+    ['OFAC', estadoVerificacion('ofac')],
+    ['ONU', estadoVerificacion('onu')],
+    ['PEP UAFE', estadoVerificacion('uafe')],
     [''],
-    ['OBSERVACIONES', datos.observaciones || 'Ninguna']
+    ['OBSERVACIONES', datos.observaciones || 'Ninguna'],
+    [''],
+    ['BENEFICIARIO FINAL Y DDC'],
+    ['Beneficiario Final', beneficiarioTexto],
+    ['Porcentaje de Participación', datos.tipoPersona === 'juridica' ? `${beneficiario.porcentaje || 'N/A'}%` : 'No aplica'],
+    ['Beneficiario Final PEP', beneficiario.esPep ? `SI — ${beneficiario.detallePep || 'sin detalle'}` : 'NO'],
+    ['Debida Diligencia (art. 47)', ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`]
   ]);
 
   setCols(ws2, [30, 45]);

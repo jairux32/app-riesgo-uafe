@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, us
 import { calculateInherentRisk, calculateResidualRisk } from '../utils/calculations';
 import { saveCase, updateCase } from '../utils/storage';
 import { updatePendingCase } from '../utils/offlineSync';
-import { CONTROLES_INTERNOS, FACTORES_SENALES_UAFE } from '../data/constants';
+import { CONTROLES_INTERNOS, FACTORES_SENALES_UAFE, DDC_INICIAL, BENEFICIARIO_FINAL_INICIAL } from '../data/constants';
 import toast from 'react-hot-toast';
 
 const initialState = {
@@ -25,6 +25,8 @@ const initialState = {
     estadoCivil: '',
     conyuge: { nombre: '', cedula: '', nacionalidad: '' },
     representanteLegal: { nombre: '', cedula: '', nacionalidad: '' },
+    beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+    ddc: { ...DDC_INICIAL },
     fechaConstitucion: '',
     fechaTransaccion: '',
     tipoTransaccion: '',
@@ -155,7 +157,22 @@ export const CaseProvider = ({ children }) => {
   }, []);
 
   const loadCase = useCallback((c) => {
-    setDatos(c.datos || initialState.datos);
+    // Los casos antiguos no tienen los campos de DDC/BF: se mezclan con los
+    // valores iniciales para que la UI no reciba objetos undefined.
+    setDatos({
+      ...initialState.datos,
+      ...(c.datos || {}),
+      conyuge: { ...initialState.datos.conyuge, ...(c.datos?.conyuge || {}) },
+      representanteLegal: {
+        ...initialState.datos.representanteLegal,
+        ...(c.datos?.representanteLegal || {})
+      },
+      beneficiarioFinal: {
+        ...BENEFICIARIO_FINAL_INICIAL,
+        ...(c.datos?.beneficiarioFinal || {})
+      },
+      ddc: { ...DDC_INICIAL, ...(c.datos?.ddc || {}) }
+    });
     setEvaluaciones(c.evaluaciones || {});
     setControlesEval(c.controlesEval || {});
     setStep(1);

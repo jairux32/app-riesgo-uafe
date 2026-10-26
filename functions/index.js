@@ -241,6 +241,19 @@ exports.auditCaseChanges = onDocumentWritten(
       score: data.inherentScore ?? null
     };
 
+    // Resumen de DDC/BF para que el audit trail permita verificar el art. 47
+    // sin almacenar datos personales completos.
+    const ddc = data.datos?.ddc || {};
+    const esJuridica = data.datos?.tipoPersona === 'juridica';
+    const beneficiario = data.datos?.beneficiarioFinal || {};
+    detalles.ddcCompleta = Boolean(
+      ddc.identificacion
+      && ddc.proposito
+      && ddc.origenFondos
+      && (ddc.listas || ddc.listasNoDisponibles)
+      && (!esJuridica || (ddc.beneficiarioFinal && beneficiario.nombre && beneficiario.cedula))
+    );
+
     const db = getFirestore();
     const headRef = db.collection('audit_heads').doc(caseId);
     const logRef = db.collection('audit_logs').doc();

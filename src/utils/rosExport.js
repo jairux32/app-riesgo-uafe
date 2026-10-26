@@ -1,8 +1,12 @@
+import { validarDDC } from './validators';
+
 export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const doc = new jsPDF();
   let y = 15;
+  const ddc = validarDDC(datos);
+  const beneficiario = datos.beneficiarioFinal || {};
 
   const addPageIfNeeded = (requiredSpace) => {
     if (y + requiredSpace > 280) {
@@ -94,12 +98,21 @@ export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
     seccionC.push(['Representante Legal', datos.representanteLegal?.nombre || 'Por completar']);
     seccionC.push(['Cedula Representante', datos.representanteLegal?.cedula || 'Por completar']);
     seccionC.push(['Fecha de Constitucion', datos.fechaConstitucion || 'Por completar']);
+    seccionC.push(['Beneficiario Final', beneficiario.nombre || 'Por completar']);
+    seccionC.push(['Identificacion Beneficiario Final', beneficiario.cedula || 'Por completar']);
+    seccionC.push(['Participacion Beneficiario Final', `${beneficiario.porcentaje || 'Por completar'}%`]);
+    seccionC.push(['Beneficiario Final PEP', beneficiario.esPep ? `SI - ${beneficiario.detallePep || ''}` : 'NO']);
   } else {
     seccionC.push(['Estado Civil', datos.estadoCivil || 'Por completar']);
     if (datos.estadoCivil === 'casado') {
       seccionC.push(['Conyuge', datos.conyuge?.nombre || 'Por completar']);
     }
   }
+
+  seccionC.push([
+    'Debida Diligencia (art. 47)',
+    ddc.completa ? 'COMPLETA' : `INCOMPLETA - falta: ${ddc.faltantes.join(', ')}`
+  ]);
 
   autoTable(doc, {
     startY: y,

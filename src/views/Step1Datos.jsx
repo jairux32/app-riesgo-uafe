@@ -1,15 +1,40 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { Upload, Loader, UserCheck, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, Database } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
-import { validarIdentificacion, validarMedioPago } from '../utils/validators';
+import { validarIdentificacion, validarMedioPago, validarDDC } from '../utils/validators';
 import { verificarListasRestrictivas, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
-import { PROVINCIAS_ECUADOR, cargarCatalogo, LIMITE_EFECTIVO_USD, UMBRAL_MEDIO_PAGO_USD } from '../data/constants';
+import {
+  PROVINCIAS_ECUADOR,
+  cargarCatalogo,
+  LIMITE_EFECTIVO_USD,
+  UMBRAL_MEDIO_PAGO_USD,
+  DDC_INICIAL,
+  BENEFICIARIO_FINAL_INICIAL
+} from '../data/constants';
 import { searchClients as searchClientsDB } from '../utils/clientsDB';
 import { ClientSearchModal } from '../components/ClientSearchModal';
+
+const verificacionesPendientes = () => ({
+  ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+  onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+  uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
+});
+
+// Al cambiar la identidad del cliente se invalida todo el screening y la DDC:
+// heredar verificaciones de otra persona produce falsos negativos graves.
+const aplicarResetVerificaciones = (prev) => ({
+  ...prev,
+  ofac: false,
+  onu: false,
+  pepUafe: false,
+  beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+  ddc: { ...DDC_INICIAL },
+  verificaciones: verificacionesPendientes()
+});
 
 export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
@@ -20,7 +45,6 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const suggestionsRef = useRef(null);
-  const [validacionCedula, setValidacionCedula] = useState(null);
   const [verificando, setVerificando] = useState(false);
   const [cantones, setCantones] = useState([]);
   const [parroquias, setParroquias] = useState([]);
@@ -29,6 +53,13 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [dbSuggestions, setDbSuggestions] = useState([]);
   const dbDebounceRef = useRef(null);
   const [notaryAutoLoaded, setNotaryAutoLoaded] = useState(false);
+
+  // Derivada de los datos (no estado): así un caso cargado también valida su
+  // cédula y el botón "Siguiente" no queda bloqueado.
+  const validacionCedula = useMemo(
+    () => (datos.cedula ? validarIdentificacion(datos.cedula) : null),
+    [datos.cedula]
+  );
 
   useEffect(() => {
     const loadCatalogs = async () => {
@@ -137,10 +168,30 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setDatos(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setDatos(prev => {
+      const siguiente = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+
+      if (name === 'cliente' || name === 'cedula') {
+        return aplicarResetVerificaciones(siguiente);
+      }
+
+      if (name === 'tipoPersona') {
+        // Cambiar entre natural y jurídica invalida el beneficiario final.
+        return {
+          ...siguiente,
+          beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+          ddc: {
+            ...(prev.ddc || DDC_INICIAL),
+            beneficiarioFinal: false
+          }
+        };
+      }
+
+      return siguiente;
+    });
 
     // Plantilla: si cambia el acto, pre-llenar datos típicos
     if (name === 'acto' && value) {
@@ -157,10 +208,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     }
 
     // Validar cédula en tiempo real
-    if (name === 'cedula') {
-      const resultado = validarIdentificacion(value);
-      setValidacionCedula(resultado);
-    }
+    // (la validación se deriva de datos.cedula con useMemo)
 
     // Autocompletar: buscar en historial Y en base de datos de clientes
     if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2) {
@@ -211,7 +259,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   };
 
   const handleSelectClient = (clientData) => {
-    setDatos(prev => ({
+    setDatos(prev => aplicarResetVerificaciones({
       ...prev,
       cliente: clientData.cliente || prev.cliente,
       cedula: clientData.cedula || prev.cedula,
@@ -222,16 +270,6 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       reportesPrevios: clientData.reportesPrevios || false,
       origen: clientData.origen || prev.origen,
       medioPago: clientData.medioPago || prev.medioPago,
-      // Al cambiar de cliente se invalida cualquier verificación anterior:
-      // heredar el screening de otro cliente es un falso negativo grave.
-      ofac: false,
-      onu: false,
-      pepUafe: false,
-      verificaciones: {
-        ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
-        onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
-        uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
-      },
     }));
     setShowSuggestions(false);
     const source = clientData.source === 'db' ? 'base de datos' : 'historial';
@@ -239,23 +277,11 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   };
 
   const handleSelectClientFromModal = (clientData) => {
-    setDatos(prev => ({
+    setDatos(prev => aplicarResetVerificaciones({
       ...prev,
       cliente: clientData.cliente || prev.cliente,
       cedula: clientData.cedula || prev.cedula,
-      ofac: false,
-      onu: false,
-      pepUafe: false,
-      verificaciones: {
-        ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
-        onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
-        uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
-      },
     }));
-    if (clientData.cedula) {
-      const resultado = validarIdentificacion(clientData.cedula);
-      setValidacionCedula(resultado);
-    }
     toast.success(`Cliente ${clientData.cliente} cargado desde base de datos`, { icon: '👤' });
   };
 
@@ -268,8 +294,22 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     try {
       const resultados = await verificarListasRestrictivas(datos.cliente, 'todos');
 
+      // La DDC solo se considera cumplida si el screening se ejecutó contra
+      // fuentes reales. "no_configurado" no equivale a "verificado".
+      const estadosConFuente = ['limpio', 'posible', 'coincidencia'];
+      const valores = Object.values(resultados);
+      const listasVerificadas = valores.length > 0
+        && valores.every(r => estadosConFuente.includes(r.estado));
+
       setDatos(prev => ({
         ...prev,
+        ddc: {
+          ...(prev.ddc || DDC_INICIAL),
+          listas: listasVerificadas,
+          // Una nueva verificación invalida la constancia anterior: si sigue
+          // sin fuente, el usuario debe volver a dejarla explícitamente.
+          listasNoDisponibles: false
+        },
         verificaciones: {
           ofac: {
             estado: resultados.ofac?.estado || 'error',
@@ -314,6 +354,18 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   };
 
   const validacionMedioPago = validarMedioPago(datos.valor, datos.medioPago);
+  const ddcResultado = validarDDC(datos);
+  const estadosVerificaciones = Object.values(datos.verificaciones || {})
+    .map(verificacion => verificacion?.estado);
+  const hayErrorVerificacion = estadosVerificaciones.includes('error')
+    || estadosVerificaciones.includes('pendiente');
+  // La constancia solo se ofrece si el problema es falta de fuente, no un
+  // error de la consulta: un error no equivale a "no disponible".
+  const fuentesNoDisponibles = hayErrorVerificacion
+    ? []
+    : Object.entries(datos.verificaciones || {})
+      .filter(([, verificacion]) => verificacion?.estado === 'no_configurado')
+      .map(([clave]) => clave.toUpperCase());
 
   const isComplete = 
     datos.notaria?.trim() && 
@@ -323,6 +375,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     datos.acto && 
     datos.valor >= 0 &&
     validacionMedioPago.valido &&
+    ddcResultado.completa &&
     (!datos.esPep || (datos.esPep && datos.detallePep?.trim()));
 
   const handleImportExcel = async (e) => {
@@ -708,6 +761,78 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
                 <input type="text" className="input-field" value={datos.representanteLegal.cedula} onChange={(e) => setDatos(prev => ({ ...prev, representanteLegal: { ...prev.representanteLegal, cedula: e.target.value } }))} />
               </div>
             </div>
+
+            <h4 className="text-sm text-muted mb-2 mt-4">Beneficiario Final (art. 92)</h4>
+            <p className="text-xs text-muted mb-2">
+              Reconstruya la cadena de propiedad hasta la persona natural que controla o se beneficia de la operación.
+            </p>
+            <div className="grid-2">
+              <div className="form-group">
+                <label>Nombre completo</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={datos.beneficiarioFinal?.nombre || ''}
+                  onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), nombre: e.target.value } }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Identificación</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={datos.beneficiarioFinal?.cedula || ''}
+                  onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), cedula: e.target.value } }))}
+                />
+              </div>
+              <div className="form-group">
+                <label>Nacionalidad</label>
+                <select
+                  className="input-field"
+                  value={datos.beneficiarioFinal?.nacionalidad || 'ECU'}
+                  onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), nacionalidad: e.target.value } }))}
+                >
+                  {nacionalidades.length > 0 ? (
+                    nacionalidades.map(n => (
+                      <option key={n.codigo} value={n.codigo}>{n.nombre}</option>
+                    ))
+                  ) : (
+                    <option value="ECU">ECUADOR</option>
+                  )}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Porcentaje de participación (%)</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  min="0.01"
+                  max="100"
+                  step="0.01"
+                  value={datos.beneficiarioFinal?.porcentaje ?? ''}
+                  onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), porcentaje: e.target.value } }))}
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={Boolean(datos.beneficiarioFinal?.esPep)}
+                onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), esPep: e.target.checked } }))}
+              />
+              ¿El beneficiario final es PEP?
+            </label>
+            {datos.beneficiarioFinal?.esPep && (
+              <div className="form-group mt-2">
+                <label>Detalle de la condición PEP</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={datos.beneficiarioFinal?.detallePep || ''}
+                  onChange={(e) => setDatos(prev => ({ ...prev, beneficiarioFinal: { ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL), detallePep: e.target.value } }))}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -868,7 +993,81 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         </div>
       </div>
 
-      {/* ===== CARD 5: Observaciones y Siguiente ===== */}
+      {/* ===== CARD 5: Debida Diligencia (art. 47) ===== */}
+      <div className="card">
+        <h3 style={{ fontSize: '1.05rem', marginBottom: '8px' }}>Debida Diligencia del Cliente (art. 47)</h3>
+        <p className="text-sm text-muted" style={{ marginBottom: '12px' }}>
+          Sin debida diligencia completa no se inicia la relación ni la transacción. Marque solo lo que efectivamente verificó.
+        </p>
+
+        <div className="flex flex-col gap-2">
+          {[
+            ['identificacion', 'Verifiqué la identidad del cliente con su documento'],
+            ['proposito', 'Comprendí el propósito y la naturaleza de la operación'],
+            ['origenFondos', 'Verifiqué el origen y la licitud de los fondos'],
+            ...(datos.tipoPersona === 'juridica'
+              ? [['beneficiarioFinal', 'Identifiqué y verifiqué al beneficiario final']]
+              : [])
+          ].map(([clave, etiqueta]) => (
+            <label key={clave} className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={Boolean(datos.ddc?.[clave])}
+                onChange={(e) => setDatos(prev => ({
+                  ...prev,
+                  ddc: { ...(prev.ddc || DDC_INICIAL), [clave]: e.target.checked }
+                }))}
+              />
+              {etiqueta}
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-3" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-input)' }}>
+          <p className="text-sm" style={{ margin: 0 }}>
+            Verificación en listas: <strong>{
+              datos.ddc?.listas
+                ? 'ejecutada'
+                : datos.ddc?.listasNoDisponibles
+                  ? 'sin fuente (constancia registrada)'
+                  : 'pendiente'
+            }</strong>
+          </p>
+          {fuentesNoDisponibles.length > 0 && (
+            <>
+              <p className="text-xs mt-2" style={{ color: 'var(--naranja, #f97316)', margin: 0 }}>
+                Sin fuente configurada para: {fuentesNoDisponibles.join(', ')}. La verificación no se realizó; puede dejar constancia para continuar.
+              </p>
+              <label className="flex items-center gap-2 mt-2" style={{ cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(datos.ddc?.listasNoDisponibles)}
+                  onChange={(e) => setDatos(prev => ({
+                    ...prev,
+                    ddc: { ...(prev.ddc || DDC_INICIAL), listasNoDisponibles: e.target.checked }
+                  }))}
+                />
+                Dejo constancia de que no hay fuente de listas disponible
+              </label>
+            </>
+          )}
+          {!datos.ddc?.listas && !datos.ddc?.listasNoDisponibles && fuentesNoDisponibles.length === 0 && (
+            <p className="text-xs mt-2" style={{ color: 'var(--rojo)', margin: 0 }}>
+              Ejecute la verificación en listas para completar la debida diligencia.
+            </p>
+          )}
+        </div>
+
+        {!ddcResultado.completa && (
+          <div className="mt-3" style={{ padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--rojo)' }}>
+            <p className="text-sm" style={{ color: 'var(--rojo)', margin: 0 }}>
+              Falta completar: {ddcResultado.faltantes.join('; ')}.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ===== CARD 6: Observaciones y Siguiente ===== */}
       <div className="card">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label>Observaciones generales</label>

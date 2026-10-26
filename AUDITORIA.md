@@ -314,7 +314,7 @@ Scheduler diario → Cloud Function de ingesta
 | Requisito | Estado en código | Riesgo | Recomendación |
 |---|---|---|---|
 | Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score colapsado | **Alto** | Corregir fórmula y documentar metodología |
-| DDC y beneficiario final (arts. 47, 92) | Sin campo de BF; sin evidencias | **Alto** | Añadir UBO y documentación soporte |
+| DDC y beneficiario final (arts. 47, 92) | Campos de BF y checklist DDC bloqueante; faltan evidencias documentales | **Medio** | Carga de evidencias y hash (P2) |
 | PEP y listas restrictivas | Listas ficticias; PEP manual | **Crítico** | Screening real con fuente, fecha y resultado |
 | RESU/NO-RESU (USD 10.000; 15/10 días) | Sin generador ni calendario | **Alto** | Motor de obligaciones con estado de envío |
 | ROS/NO-ROS (5+3 días; reserva art. 62) | Solo recomendación IA y PDF | **Alto** | Workflow con estados, responsable y acuse |
@@ -420,7 +420,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139` y los de seguridad/validación. Verificación actual: `npm test` 61/61, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21` y los de DDC/BF. Verificación actual: `npm test` 66/66, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -439,7 +439,8 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139` y los de seguridad/valid
 | Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
-| DDC/BF, RESU/NO-RESU y ROS/NO-ROS como workflow | **Pendiente** | Hoy son recomendaciones del dictamen, no estados del sistema |
+| DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y campos de BF para personas jurídicas; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
+| DDC/BF, RESU/NO-RESU y ROS/NO-ROS como workflow | **Pendiente** | RESU/ROS siguen siendo recomendaciones del dictamen, no estados del sistema |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
 

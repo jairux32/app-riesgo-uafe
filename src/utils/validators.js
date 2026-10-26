@@ -163,3 +163,41 @@ export const validarIdentificacion = (identificacion) => {
   // Longitud inválida
   return { valido: false, mensaje: 'Longitud inválida. Cédula: 10 dígitos, RUC: 13 dígitos, Pasaporte: 5-20 caracteres.', tipo: null };
 };
+
+/**
+ * Verifica que la debida diligencia del cliente esté completa (Ley LA/FT
+ * art. 47). Para personas jurídicas exige además identificar al beneficiario
+ * final y su porcentaje de participación (art. 92; Reglamento art. 31).
+ *
+ * No infiere verificaciones: `ddc` contiene atestaciones explícitas. La
+ * verificación en listas solo se marca cuando el screening se ejecutó.
+ *
+ * @param {object} datos Datos del caso
+ * @returns {{completa: boolean, faltantes: string[]}}
+ */
+export const validarDDC = (datos = {}) => {
+  const ddc = datos.ddc || {};
+  const beneficiario = datos.beneficiarioFinal || {};
+  const esJuridica = datos.tipoPersona === 'juridica';
+  const faltantes = [];
+
+  if (!ddc.identificacion) faltantes.push('identidad del cliente verificada');
+  if (!ddc.proposito) faltantes.push('propósito y naturaleza de la operación');
+  if (!ddc.origenFondos) faltantes.push('origen y licitud de los fondos');
+  if (!ddc.listas && !ddc.listasNoDisponibles) {
+    faltantes.push('verificación en listas o constancia de fuente no disponible');
+  }
+
+  if (esJuridica) {
+    if (!ddc.beneficiarioFinal) faltantes.push('beneficiario final verificado');
+    if (!String(beneficiario.nombre || '').trim()) faltantes.push('nombre del beneficiario final');
+    if (!String(beneficiario.cedula || '').trim()) faltantes.push('identificación del beneficiario final');
+
+    const porcentaje = Number(beneficiario.porcentaje);
+    if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
+      faltantes.push('porcentaje del beneficiario final (1-100)');
+    }
+  }
+
+  return { completa: faltantes.length === 0, faltantes };
+};

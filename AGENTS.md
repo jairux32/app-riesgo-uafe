@@ -29,7 +29,7 @@ npm run test:watch # Tests in watch mode
 - **Auth**: `src/context/AuthContext.jsx` — Firebase Auth (login, register, logout)
 
 ### Wizard Steps
-1. `src/views/Step1Datos` → Captura datos básicos + importación masiva Excel
+1. `src/views/Step1Datos` → Captura datos básicos + importación masiva Excel + DDC y beneficiario final
 2. `src/views/Step2Senales` → Evaluación de 56 señales de alerta UAFE (7 categorías)
 3. `src/views/Step3Controles` → Evaluación de 10 controles internos
 4. `src/views/Step4Analisis` → Dictamen jurídico con IA + exportación PDF/Excel/ROS
@@ -82,6 +82,7 @@ npm run test:watch # Tests in watch mode
 - **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.
 - **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
+- **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
@@ -90,11 +91,11 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator (61 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator (66 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
-- `src/test/validators.test.js` — Cédula/RUC/pasaporte + límite de efectivo
+- `src/test/validators.test.js` — Cédula/RUC/pasaporte + límite de efectivo + DDC/BF
 - `src/test/calculations.test.js` — Riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Levenshtein/similarity/listas/estados
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

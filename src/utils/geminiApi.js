@@ -1,6 +1,7 @@
 import { getAuth } from 'firebase/auth';
 import app from '../firebase/config';
 import { CONTROLES_INTERNOS } from '../data/constants';
+import { validarDDC } from './validators';
 import { validarRespuestaAuditoria } from './auditValidator';
 
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
@@ -110,6 +111,12 @@ export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
     return { ...c, nombre: ctrl ? ctrl.nombre : c.id };
   });
 
+  const beneficiario = datos.beneficiarioFinal || {};
+  const ddc = validarDDC(datos);
+  const descripcionBeneficiario = datos.tipoPersona === 'juridica'
+    ? `${beneficiario.nombre || 'N/A'} — ID: ${beneficiario.cedula || 'N/A'} — Participación: ${beneficiario.porcentaje || 'N/A'}%${beneficiario.esPep ? ` — PEP: ${beneficiario.detallePep || 'sin detalle'}` : ''}`
+    : 'No aplica (persona natural)';
+
   return `CASO A ANALIZAR:
 
 DATOS DEL ACTO NOTARIAL:
@@ -120,6 +127,8 @@ DATOS DEL ACTO NOTARIAL:
 - Origen declarado de fondos: ${datos.origen || 'N/A'}
 - Medio de pago: ${datos.medioPago || 'N/A'}
 - Actividad económica: ${datos.actividad || 'N/A'}
+- Beneficiario final: ${descripcionBeneficiario}
+- Debida diligencia (art. 47): ${ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`}
 - ¿Es PEP?: ${datos.esPep ? 'Sí' : 'No'} ${datos.detallePep ? `(${datos.detallePep})` : ''}
 - ¿Actúa mediante apoderado?: ${datos.apoderado ? 'Sí' : 'No'}
 - Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
@@ -154,6 +163,7 @@ IMPORTANTE:
 - Cita artículos específicos de la Ley Orgánica 2024 y resoluciones UAFE
 - Sé estrictamente jurídico, objetivo y basado en normativa ecuatoriana vigente
 - No inventes hechos, solo analiza los datos proporcionados
+- Si la debida diligencia está INCOMPLETA, no recomiendes NO_ELEVAR: el art. 47 impide iniciar la operación y obliga a terminarla si ya comenzó
 - Devuelve SOLO el JSON, sin texto adicional ni markdown
 `;
 };

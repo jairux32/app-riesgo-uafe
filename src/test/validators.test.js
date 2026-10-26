@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validarCedulaEcuatoriana, validarRUC, validarIdentificacion, validarMedioPago } from '../utils/validators';
+import { validarCedulaEcuatoriana, validarRUC, validarIdentificacion, validarMedioPago, validarDDC } from '../utils/validators';
 
 describe('validarCedulaEcuatoriana', () => {
   it('rechaza cédulas con menos de 10 dígitos', () => {
@@ -129,5 +129,57 @@ describe('validarMedioPago', () => {
 
   it('acepta el límite parametrizado', () => {
     expect(validarMedioPago(1000, 'Efectivo', { limiteEfectivo: 500 }).valido).toBe(false);
+  });
+});
+
+describe('validarDDC', () => {
+  const ddcBase = {
+    identificacion: true,
+    proposito: true,
+    origenFondos: true,
+    listas: true
+  };
+
+  it('considera completa la DDC de una persona natural con todo verificado', () => {
+    const result = validarDDC({ tipoPersona: 'natural', ddc: ddcBase });
+    expect(result.completa).toBe(true);
+    expect(result.faltantes).toEqual([]);
+  });
+
+  it('enumera las verificaciones faltantes sin inferirlas', () => {
+    const result = validarDDC({ tipoPersona: 'natural', ddc: {} });
+    expect(result.completa).toBe(false);
+    expect(result.faltantes).toContain('identidad del cliente verificada');
+    expect(result.faltantes).toContain('origen y licitud de los fondos');
+    expect(result.faltantes).toContain('verificación en listas o constancia de fuente no disponible');
+  });
+
+  it('acepta la constancia de que no hay fuente de listas', () => {
+    const result = validarDDC({
+      tipoPersona: 'natural',
+      ddc: { ...ddcBase, listas: false, listasNoDisponibles: true }
+    });
+    expect(result.completa).toBe(true);
+  });
+
+  it('exige beneficiario final, identificación y porcentaje en personas jurídicas', () => {
+    const result = validarDDC({
+      tipoPersona: 'juridica',
+      ddc: { ...ddcBase, beneficiarioFinal: true },
+      beneficiarioFinal: { nombre: '', cedula: '', porcentaje: '0' }
+    });
+    expect(result.completa).toBe(false);
+    expect(result.faltantes).toContain('nombre del beneficiario final');
+    expect(result.faltantes).toContain('identificación del beneficiario final');
+    expect(result.faltantes).toContain('porcentaje del beneficiario final (1-100)');
+  });
+
+  it('considera completa la DDC de una persona jurídica con beneficiario final válido', () => {
+    const result = validarDDC({
+      tipoPersona: 'juridica',
+      ddc: { ...ddcBase, beneficiarioFinal: true },
+      beneficiarioFinal: { nombre: 'Ana Pérez', cedula: '1713175071', porcentaje: '60' }
+    });
+    expect(result.completa).toBe(true);
   });
 });

@@ -689,6 +689,11 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
                         Cliente: {log.details.cliente}
                       </p>
                     )}
+                    {typeof log.details?.ddcCompleta === 'boolean' && (
+                      <p style={{ fontSize: '0.75rem', color: log.details.ddcCompleta ? 'var(--verde)' : 'var(--rojo)', marginTop: '2px' }}>
+                        DDC: {log.details.ddcCompleta ? 'completa' : 'incompleta'}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

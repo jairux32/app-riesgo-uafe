@@ -273,6 +273,27 @@ export const LIMITE_EFECTIVO_USD = LIMITE_EFECTIVO_SBU * SBU_VIGENTE; // 48.200
 // Ley Notarial art. 19.m: identificar el medio de pago desde USD 10.000.
 export const UMBRAL_MEDIO_PAGO_USD = 10000;
 
+// Debida diligencia del cliente (Ley LA/FT art. 47) y beneficiario final
+// (art. 92; Reglamento art. 31). Son atestaciones del notario/oficial de
+// cumplimiento: la app no puede inferir que una verificación se realizó.
+export const DDC_INICIAL = {
+  identificacion: false,
+  proposito: false,
+  origenFondos: false,
+  beneficiarioFinal: false,
+  listas: false,
+  listasNoDisponibles: false,
+};
+
+export const BENEFICIARIO_FINAL_INICIAL = {
+  nombre: '',
+  cedula: '',
+  nacionalidad: 'ECU',
+  porcentaje: '',
+  esPep: false,
+  detallePep: '',
+};
+
 // Estados de caso (workflow)
 export const ESTADOS_CASO = [
   { id: 'borrador', label: 'Borrador', color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.15)' },

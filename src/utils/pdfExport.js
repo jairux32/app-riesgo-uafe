@@ -1,3 +1,5 @@
+import { validarDDC } from './validators';
+
 export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
@@ -92,6 +94,30 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
     doc.text(dataRight[i], 110, y);
     y += 6;
   }
+
+  const ddc = validarDDC(datos);
+  const beneficiario = datos.beneficiarioFinal || {};
+  const estadoVerificacion = (clave) => {
+    const estado = datos.verificaciones?.[clave]?.estado;
+    if (!estado || estado === 'pendiente') return 'PENDIENTE';
+    if (estado === 'no_configurado') return 'SIN FUENTE';
+    return String(estado).toUpperCase();
+  };
+
+  if (datos.tipoPersona === 'juridica') {
+    doc.text(`Beneficiario Final: ${beneficiario.nombre || 'N/A'} — ${beneficiario.cedula || 'N/A'} — ${beneficiario.porcentaje || 'N/A'}%`, 15, y);
+    y += 6;
+  }
+  const ddcTexto = ddc.completa
+    ? 'COMPLETA'
+    : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`;
+  const ddcLineas = doc.splitTextToSize(`Debida Diligencia (art. 47): ${ddcTexto}`, 180);
+  for (const linea of ddcLineas) {
+    doc.text(linea, 15, y);
+    y += 5;
+  }
+  doc.text(`Listas: OFAC ${estadoVerificacion('ofac')} | ONU ${estadoVerificacion('onu')} | UAFE ${estadoVerificacion('uafe')}`, 15, y);
+  y += 5;
   y += 5;
 
   doc.setFontSize(11);

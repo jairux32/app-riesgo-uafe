@@ -47,7 +47,7 @@ npm run test:watch # Tests en modo watch
 - **Auth**: `src/context/AuthContext.jsx` — Firebase Auth
 
 ### Wizard de 4 pasos
-1. `Step1Datos` → Captura de datos + importación masiva Excel
+1. `Step1Datos` → Captura de datos + importación masiva Excel + DDC y beneficiario final
 2. `Step2Senales` → Evaluación de señales de alerta UAFE (56 señales, 7 categorías)
 3. `Step3Controles` → Evaluación de 10 controles internos
 4. `Step4Analisis` → Dictamen jurídico con IA + exportación PDF/Excel/ROS
@@ -58,7 +58,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/excelParser.js` — Parser de reportes UAFE + auto-evaluación
 - `src/utils/exportUtils.js` — Barrel: excelExport, pdfExport, rosExport
 - `src/utils/sanctionsCheck.js` — Screening de listas (sin fuentes ficticias)
-- `src/utils/validators.js` — Cédula/RUC/pasaporte y límite de efectivo
+- `src/utils/validators.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
 ### Backend
@@ -78,8 +78,8 @@ npm run test:watch # Tests en modo watch
 La base de clientes **no se publica** en el hosting. `data-local/` está ignorado por git y la carga se hace manualmente desde la UI (archivo JSON local → IndexedDB).
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (61 tests):
-- `src/test/validators.test.js` — Cédula/RUC/pasaporte y límite de efectivo
+Tests con **vitest** + **@testing-library/react** (66 tests):
+- `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
