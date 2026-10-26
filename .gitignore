@@ -34,3 +34,8 @@ skills-lock.json
 # Datos locales con PII (nunca publicar ni commitear)
 data-local/
 public/data/clientes.json
+
+# Emulador de Firestore
+firestore-debug.log
+database-debug.log
+ui-debug.log

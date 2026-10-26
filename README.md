@@ -106,7 +106,7 @@ Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda sol
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (229 tests):
+Tests con **vitest** + **@testing-library/react** (229 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -118,6 +118,9 @@ Tests con **vitest** + **@testing-library/react** (229 tests):
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos
+
+### Reglas de Firestore
+`npm run test:rules` levanta el emulador con `firebase emulators:exec` (vía `npx`, requiere Java) y ejecuta 13 pruebas en `tests/rules/`: aislamiento de casos y perfiles por usuario, filtro obligatorio `userId` en listados, y prohibición de que el cliente escriba `audit_logs` o `audit_heads`.
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

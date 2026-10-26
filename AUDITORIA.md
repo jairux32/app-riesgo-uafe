@@ -359,7 +359,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Tablero de calidad del modelo~~: cruza score y decisión de reporte para señalar posibles subestimaciones y sobreestimaciones, riesgo alto sin decisión, ROS vencidos, cobertura de IA, versiones y tiempo de cierre. Falta acumular ROS históricos etiquetados para calibrar pesos.
 - ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
 - ~~Módulo de capacitación con registro y evidencias~~: registro por jornada con horas, participantes, responsable y certificado o lista de asistencia con hash SHA-256; vigencia anual calculada y alerta de horas.
-- Tests de reglas con emulador, e2e y observabilidad; el CI de calidad ya ejecuta lint, tests, auditorías y build en cada push/PR y bloquea el deploy si falla.
+- ~~Tests de reglas con emulador~~: `tests/rules/` cubre aislamiento por usuario, filtro `userId` y audit trail server-only; el CI ejecuta `npm run test:rules` además de lint, tests, auditorías y build. Faltan e2e y observabilidad.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - Evaluación de impacto en protección de datos y política de retención, incluida la purga de archivos de evidencia huérfanos en IndexedDB.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 229/229, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 229/229 + 13 de reglas, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|

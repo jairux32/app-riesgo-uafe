@@ -19,6 +19,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      - name: Test Firestore rules
+        run: npm run test:rules
       - name: Audit frontend
         run: npm audit --audit-level=high
       - name: Install and audit functions

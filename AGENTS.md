@@ -20,6 +20,7 @@ npm run lint       # ESLint check
 npm run preview    # Preview dist/ build
 npm test           # Run tests (vitest)
 npm run test:watch # Tests in watch mode
+npm run test:rules # Tests de reglas con el emulador (requiere Java)
 ```
 
 ## Architecture & Flow
@@ -110,8 +111,10 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
+- CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
+- `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo (229 tests)
+- Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
