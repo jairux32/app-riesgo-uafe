@@ -1,15 +1,15 @@
 # AGENTS.md
 
-**app-riesgo-uafe** — Sistema de Análisis de Riesgo LA/FD con IA (Gemini) para sector notarial ecuatoriano.
+**app-riesgo-uafe** — Sistema de Análisis de Riesgo LA/FT con IA para el sector notarial ecuatoriano.
 
 ## Tech Stack
 - React 19 + Vite 8
 - JavaScript (no TypeScript)
 - Firebase 12: Auth, Firestore, Cloud Functions, Cloud Messaging
-- AI: Google Gemini (gemini-2.5-flash) vía Cloud Function segura
+- AI: Groq (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - Routing: react-router-dom
 - Local Storage: IndexedDB (vía idb)
-- Exports: jspdf, xlsx
+- Exports: jspdf, xlsx, ROS
 - Tests: vitest + @testing-library/react
 
 ## Commands
@@ -25,7 +25,7 @@ npm run test:watch # Tests in watch mode
 ## Architecture & Flow
 - **Entry**: `src/main.jsx` — BrowserRouter + AuthProvider + Service Worker
 - **Router**: `src/App.jsx` — Rutas: `/` (wizard), `/dashboard`, `/profile`
-- **State**: `src/context/CaseContext.jsx` — Context con useReducer + useMemo para estado del caso
+- **State**: `src/context/CaseContext.jsx` — Context con useState + useMemo (caseId, análisis IA, autoguardado)
 - **Auth**: `src/context/AuthContext.jsx` — Firebase Auth (login, register, logout)
 
 ### Wizard Steps
@@ -36,20 +36,21 @@ npm run test:watch # Tests in watch mode
 
 ### Utils (src/utils/)
 - `storage.js` — Fachada Firestore + IndexedDB (offline-first)
-- `calculations.js` — Scores inherente y residual con pesos ponderados
-- `geminiApi.js` — Integración Gemini vía httpsCallable (Cloud Function)
-- `excelParser.js` — Parser reportes UAFE + auto-evaluación con señales SA01-SA201
+- `calculations.js` — Scores inherente y residual (probabilidad 5/1, pesos normalizados)
+- `geminiApi.js` — Cliente de la Cloud Function de análisis (Bearer token)
+- `excelParser.js` — Parser reportes UAFE + auto-evaluación de las 56 señales
 - `exportUtils.js` — Barrel re-export: `excelExport.js`, `pdfExport.js`, `rosExport.js`
-- `auditSchema.js` — JSON Schema para salida estructurada de Gemini
-- `auditTransformer.js` — Transforma JSON de Gemini a formato display
+- `auditSchema.js` — JSON Schema para salida estructurada del modelo
+- `auditTransformer.js` — Transforma JSON del modelo a formato display
 - `alertasInteligentes.js` — Alertas de portfolio (estancados, recurrentes, vencidos)
-- `sanctionsCheck.js` — Verificación en listas OFAC/ONU/UAFE (Levenshtein)
-- `validators.js` — Validación cédula/RUC/pasaporte ecuatoriano
+- `sanctionsCheck.js` — Screening con Levenshtein; `no_configurado` si no hay fuente
+- `validators.js` — Cédula/RUC/pasaporte + límite de efectivo (100 SBU)
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
+- `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
 
 ### Data (src/data/)
-- `constants.js` — Contexto legal, catálogos UAFE, factores de riesgo, controles
+- `constants.js` — Contexto legal, catálogos UAFE, factores de riesgo, controles, SBU
 - `demoCase.js` — Caso demo
 
 ### Firebase (src/firebase/)
@@ -60,8 +61,9 @@ npm run test:watch # Tests in watch mode
 - `messaging.js` — Notificaciones push (FCM)
 
 ### Backend (functions/)
-- `analyzeCase` (onCall) — Proxy seguro para Gemini API con defineSecret('GEMINI_API_KEY')
-- `notifyHighRiskCase` (onDocumentCreated) — Push notification cuando score ≥ 20
+- `analyzeCase` (`onRequest`) — Proxy autenticado hacia Groq con `defineSecret('GROQ_API_KEY')`; exige Bearer token, CORS restringido y límites de prompt/tokens
+- `notifyHighRiskCase` (`onDocumentCreated`) — Push notification cuando score ≥ 20
+- `legalContext.js` — Contexto legal inyectado como system prompt (copia de `constants.js`)
 
 ## Key Features (Advanced)
 - **Excel Importer**: Procesa reportes UAFE con mapeo dinámico de columnas + auto-evaluación
@@ -69,22 +71,26 @@ npm run test:watch # Tests in watch mode
 - **Batch Processing**: Análisis secuencial de múltiples casos desde el historial
 - **Legal Export**: PDF con dictamen formal, bloques de firma, ROS estructurado
 - **Offline**: IndexedDB para casos pendientes, sincronización automática al reconectar
-- **Structured AI Output**: Gemini devuelve JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
+- **Structured AI Output**: JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
 
 ## Important Constraints
-- **Legal Context**: El `CONTEXTO_LEGAL_COMPLETO_ECUADOR` en `constants.js` DEBE incluirse en cada prompt de IA
-- **API Key**: GEMINI_API_KEY es un secreto de Cloud Functions (defineSecret). NUNCA exponer en el cliente
-- **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`)
-- **Risk Weights**: Pesos de `FACTORES_SENALES_UAFE` están normalizados a suma 1.0
-- **Build Output**: `dist/` se despliega en Firebase Hosting
+- **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen.
+- **API Key**: `GROQ_API_KEY` es un secreto de Cloud Functions (`defineSecret`). NUNCA exponer en el cliente.
+- **Auth**: `analyzeCase` verifica el ID token de Firebase; el cliente envía `Authorization: Bearer <token>`.
+- **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
+- **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
+- **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
+- **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
+- **Build Output**: `dist/` se despliega en Firebase Hosting.
 
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck (36 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext (53 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
-- `src/test/validators.test.js` — Cédula/RUC/pasaporte (17 tests)
-- `src/test/calculations.test.js` — Riesgo inherente/residual (7 tests)
-- `src/test/sanctionsCheck.test.js` — Levenshtein/similarity/listas (12 tests)
+- `src/test/validators.test.js` — Cédula/RUC/pasaporte + límite de efectivo
+- `src/test/calculations.test.js` — Riesgo inherente/residual
+- `src/test/sanctionsCheck.test.js` — Levenshtein/similarity/listas/estados
+- `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

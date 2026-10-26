@@ -1,19 +1,19 @@
 # app-riesgo-uafe
 
-Sistema de Análisis de Riesgo LA/FD con IA (Gemini) para el sector notarial ecuatoriano.
+Sistema de Análisis de Riesgo LA/FT con IA para el sector notarial ecuatoriano.
 
 ## Descripción
 
-Aplicación web para notarios públicos del Ecuador que permite analizar el riesgo de Lavado de Activos y Financiación del Delito (LA/FD) en actos notariales, siguiendo la metodología EBR (Enfoque Basado en Riesgo) y la normativa de la UAFE (Unidad de Análisis Financiero y Económico).
+Aplicación web para notarios públicos del Ecuador que permite analizar el riesgo de Lavado de Activos y Financiación del Terrorismo (LA/FT) en actos notariales, siguiendo la metodología EBR (Enfoque Basado en Riesgo) y la normativa de la UAFE (Unidad de Análisis Financiero y Económico).
 
 ## Tech Stack
 - **React 19** + **Vite 8**
 - **JavaScript** (no TypeScript)
 - **Firebase 12**: Auth, Firestore, Cloud Functions, Cloud Messaging
-- **Google Gemini** (gemini-2.5-flash) vía Cloud Function segura
+- **Groq** (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - **IndexedDB** (vía `idb`) para persistencia offline
 - **react-router-dom** para navegación
-- **Exports**: jspdf (PDF), xlsx (Excel)
+- **Exports**: jspdf (PDF), xlsx (Excel), ROS
 - **recharts** para visualizaciones
 
 ## Comandos
@@ -28,18 +28,19 @@ npm run test:watch # Tests en modo watch
 
 ## Configuración
 1. Copiar `.env.example` a `.env` y completar las variables de Firebase
-2. Configurar el secreto `GEMINI_API_KEY` en Firebase Cloud Functions:
+2. Configurar el secreto `GROQ_API_KEY` en Firebase Cloud Functions:
    ```bash
-   firebase functions:secrets:set GEMINI_API_KEY
+   firebase functions:secrets:set GROQ_API_KEY
    ```
 3. Para notificaciones push, generar VAPID key en Firebase Console y agregarla a `.env`
+4. Opcional: definir `ALLOWED_ORIGINS` (separados por coma) para restringir CORS de `analyzeCase`
 
 ## Arquitectura
 
 ### Frontend
 - **Entry**: `src/main.jsx` — BrowserRouter + AuthProvider + Service Worker
 - **Router**: `src/App.jsx` — Rutas `/` (wizard), `/dashboard`, `/profile`
-- **Estado de caso**: `src/context/CaseContext.jsx` — Context + useReducer + useMemo
+- **Estado de caso**: `src/context/CaseContext.jsx` — Context + useState + useMemo
 - **Auth**: `src/context/AuthContext.jsx` — Firebase Auth
 
 ### Wizard de 4 pasos
@@ -50,15 +51,18 @@ npm run test:watch # Tests en modo watch
 
 ### Lógica
 - `src/utils/calculations.js` — Scores de riesgo inherente y residual
-- `src/utils/geminiApi.js` — Integración con Gemini vía Cloud Function
+- `src/utils/geminiApi.js` — Cliente de la Cloud Function de análisis
 - `src/utils/excelParser.js` — Parser de reportes UAFE + auto-evaluación
 - `src/utils/exportUtils.js` — Barrel: excelExport, pdfExport, rosExport
+- `src/utils/sanctionsCheck.js` — Screening de listas (sin fuentes ficticias)
+- `src/utils/validators.js` — Cédula/RUC/pasaporte y límite de efectivo
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
 ### Backend
 - `functions/index.js`:
-  - `analyzeCase` (onCall) — Proxy seguro para Gemini con `defineSecret`
-  - `notifyHighRiskCase` (onDocumentCreated) — Notificación push para riesgo ALTO
+  - `analyzeCase` (`onRequest`) — Proxy autenticado (Bearer token) hacia Groq
+  - `notifyHighRiskCase` (`onDocumentCreated`) — Notificación push para riesgo ALTO
+- `functions/legalContext.js` — Copia del contexto legal inyectado como system prompt
 
 ### Persistencia
 - `src/utils/storage.js` — Fachada Firestore + IndexedDB (offline)
@@ -66,11 +70,15 @@ npm run test:watch # Tests en modo watch
 - `src/firebase/firestore.js` — Operaciones Firestore
 - `src/firebase/auditStore.js` — Audit trail
 
+### Datos personales
+La base de clientes **no se publica** en el hosting. `data-local/` está ignorado por git y la carga se hace manualmente desde la UI (archivo JSON local → IndexedDB).
+
 ## Testing
-Tests con **vitest** + **@testing-library/react**:
-- `src/test/validators.test.js` — Validación de cédula/RUC/pasaporte
-- `src/test/calculations.test.js` — Cálculos de riesgo
+Tests con **vitest** + **@testing-library/react** (53 tests):
+- `src/test/validators.test.js` — Cédula/RUC/pasaporte y límite de efectivo
+- `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
+- `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
 
 ## Despliegue
 La carpeta `dist/` se despliega en **Firebase Hosting**. CI/CD vía GitHub Actions (`.github/workflows/`).

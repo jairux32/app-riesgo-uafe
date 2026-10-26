@@ -248,14 +248,30 @@ export const CONTROLES_INTERNOS = [
   { id: 'co1', nombre: 'Políticas KYC documentadas y actualizadas' },
   { id: 'co2', nombre: 'Verificación en listas restrictivas (OFAC, ONU, PEP UAFE)' },
   { id: 'co3', nombre: 'Identificación del beneficiario final' },
-  { id: 'co4', nombre: 'Capacitación anual del personal en LA/FD (Res. UAFE-DG-2024-0245)' },
+  { id: 'co4', nombre: 'Capacitación anual del personal en LA/FT (Res. UAFE-DG-2024-0621)' },
   { id: 'co5', nombre: 'Oficial de Cumplimiento activo y registrado en UAFE' },
   { id: 'co6', nombre: 'Sistema de monitoreo de operaciones inusuales' },
   { id: 'co7', nombre: 'Envío oportuno de RESU (15 días post-mes) y NO-RESU (10 días post-mes)' },
   { id: 'co8', nombre: 'Protocolo de ROS documentado y conocido por el personal' },
-  { id: 'co9', nombre: 'Archivo y custodia de expedientes (mínimo 7 años)' },
+  { id: 'co9', nombre: 'Archivo y custodia de expedientes (mínimo 10 años)' },
   { id: 'co10', nombre: 'Revisión por Oficial antes de elevar escritura en casos de alto riesgo' }
 ];
+
+// Salario Básico Unificado y límites legales derivados.
+// SBU 2026 = USD 482 (Acuerdo MDT-2025-195). Actualizar cada año.
+export const SBU_POR_ANIO = {
+  2025: 470,
+  2026: 482
+};
+
+export const SBU_VIGENTE = SBU_POR_ANIO[2026];
+
+// Ley Notarial art. 20.8: prohibido recibir efectivo por más de 100 SBU.
+export const LIMITE_EFECTIVO_SBU = 100;
+export const LIMITE_EFECTIVO_USD = LIMITE_EFECTIVO_SBU * SBU_VIGENTE; // 48.200
+
+// Ley Notarial art. 19.m: identificar el medio de pago desde USD 10.000.
+export const UMBRAL_MEDIO_PAGO_USD = 10000;
 
 // Estados de caso (workflow)
 export const ESTADOS_CASO = [

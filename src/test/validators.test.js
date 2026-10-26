@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validarCedulaEcuatoriana, validarRUC, validarIdentificacion } from '../utils/validators';
+import { validarCedulaEcuatoriana, validarRUC, validarIdentificacion, validarMedioPago } from '../utils/validators';
 
 describe('validarCedulaEcuatoriana', () => {
   it('rechaza cédulas con menos de 10 dígitos', () => {
@@ -95,5 +95,39 @@ describe('validarIdentificacion', () => {
   it('rechaza pasaportes demasiado largos', () => {
     const result = validarIdentificacion('AB' + '1'.repeat(20));
     expect(result.valido).toBe(false);
+  });
+});
+
+describe('validarMedioPago', () => {
+  it('permite efectivo por debajo de 100 SBU', () => {
+    const result = validarMedioPago(48000, 'Efectivo');
+    expect(result.valido).toBe(true);
+  });
+
+  it('bloquea efectivo por encima de 100 SBU (48.200 con SBU 2026)', () => {
+    const result = validarMedioPago(48201, 'Efectivo');
+    expect(result.valido).toBe(false);
+    expect(result.motivo).toBe('excede_efectivo');
+  });
+
+  it('permite transferencias de alto valor', () => {
+    const result = validarMedioPago(250000, 'Transferencia');
+    expect(result.valido).toBe(true);
+  });
+
+  it('exige medio de pago desde USD 10.000', () => {
+    const result = validarMedioPago(12000, '');
+    expect(result.valido).toBe(false);
+    expect(result.motivo).toBe('medio_pago_requerido');
+  });
+
+  it('advierte sobre el efectivo en pagos mixtos de alto valor', () => {
+    const result = validarMedioPago(30000, 'Mixto');
+    expect(result.valido).toBe(true);
+    expect(result.advertencia).toMatch(/100 SBU/);
+  });
+
+  it('acepta el límite parametrizado', () => {
+    expect(validarMedioPago(1000, 'Efectivo', { limiteEfectivo: 500 }).valido).toBe(false);
   });
 });

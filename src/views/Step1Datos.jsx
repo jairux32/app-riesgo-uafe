@@ -5,9 +5,9 @@ import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
-import { validarIdentificacion } from '../utils/validators';
+import { validarIdentificacion, validarMedioPago } from '../utils/validators';
 import { verificarListasRestrictivas, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
-import { PROVINCIAS_ECUADOR, cargarCatalogo } from '../data/constants';
+import { PROVINCIAS_ECUADOR, cargarCatalogo, LIMITE_EFECTIVO_USD, UMBRAL_MEDIO_PAGO_USD } from '../data/constants';
 import { searchClients as searchClientsDB } from '../utils/clientsDB';
 import { ClientSearchModal } from '../components/ClientSearchModal';
 
@@ -313,6 +313,8 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     }
   };
 
+  const validacionMedioPago = validarMedioPago(datos.valor, datos.medioPago);
+
   const isComplete = 
     datos.notaria?.trim() && 
     datos.notario?.trim() && 
@@ -320,6 +322,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     validacionCedula?.valido && 
     datos.acto && 
     datos.valor >= 0 &&
+    validacionMedioPago.valido &&
     (!datos.esPep || (datos.esPep && datos.detallePep?.trim()));
 
   const handleImportExcel = async (e) => {
@@ -556,6 +559,21 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
               <option value="Mixto">Mixto</option>
               <option value="N/A">N/A</option>
             </select>
+            {!validacionMedioPago.valido && (
+              <p className="text-sm mt-2" style={{ color: 'var(--rojo)', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                {validacionMedioPago.mensaje}
+              </p>
+            )}
+            {validacionMedioPago.valido && validacionMedioPago.advertencia && (
+              <p className="text-sm mt-2" style={{ color: 'var(--naranja, #f97316)', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                {validacionMedioPago.advertencia}
+              </p>
+            )}
+            <p className="text-sm text-muted mt-2">
+              Efectivo: máximo 100 SBU (USD {LIMITE_EFECTIVO_USD.toLocaleString('es-EC')}). Desde USD {UMBRAL_MEDIO_PAGO_USD.toLocaleString('es-EC')} el medio de pago es obligatorio.
+            </p>
           </div>
 
           <div className="form-group">

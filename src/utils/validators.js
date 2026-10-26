@@ -2,6 +2,48 @@
  * Validación de identificación ecuatoriana (cédula/RUC/pasaporte)
  */
 
+import { LIMITE_EFECTIVO_USD, UMBRAL_MEDIO_PAGO_USD } from '../data/constants';
+
+/**
+ * Controla el límite legal de efectivo (Ley Notarial art. 20.8) y la
+ * obligación de identificar el medio de pago desde USD 10.000 (art. 19.m).
+ *
+ * @param {number|string} valor Monto de la operación en USD
+ * @param {string} medioPago Medio declarado (Efectivo, Transferencia, Mixto...)
+ * @param {{limiteEfectivo?: number}} opciones Permite parametrizar el SBU
+ */
+export const validarMedioPago = (valor, medioPago, opciones = {}) => {
+  const limiteEfectivo = opciones.limiteEfectivo ?? LIMITE_EFECTIVO_USD;
+  const monto = Number(valor) || 0;
+  const medio = String(medioPago || '').trim();
+  const medioNormalizado = medio.toLowerCase();
+
+  if (medioNormalizado === 'efectivo' && monto > limiteEfectivo) {
+    return {
+      valido: false,
+      motivo: 'excede_efectivo',
+      mensaje: `El efectivo supera el límite legal de 100 SBU (USD ${limiteEfectivo.toLocaleString('es-EC')}). No se puede elevar la escritura con ese medio de pago.`
+    };
+  }
+
+  if (monto >= UMBRAL_MEDIO_PAGO_USD && !medio) {
+    return {
+      valido: false,
+      motivo: 'medio_pago_requerido',
+      mensaje: 'Identifique el medio de pago: es obligatorio para operaciones desde USD 10.000 (Ley Notarial art. 19.m).'
+    };
+  }
+
+  if (medioNormalizado === 'mixto' && monto >= UMBRAL_MEDIO_PAGO_USD) {
+    return {
+      valido: true,
+      advertencia: 'En pagos mixtos, la porción en efectivo no puede superar 100 SBU. Documente el desglose y verifique que la parte en efectivo no exceda el límite.'
+    };
+  }
+
+  return { valido: true, mensaje: '' };
+};
+
 /**
  * Valida cédula ecuatoriana (10 dígitos, módulo 10)
  */
