@@ -48,6 +48,7 @@ npm run test:watch # Tests in watch mode
 - `validators.js` — Cédula/RUC/pasaporte + límite de efectivo (100 SBU)
 - `obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `cumplimiento.js` — Código SISLAFT, OC, manual, EBR y capacitación con alertas de vencimiento
+- `listasDB.js` — Snapshots de OFAC/ONU/PEP en IndexedDB con versión, fecha y hash
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
@@ -86,6 +87,7 @@ npm run test:watch # Tests in watch mode
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
 - **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
+- **Screening con snapshots**: Importación de listas OFAC/ONU/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
@@ -95,7 +97,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones (91 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB (98 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -106,3 +108,4 @@ npm run test:watch # Tests in watch mode
 - `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA
 - `src/test/obligaciones.test.js` — Plazos de RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia de los requisitos institucionales
+- `src/test/listasDB.test.js` — Parseo de listas restrictivas CSV/JSON

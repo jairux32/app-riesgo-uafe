@@ -16,7 +16,9 @@ import {
   BENEFICIARIO_FINAL_INICIAL
 } from '../data/constants';
 import { searchClients as searchClientsDB } from '../utils/clientsDB';
+import { cargarListas, getEstadoListas } from '../utils/listasDB';
 import { ClientSearchModal } from '../components/ClientSearchModal';
+import { GestionListasModal } from '../components/GestionListasModal';
 
 const verificacionesPendientes = () => ({
   ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
@@ -46,6 +48,9 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [suggestions, setSuggestions] = useState([]);
   const suggestionsRef = useRef(null);
   const [verificando, setVerificando] = useState(false);
+  const [showListasModal, setShowListasModal] = useState(false);
+  const [listasActualizadas, setListasActualizadas] = useState(0);
+  const [estadoListas, setEstadoListas] = useState({});
   const [cantones, setCantones] = useState([]);
   const [parroquias, setParroquias] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
@@ -75,6 +80,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     };
     loadCatalogs();
   }, []);
+
+  useEffect(() => {
+    let activo = true;
+    getEstadoListas()
+      .then(estado => { if (activo) setEstadoListas(estado); })
+      .catch(() => { if (activo) setEstadoListas({}); });
+    return () => { activo = false; };
+  }, [listasActualizadas]);
 
   // Filtrar cantones cuando cambia provincia
   useEffect(() => {
@@ -292,11 +305,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     }
     setVerificando(true);
     try {
-      const resultados = await verificarListasRestrictivas(datos.cliente, 'todos');
+      // Se usan los snapshots importados por el usuario. Sin snapshots el
+      // resultado es `no_configurado`, nunca "limpio".
+      const fuentes = await cargarListas();
+      const resultados = await verificarListasRestrictivas(datos.cliente, 'todos', fuentes);
 
       // La DDC solo se considera cumplida si el screening se ejecutó contra
       // fuentes reales. "no_configurado" no equivale a "verificado".
-      const estadosConFuente = ['limpio', 'posible', 'coincidencia'];
+      const estadosConFuente = ['no_encontrado', 'posible', 'coincidencia'];
       const valores = Object.values(resultados);
       const listasVerificadas = valores.length > 0
         && valores.every(r => estadosConFuente.includes(r.estado));
@@ -315,19 +331,22 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             estado: resultados.ofac?.estado || 'error',
             fecha: resultados.ofac?.fecha,
             resultado: resultados.ofac?.mensaje,
-            coincidencias: resultados.ofac?.coincidencias || []
+            coincidencias: resultados.ofac?.coincidencias || [],
+            versionLista: resultados.ofac?.versionLista || null
           },
           onu: {
             estado: resultados.onu?.estado || 'error',
             fecha: resultados.onu?.fecha,
             resultado: resultados.onu?.mensaje,
-            coincidencias: resultados.onu?.coincidencias || []
+            coincidencias: resultados.onu?.coincidencias || [],
+            versionLista: resultados.onu?.versionLista || null
           },
           uafe: {
             estado: resultados.uafe?.estado || 'error',
             fecha: resultados.uafe?.fecha,
             resultado: resultados.uafe?.mensaje,
-            coincidencias: resultados.uafe?.coincidencias || []
+            coincidencias: resultados.uafe?.coincidencias || [],
+            versionLista: resultados.uafe?.versionLista || null
           }
         }
       }));
@@ -940,14 +959,32 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       <div className="card">
         <div className="flex justify-between items-center flex-wrap gap-3" style={{ marginBottom: '12px' }}>
           <h3 style={{ fontSize: '1.05rem', margin: 0 }}>Verificación en Listas Restrictivas</h3>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={handleVerificarListas}
-            disabled={verificando || !datos.cliente}
-          >
-            {verificando ? <><Loader size={12} className="spin" /> Verificando...</> : <><Search size={12} /> Verificar Ahora</>}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => setShowListasModal(true)}
+              title="Importar snapshots oficiales de OFAC, ONU y PEP"
+            >
+              <Database size={12} /> Listas ({Object.values(estadoListas).filter(Boolean).length}/3)
+            </button>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleVerificarListas}
+              disabled={verificando || !datos.cliente}
+            >
+              {verificando ? <><Loader size={12} className="spin" /> Verificando...</> : <><Search size={12} /> Verificar Ahora</>}
+            </button>
+          </div>
         </div>
+
+        <p className="text-xs text-muted" style={{ marginBottom: '10px' }}>
+          {Object.values(estadoListas).some(Boolean)
+            ? `Snapshots cargados: ${Object.entries(estadoListas)
+              .filter(([, meta]) => meta)
+              .map(([tipo, meta]) => `${tipo.toUpperCase()} ${meta.total.toLocaleString('es-EC')} (${meta.version})`)
+              .join(' · ')}`
+            : 'No hay snapshots de listas cargados: la verificación quedará como "sin verificar".'}
+        </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
           {[
@@ -968,6 +1005,11 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
                 </div>
                 {verif.resultado && (
                   <p className="text-xs text-muted" style={{ lineHeight: '1.3' }}>{verif.resultado}</p>
+                )}
+                {verif.versionLista && (
+                  <p className="text-xs text-muted" style={{ lineHeight: '1.3' }}>
+                    Snapshot: {verif.versionLista}
+                  </p>
                 )}
                 {verif.coincidencias?.length > 0 && (
                   <div className="mt-1" style={{ padding: '4px 6px', background: 'rgba(0,0,0,0.15)', borderRadius: '4px' }}>
@@ -1084,6 +1126,13 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         <ClientSearchModal
           onSelect={handleSelectClientFromModal}
           onClose={() => setShowClientSearch(false)}
+        />
+      )}
+
+      {showListasModal && (
+        <GestionListasModal
+          onClose={() => setShowListasModal(false)}
+          onCambio={() => setListasActualizadas(n => n + 1)}
         />
       )}
     </div>
