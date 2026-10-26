@@ -1,4 +1,5 @@
 import { openDB } from 'idb';
+import { filtrarPendientesDeUsuario } from './sincronizacion';
 
 const DB_NAME = 'app-riesgo-offline';
 const DB_VERSION = 1;
@@ -39,11 +40,13 @@ export const savePendingCase = async (caseData) => {
   }
 };
 
-// Obtener casos pendientes
-export const getPendingCases = async () => {
+// Obtener casos pendientes. Con `userId` solo devuelve los del usuario: el
+// dispositivo puede haber sido usado por más de una cuenta.
+export const getPendingCases = async (userId) => {
   try {
     const db = await getDB();
-    return await db.getAll(STORE_NAME);
+    const todos = await db.getAll(STORE_NAME);
+    return userId ? filtrarPendientesDeUsuario(todos, userId) : todos;
   } catch (err) {
     console.error('Error obteniendo casos pendientes:', err);
     return [];

@@ -347,7 +347,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Persistir el análisis de IA, validar con `AUDIT_RESPONSE_SCHEMA` y versionar prompt/modelo/contexto~~: implementado con `_meta`, validación previa y trazabilidad en PDF, Excel y audit trail.
 - ~~Audit trail server-side, append-only y con hash encadenado~~: `auditCaseChanges` escribe `audit_logs` y `audit_heads` con SHA-256; el cliente solo lee.
 - ~~Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse~~: panel en Step4 y cálculo de plazos en `obligaciones.js`.
-- Corregir duplicados, offline, Dashboard, filtro OFAC y reporte mensual.
+- ~~Corregir duplicados y offline~~: caché persistente de Firestore, borradores atribuidos a su usuario, sincronización idempotente por `clientCaseId` y alerta de posibles duplicados en el portfolio. El Dashboard y el filtro OFAC se corrigieron en los bloques anteriores; queda revisar el reporte mensual.
 - ~~Screening real OFAC + ONU + UK con snapshots versionados~~ y ficha de descarte de falsos positivos: implementado para OFAC, ONU, UK (Name 1..N) y lista PEP interna con hash, con revisión documentada y bloqueo de la DDC.
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
@@ -363,6 +363,7 @@ Scheduler diario → Cloud Function de ingesta
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
+- Cobertura e2e del flujo crítico (login, wizard y exportación) y observabilidad de errores del cliente y de Functions.
 
 ---
 

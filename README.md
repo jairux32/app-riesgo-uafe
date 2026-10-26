@@ -82,6 +82,7 @@ npm run test:watch # Tests en modo watch
 ### Persistencia
 - `src/utils/storage.js` — Fachada Firestore + IndexedDB (offline)
 - `src/utils/offlineSync.js` — Sincronización offline con `idb`
+- `src/utils/sincronizacion.js` — Reglas de atribución por usuario, reintentos idempotentes y duplicados
 - `src/firebase/firestore.js` — Operaciones Firestore
 - `src/firebase/auditStore.js` — Audit trail
 
@@ -109,7 +110,7 @@ El perfil incluye un mantenimiento del almacenamiento local: compara los archivo
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (245 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (262 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -119,6 +120,7 @@ Tests con **vitest** + **@testing-library/react** (245 tests de unidad):
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
 - `src/test/purgaEvidencias.test.js` — Archivos huérfanos, periodo de gracia y purga
+- `src/test/sincronizacion.test.js` — Borradores por usuario, reintentos idempotentes y duplicados
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos

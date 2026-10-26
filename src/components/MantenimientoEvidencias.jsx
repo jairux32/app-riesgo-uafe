@@ -22,7 +22,7 @@ export const MantenimientoEvidencias = ({ userId, perfil }) => {
   const cargarReferencias = async () => {
     const [casos, pendientes] = await Promise.all([
       getUserCases(userId).catch(() => []),
-      getPendingCases().catch(() => [])
+      getPendingCases(userId).catch(() => [])
     ]);
     return { casos: casos || [], casosPendientes: pendientes || [] };
   };

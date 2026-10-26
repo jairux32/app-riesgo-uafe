@@ -5,6 +5,7 @@
 
 import { calculateInherentRisk } from './calculations';
 import { construirPerfilTransaccional, evaluarDesviaciones } from './perfilTransaccional';
+import { detectarDuplicados } from './sincronizacion';
 
 const DIAS_ESTANCAMIENTO = 7;
 const DIAS_VENCIMIENTO_UAFE = 10; // Plazo para reportar desde aprobación (simulado)
@@ -144,6 +145,19 @@ export function generarAlertas(cases) {
     });
   });
 
+  // 6. Posibles registros duplicados del mismo cliente, acto y mes
+  detectarDuplicados(cases).forEach(grupo => {
+    alertas.push({
+      tipo: 'posible_duplicado',
+      prioridad: 'media',
+      casoId: grupo.casos[0]?.id,
+      cliente: grupo.casos[0]?.cliente || 'Sin nombre',
+      mensaje: `${grupo.total} casos de "${grupo.acto}" para el mismo cliente en ${grupo.mes}`,
+      accion: 'Revisar si es un registro repetido y consolidar el expediente',
+      casos: grupo.casos
+    });
+  });
+
   // Ordenar por prioridad
   const prioridadOrden = { alta: 0, media: 1, baja: 2 };
   alertas.sort((a, b) => prioridadOrden[a.prioridad] - prioridadOrden[b.prioridad]);
@@ -161,6 +175,7 @@ export function getAlertaStyle(tipo) {
     vencimiento_uafe: { color: '#dc2626', bg: 'rgba(220,38,38,0.15)', icon: '🚨' },
     verificacion_pendiente: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '⚠️' },
     desviacion_perfil: { color: '#f97316', bg: 'rgba(249,115,22,0.1)', icon: '📈' },
+    posible_duplicado: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: '📑' },
   };
   return styles[tipo] || { color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', icon: 'ℹ️' };
 }

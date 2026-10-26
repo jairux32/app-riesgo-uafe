@@ -1,5 +1,11 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import {
+  initializeFirestore,
+  getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from 'firebase/firestore';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
@@ -31,4 +37,21 @@ if (appCheckSiteKey) {
 }
 
 export const auth = getAuth(app);
+
+// Caché persistente de Firestore: sin ella, cualquier lectura o escritura sin
+// conexión falla y se pierde el trabajo del usuario (por ejemplo, el análisis
+// de IA de un caso ya guardado). Con la caché persistente, las escrituras se
+// encolan y se envían solas al recuperar la red, y las lecturas usan la última
+// copia local. Si el navegador no la soporta, se sigue con la caché en memoria.
+export const db = (() => {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch (err) {
+    console.warn('No se pudo habilitar la caché persistente de Firestore:', err);
+    return getFirestore(app);
+  }
+})();
+
 export default app;

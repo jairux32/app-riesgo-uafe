@@ -59,6 +59,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - `calidadModelo.js` — Tablero de calidad: distribución, señales de calibración, versiones de IA y tiempos de cierre
 - `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
+- `sincronizacion.js` — Atribución de borradores por usuario, reintentos idempotentes y detección de duplicados
 - `monthlyReport.js` — Reporte mensual PDF
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
 
@@ -84,7 +85,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - **Auto-Evaluation**: Sugiere valores con motivo trazable en 36 señales; 20 quedan marcadas como manuales
 - **Batch Processing**: Análisis secuencial de múltiples casos desde el historial
 - **Legal Export**: PDF con dictamen formal, bloques de firma, ROS estructurado
-- **Offline**: IndexedDB para casos pendientes, sincronización automática al reconectar
+- **Offline**: caché persistente de Firestore (las escrituras se encolan y se envían al reconectar) más IndexedDB para los borradores creados sin conexión; la sincronización se atribuye al usuario que creó el borrador y es idempotente por `clientCaseId`
 - **Structured AI Output**: JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
 
 ## Important Constraints
@@ -114,7 +115,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias (245 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion (262 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 
 ## Testing
@@ -131,6 +132,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 - `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/evidencias.test.js` — Hash SHA-256, integridad y evidencias mínimas
 - `src/test/purgaEvidencias.test.js` — Archivos huérfanos, periodo de gracia y purga
+- `src/test/sincronizacion.test.js` — Borradores por usuario, reintentos idempotentes y duplicados
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos de cierre

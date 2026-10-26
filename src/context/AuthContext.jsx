@@ -19,9 +19,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        setUserId(currentUser.uid, currentUser.email);
-      }
+      // Sin sesión no hay dueño: los borradores de otra cuenta no deben
+      // sincronizarse ni mostrarse.
+      setUserId(currentUser?.uid || null);
       setLoading(false);
     });
     return unsubscribe;

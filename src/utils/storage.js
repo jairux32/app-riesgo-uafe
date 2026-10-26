@@ -4,29 +4,26 @@ import {
   deleteCaseFromFirestore,
   updateCaseInFirestore
 } from '../firebase/firestore';
-import { isOnline, savePendingCase, getPendingCases, markCaseSynced } from './offlineSync';
+import { isOnline, savePendingCase, getPendingCases, markCaseSynced, updatePendingCase } from './offlineSync';
+import { claveDuplicado, conIdCliente, planDeSincronizacion } from './sincronizacion';
 import toast from 'react-hot-toast';
 
 let currentUserId = null;
 
 export const setUserId = (userId) => {
-  currentUserId = userId;
+  currentUserId = userId || null;
 };
 
 export const checkDuplicateCase = async (datos) => {
   try {
+    if (!datos?.cedula || !datos?.acto) return null;
+
     const allCases = await getAllCases();
-    const cedula = datos.cedula?.trim();
-    const acto = datos.acto?.trim();
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    
-    const duplicate = allCases.find(c => {
-      const caseMonth = c.createdAt ? c.createdAt.slice(0, 7) : currentMonth;
-      return c.datos?.cedula?.trim() === cedula && 
-             c.datos?.acto?.trim() === acto && 
-             caseMonth === currentMonth;
-    });
-    
+    const clave = claveDuplicado({ datos, createdAt: new Date().toISOString() });
+    if (!clave) return null;
+
+    const duplicate = allCases.find(c => claveDuplicado(c) === clave);
+
     return duplicate || null;
   } catch (err) {
     console.error('Error verificando duplicados:', err);
@@ -36,20 +33,32 @@ export const checkDuplicateCase = async (datos) => {
 
 export const saveCase = async (caseData) => {
   try {
+    // Sin usuario no hay a quién atribuir el caso: las reglas de Firestore lo
+    // rechazarían y el borrador local quedaría inaccesible.
+    if (!currentUserId) {
+      toast.error('La sesión aún no está lista. Espere un momento e intente guardar de nuevo.');
+      return null;
+    }
+
     if (caseData.datos?.cedula && caseData.datos?.acto) {
       const duplicate = await checkDuplicateCase(caseData.datos);
       if (duplicate) {
+        const fecha = duplicate.createdAt
+          ? new Date(duplicate.createdAt).toLocaleDateString('es-EC')
+          : 'este mes';
         const confirm = window.confirm(
           `⚠️ Caso duplicado detectado\n\n` +
-          `El cliente ${duplicate.datos.cliente} ya tiene un caso de "${duplicate.datos.acto}" registrado este mes (${new Date(duplicate.createdAt).toLocaleDateString('es-EC')}).\n\n` +
+          `El cliente ${duplicate.datos?.cliente || 'sin nombre'} ya tiene un caso de ` +
+          `"${duplicate.datos?.acto}" registrado este mes (${fecha}).\n\n` +
           `¿Desea guardar de todos modos?`
         );
         if (!confirm) return null;
       }
     }
-    
+
     if (!isOnline()) {
-      const pendingId = await savePendingCase({ ...caseData, userId: currentUserId });
+      const pendiente = conIdCliente({ ...caseData, userId: currentUserId });
+      const pendingId = await savePendingCase(pendiente);
       if (pendingId != null) {
         toast('Caso guardado localmente. Se sincronizará cuando haya conexión.', { icon: '💾' });
         return { id: `pending_${pendingId}`, ...caseData };
@@ -81,7 +90,7 @@ export const getAllCases = async () => {
   // Los pendientes se muestran siempre, no solo sin conexión: de lo contrario
   // desaparecen al recuperar la red y el usuario cree que se perdieron.
   try {
-    const pendientes = await getPendingCases();
+    const pendientes = await getPendingCases(currentUserId);
     pendingCases = pendientes.map(c => ({ ...c, id: `pending_${c.id}` }));
   } catch (err) {
     console.error('Error obteniendo casos pendientes:', err);
@@ -128,26 +137,53 @@ export const updateCaseAnalysis = async (id, analysis) => {
 };
 
 export const syncPendingCases = async () => {
+  if (!currentUserId) return;
+
   try {
-    const pending = await getPendingCases();
-    if (pending.length === 0) return;
-    
+    const pendientes = await getPendingCases(currentUserId);
+    if (pendientes.length === 0) return;
+
+    // Sin la lista de la nube no se puede saber qué ya se subió: se reintenta
+    // en la próxima conexión en lugar de arriesgar duplicados.
+    let casosEnNube;
+    try {
+      casosEnNube = await getUserCases(currentUserId);
+    } catch (err) {
+      console.error('No se pudo consultar la nube; se reintentará la sincronización:', err);
+      return;
+    }
+
+    const { nuevos, yaEnNube } = planDeSincronizacion(pendientes, casosEnNube);
+
+    // Los que ya llegaron a la nube solo necesitan limpiarse en local.
+    for (const pendiente of yaEnNube) {
+      await markCaseSynced(pendiente.id);
+    }
+
     let synced = 0;
-    for (const pendingCase of pending) {
+    for (const pendiente of nuevos) {
       try {
+        const conId = conIdCliente(pendiente);
+        if (!pendiente.clientCaseId) {
+          // Se persiste antes de subir: si la escritura funciona y el borrado
+          // local falla, el próximo intento reconocerá el caso.
+          await updatePendingCase(pendiente.id, { clientCaseId: conId.clientCaseId });
+        }
+
         // Se quitan los metadatos de IndexedDB antes de escribir en Firestore.
-        const caseData = { ...pendingCase };
+        const caseData = { ...conId };
         delete caseData.id;
         delete caseData.synced;
         delete caseData.timestamp;
-        await saveCaseToFirestore(caseData, pendingCase.userId || currentUserId);
-        await markCaseSynced(pendingCase.id);
+
+        await saveCaseToFirestore(caseData, currentUserId);
+        await markCaseSynced(pendiente.id);
         synced++;
       } catch (err) {
         console.error('Error sincronizando caso:', err);
       }
     }
-    
+
     if (synced > 0) {
       toast.success(`${synced} caso(s) sincronizado(s) con la nube`);
     }
