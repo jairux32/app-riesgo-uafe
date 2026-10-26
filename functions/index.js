@@ -262,11 +262,23 @@ exports.auditCaseChanges = onDocumentWritten(
     const ddc = data.datos?.ddc || {};
     const esJuridica = data.datos?.tipoPersona === 'juridica';
     const beneficiario = data.datos?.beneficiarioFinal || {};
+    const cadena = Array.isArray(data.datos?.cadenaPropiedad) ? data.datos.cadenaPropiedad : [];
+    const cadenaCompleta = cadena.every((nivel) => {
+      const porcentaje = Number(nivel?.porcentaje);
+      return String(nivel?.nombre || '').trim()
+        && String(nivel?.identificacion || '').trim()
+        && Number.isFinite(porcentaje)
+        && porcentaje > 0
+        && porcentaje <= 100;
+    });
+    detalles.cadenaPropiedadNiveles = cadena.length;
+    detalles.cadenaPropiedadCompleta = cadena.length === 0 ? null : cadenaCompleta;
     detalles.ddcCompleta = Boolean(
       ddc.identificacion
       && ddc.proposito
       && ddc.origenFondos
       && (ddc.listas || ddc.listasNoDisponibles)
+      && cadenaCompleta
       && (!esJuridica || (ddc.beneficiarioFinal && beneficiario.nombre && beneficiario.cedula))
     );
 

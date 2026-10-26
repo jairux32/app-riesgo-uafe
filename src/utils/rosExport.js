@@ -1,4 +1,5 @@
 import { validarDDC } from './validators';
+import { describirCadenaPropiedad } from './beneficiarioFinal';
 
 export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
   const { jsPDF } = await import('jspdf');
@@ -102,6 +103,10 @@ export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
     seccionC.push(['Identificacion Beneficiario Final', beneficiario.cedula || 'Por completar']);
     seccionC.push(['Participacion Beneficiario Final', `${beneficiario.porcentaje || 'Por completar'}%`]);
     seccionC.push(['Beneficiario Final PEP', beneficiario.esPep ? `SI - ${beneficiario.detallePep || ''}` : 'NO']);
+    const cadenaTexto = describirCadenaPropiedad(datos.cadenaPropiedad || []);
+    if (cadenaTexto) {
+      seccionC.push(['Cadena de Propiedad', cadenaTexto]);
+    }
   } else {
     seccionC.push(['Estado Civil', datos.estadoCivil || 'Por completar']);
     if (datos.estadoCivil === 'casado') {
@@ -111,7 +116,9 @@ export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
 
   seccionC.push([
     'Debida Diligencia (art. 47)',
-    ddc.completa ? 'COMPLETA' : `INCOMPLETA - falta: ${ddc.faltantes.join(', ')}`
+    ddc.completa
+      ? `COMPLETA${ddc.advertencias?.length ? ` - advertencia: ${ddc.advertencias.join(' ')}` : ''}`
+      : `INCOMPLETA - falta: ${ddc.faltantes.join(', ')}`
   ]);
 
   autoTable(doc, {

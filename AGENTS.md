@@ -49,6 +49,7 @@ npm run test:watch # Tests in watch mode
 - `obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `cumplimiento.js` — Código SISLAFT, OC, manual, EBR y capacitación con alertas de vencimiento
 - `listasDB.js` — Snapshots de OFAC/ONU/PEP en IndexedDB con versión, fecha y hash
+- `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
@@ -86,7 +87,7 @@ npm run test:watch # Tests in watch mode
 - **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.
 - **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`).
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
-- **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas; se incluye en el prompt, PDF, Excel, ROS y audit trail
+- **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas, con cadena de propiedad editable y participación efectiva calculada; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
 - **Screening con snapshots**: Importación de listas OFAC/ONU/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
@@ -98,7 +99,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser (111 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal (127 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -110,4 +111,5 @@ npm run test:watch # Tests in watch mode
 - `src/test/obligaciones.test.js` — Plazos de RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia de los requisitos institucionales
 - `src/test/listasDB.test.js` — Parseo de listas restrictivas CSV/JSON
+- `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

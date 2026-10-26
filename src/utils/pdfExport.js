@@ -1,4 +1,5 @@
 import { validarDDC } from './validators';
+import { describirCadenaPropiedad } from './beneficiarioFinal';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
@@ -108,9 +109,20 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   if (datos.tipoPersona === 'juridica') {
     doc.text(`Beneficiario Final: ${beneficiario.nombre || 'N/A'} — ${beneficiario.cedula || 'N/A'} — ${beneficiario.porcentaje || 'N/A'}%`, 15, y);
     y += 6;
+
+    const cadenaTexto = describirCadenaPropiedad(datos.cadenaPropiedad || []);
+    if (cadenaTexto) {
+      const cadenaLineas = doc.splitTextToSize(`Cadena de propiedad: ${cadenaTexto}`, 180);
+      for (const linea of cadenaLineas) {
+        addPageIfNeeded(8);
+        doc.text(linea, 15, y);
+        y += 5;
+      }
+      y += 1;
+    }
   }
   const ddcTexto = ddc.completa
-    ? 'COMPLETA'
+    ? `COMPLETA${ddc.advertencias?.length ? ` — advertencia: ${ddc.advertencias.join(' ')}` : ''}`
     : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`;
   const ddcLineas = doc.splitTextToSize(`Debida Diligencia (art. 47): ${ddcTexto}`, 180);
   for (const linea of ddcLineas) {

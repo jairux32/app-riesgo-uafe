@@ -3,6 +3,7 @@
  */
 
 import { LIMITE_EFECTIVO_USD, UMBRAL_MEDIO_PAGO_USD } from '../data/constants';
+import { evaluarCadenaPropiedad } from './beneficiarioFinal';
 
 /**
  * Controla el límite legal de efectivo (Ley Notarial art. 20.8) y la
@@ -178,8 +179,10 @@ export const validarIdentificacion = (identificacion) => {
 export const validarDDC = (datos = {}) => {
   const ddc = datos.ddc || {};
   const beneficiario = datos.beneficiarioFinal || {};
+  const cadena = Array.isArray(datos.cadenaPropiedad) ? datos.cadenaPropiedad : [];
   const esJuridica = datos.tipoPersona === 'juridica';
   const faltantes = [];
+  const advertencias = [];
 
   if (!ddc.identificacion) faltantes.push('identidad del cliente verificada');
   if (!ddc.proposito) faltantes.push('propósito y naturaleza de la operación');
@@ -197,7 +200,23 @@ export const validarDDC = (datos = {}) => {
     if (!Number.isFinite(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
       faltantes.push('porcentaje del beneficiario final (1-100)');
     }
+
+    if (cadena.length > 0) {
+      const evaluacion = evaluarCadenaPropiedad(cadena);
+
+      if (evaluacion.incompletos.length > 0) {
+        faltantes.push('cadena de propiedad completa (nombre, identificación y porcentaje en cada nivel)');
+      }
+      if (evaluacion.totalDirecto > 100) {
+        advertencias.push('La participación directa declarada supera el 100%.');
+      }
+      if (!evaluacion.alcanzaUmbral) {
+        advertencias.push(
+          'Ningún propietario alcanza el 10%: identifique al gerente de mayor rango como beneficiario final (Ley art. 92).'
+        );
+      }
+    }
   }
 
-  return { completa: faltantes.length === 0, faltantes };
+  return { completa: faltantes.length === 0, faltantes, advertencias };
 };

@@ -19,6 +19,8 @@ import { searchClients as searchClientsDB } from '../utils/clientsDB';
 import { cargarListas, getEstadoListas } from '../utils/listasDB';
 import { ClientSearchModal } from '../components/ClientSearchModal';
 import { GestionListasModal } from '../components/GestionListasModal';
+import { CadenaPropiedad } from '../components/CadenaPropiedad';
+import { NIVEL_PROPIEDAD_INICIAL } from '../utils/beneficiarioFinal';
 
 const verificacionesPendientes = () => ({
   ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
@@ -34,6 +36,7 @@ const aplicarResetVerificaciones = (prev) => ({
   onu: false,
   pepUafe: false,
   beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+  cadenaPropiedad: [],
   ddc: { ...DDC_INICIAL },
   verificaciones: verificacionesPendientes()
 });
@@ -196,6 +199,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         return {
           ...siguiente,
           beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+          cadenaPropiedad: [],
           ddc: {
             ...(prev.ddc || DDC_INICIAL),
             beneficiarioFinal: false
@@ -296,6 +300,42 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       cedula: clientData.cedula || prev.cedula,
     }));
     toast.success(`Cliente ${clientData.cliente} cargado desde base de datos`, { icon: '👤' });
+  };
+
+  const handleCadenaChange = (indice, campo, valor) => {
+    setDatos(prev => {
+      const cadena = [...(prev.cadenaPropiedad || [])];
+      cadena[indice] = { ...cadena[indice], [campo]: valor };
+      return { ...prev, cadenaPropiedad: cadena };
+    });
+  };
+
+  const handleAgregarNivel = () => {
+    setDatos(prev => ({
+      ...prev,
+      cadenaPropiedad: [...(prev.cadenaPropiedad || []), { ...NIVEL_PROPIEDAD_INICIAL }]
+    }));
+  };
+
+  const handleEliminarNivel = (indice) => {
+    setDatos(prev => ({
+      ...prev,
+      cadenaPropiedad: (prev.cadenaPropiedad || []).filter((_, i) => i !== indice)
+    }));
+  };
+
+  const handleUsarBeneficiario = (nivel) => {
+    setDatos(prev => ({
+      ...prev,
+      beneficiarioFinal: {
+        ...(prev.beneficiarioFinal || BENEFICIARIO_FINAL_INICIAL),
+        nombre: nivel.nombre || '',
+        cedula: nivel.identificacion || '',
+        porcentaje: nivel.participacionEfectiva === null ? '' : String(nivel.participacionEfectiva)
+      },
+      ddc: { ...(prev.ddc || DDC_INICIAL), beneficiarioFinal: true }
+    }));
+    toast.success('Beneficiario final actualizado desde la cadena de propiedad');
   };
 
   const handleVerificarListas = async () => {
@@ -852,6 +892,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
                 />
               </div>
             )}
+
+            <CadenaPropiedad
+              cadena={datos.cadenaPropiedad || []}
+              onChange={handleCadenaChange}
+              onAgregar={handleAgregarNivel}
+              onEliminar={handleEliminarNivel}
+              onUsarBeneficiario={handleUsarBeneficiario}
+            />
           </div>
         )}
 
@@ -1104,6 +1152,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           <div className="mt-3" style={{ padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--rojo)' }}>
             <p className="text-sm" style={{ color: 'var(--rojo)', margin: 0 }}>
               Falta completar: {ddcResultado.faltantes.join('; ')}.
+            </p>
+          </div>
+        )}
+
+        {ddcResultado.completa && ddcResultado.advertencias?.length > 0 && (
+          <div className="mt-3" style={{ padding: '10px', borderRadius: '6px', borderLeft: '3px solid var(--naranja, #f97316)' }}>
+            <p className="text-sm" style={{ color: 'var(--naranja, #f97316)', margin: 0 }}>
+              {ddcResultado.advertencias.join(' ')}
             </p>
           </div>
         )}

@@ -26,6 +26,7 @@ const initialState = {
     conyuge: { nombre: '', cedula: '', nacionalidad: '' },
     representanteLegal: { nombre: '', cedula: '', nacionalidad: '' },
     beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
+    cadenaPropiedad: [],
     ddc: { ...DDC_INICIAL },
     fechaConstitucion: '',
     fechaTransaccion: '',

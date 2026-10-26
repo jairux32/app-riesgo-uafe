@@ -350,7 +350,7 @@ Scheduler diario → Cloud Function de ingesta
 - Corregir duplicados, offline, Dashboard, filtro OFAC y reporte mensual.
 - ~~Screening real OFAC + ONU + UK con snapshots versionados~~: implementado para OFAC, ONU y lista PEP interna con hash; falta UK y la ficha de descarte de falsos positivos.
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
-- Módulo de beneficiario final con cadena de propiedad.
+- ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
 - Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento.
 
 ### P2 — 3–12 meses
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 111/111, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 127/127, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -441,7 +441,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
 | Versionado del dictamen | **Corregido** | `_meta` con modelo, `promptVersion`, `contextoVersion` y fecha; se muestra en Step4, se exporta en PDF/Excel y queda en `audit_logs` |
-| DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y campos de BF para personas jurídicas; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
+| DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y BF para personas jurídicas con cadena de propiedad y participación efectiva; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
 | Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; no bloquea operaciones |
 

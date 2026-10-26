@@ -2,6 +2,7 @@ import { getAuth } from 'firebase/auth';
 import app from '../firebase/config';
 import { CONTROLES_INTERNOS } from '../data/constants';
 import { validarDDC } from './validators';
+import { describirCadenaPropiedad, evaluarCadenaPropiedad } from './beneficiarioFinal';
 import { validarRespuestaAuditoria } from './auditValidator';
 
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
@@ -117,8 +118,14 @@ export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
 
   const beneficiario = datos.beneficiarioFinal || {};
   const ddc = validarDDC(datos);
+  const cadenaTexto = describirCadenaPropiedad(datos.cadenaPropiedad || []);
+  const evaluacionCadena = evaluarCadenaPropiedad(datos.cadenaPropiedad || []);
   const descripcionBeneficiario = datos.tipoPersona === 'juridica'
     ? `${beneficiario.nombre || 'N/A'} — ID: ${beneficiario.cedula || 'N/A'} — Participación: ${beneficiario.porcentaje || 'N/A'}%${beneficiario.esPep ? ` — PEP: ${beneficiario.detallePep || 'sin detalle'}` : ''}`
+    : 'No aplica (persona natural)';
+  const descripcionCadena = datos.tipoPersona === 'juridica'
+    ? (cadenaTexto
+      || 'Sin cadena de propiedad declarada; el beneficiario final se registró de forma directa.')
     : 'No aplica (persona natural)';
 
   return `CASO A ANALIZAR:
@@ -132,7 +139,10 @@ DATOS DEL ACTO NOTARIAL:
 - Medio de pago: ${datos.medioPago || 'N/A'}
 - Actividad económica: ${datos.actividad || 'N/A'}
 - Beneficiario final: ${descripcionBeneficiario}
-- Debida diligencia (art. 47): ${ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`}
+- Cadena de propiedad: ${descripcionCadena}
+- Debida diligencia (art. 47): ${ddc.completa
+    ? `COMPLETA${ddc.advertencias?.length ? ` — advertencia: ${ddc.advertencias.join(' ')}` : ''}`
+    : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`}${evaluacionCadena.alcanzaUmbral ? '' : (datos.tipoPersona === 'juridica' && datos.cadenaPropiedad?.length ? ' — ningún propietario alcanza el 10%, verifique el control efectivo' : '')}
 - ¿Es PEP?: ${datos.esPep ? 'Sí' : 'No'} ${datos.detallePep ? `(${datos.detallePep})` : ''}
 - ¿Actúa mediante apoderado?: ${datos.apoderado ? 'Sí' : 'No'}
 - Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}

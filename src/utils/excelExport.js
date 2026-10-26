@@ -1,6 +1,7 @@
 import { FACTORES_RIESGO, CONTROLES_INTERNOS, NIVELES_RIESGO } from '../data/constants';
 import { calculateInherentRisk } from './calculations';
 import { validarDDC } from './validators';
+import { filasCadenaPropiedad } from './beneficiarioFinal';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 const setCols = (ws, widths) => {
@@ -21,6 +22,9 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
   const XLSX = await import('xlsx');
   const wb = XLSX.utils.book_new();
   const ddc = validarDDC(datos);
+  const ddcTexto = ddc.completa
+    ? `COMPLETA${ddc.advertencias?.length ? ` — advertencia: ${ddc.advertencias.join(' ')}` : ''}`
+    : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`;
   const beneficiario = datos.beneficiarioFinal || {};
   const beneficiarioTexto = datos.tipoPersona === 'juridica'
     ? `${beneficiario.nombre || 'N/A'} — ${beneficiario.cedula || 'N/A'} — ${beneficiario.porcentaje || 'N/A'}%${beneficiario.esPep ? ' — PEP' : ''}`
@@ -64,7 +68,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     [''],
     ['Debida Diligencia Requerida:', scores.diligencia],
     ['Beneficiario Final:', beneficiarioTexto],
-    ['Debida Diligencia (art. 47):', ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`],
+    ['Debida Diligencia (art. 47):', ddcTexto],
     ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UAFE: ${estadoVerificacion('uafe')}`],
     ['Reporte SISLAFT - RESU/NO-RESU:', `${reporteResu.tipo} — ${reporteResu.fechaLimite} — ${reporteResu.estado}`],
     ['Reporte SISLAFT - ROS/NO-ROS:', `${reporteRos.tipo} — ${reporteRos.fechaLimite} — ${reporteRos.estado}`]
@@ -116,7 +120,16 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Beneficiario Final', beneficiarioTexto],
     ['Porcentaje de Participación', datos.tipoPersona === 'juridica' ? `${beneficiario.porcentaje || 'N/A'}%` : 'No aplica'],
     ['Beneficiario Final PEP', beneficiario.esPep ? `SI — ${beneficiario.detallePep || 'sin detalle'}` : 'NO'],
-    ['Debida Diligencia (art. 47)', ddc.completa ? 'COMPLETA' : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`]
+    ...(datos.tipoPersona === 'juridica' && (datos.cadenaPropiedad || []).length > 0
+      ? [
+          ['Cadena de propiedad (nivel, nombre, ID, tipo, % del nivel inferior, % efectivo)'],
+          ...filasCadenaPropiedad(datos.cadenaPropiedad).map(fila => [
+            `Nivel ${fila.nivel}`,
+            `${fila.nombre} — ${fila.identificacion} — ${fila.tipo} — ${fila.porcentaje} — ${fila.participacionEfectiva}`
+          ])
+        ]
+      : []),
+    ['Debida Diligencia (art. 47)', ddcTexto]
   ]);
 
   setCols(ws2, [30, 45]);
