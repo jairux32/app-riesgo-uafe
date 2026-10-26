@@ -9,7 +9,7 @@
 - AI: Groq (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - Routing: react-router-dom
 - Local Storage: IndexedDB (vía idb)
-- Exports: jspdf, xlsx, ROS
+- Exports: jspdf, SheetJS 0.20.3, ROS
 - Tests: vitest + @testing-library/react
 
 ## Commands
@@ -82,6 +82,7 @@ npm run test:watch # Tests in watch mode
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
+- **Dependencias**: SheetJS 0.20.3 se instala desde el tarball de `cdn.sheetjs.com`; `.npmrc` fija `legacy-peer-deps=true` por el peer opcional `canvas` de jsdom. `overrides` en `package.json` mantiene `npm audit` en 0 (frontend y `functions/`). `react-router-dom` y `react-is` son dependencias directas: no quitarlas.
 
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.

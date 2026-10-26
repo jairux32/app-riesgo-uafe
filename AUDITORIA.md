@@ -404,6 +404,8 @@ Scheduler diario → Cloud Function de ingesta
 
 ## 15. Anexo: comandos de verificación
 
+> Estado **al momento de la auditoría**. Para el estado actual, ver la sección 16.
+
 ```bash
 npm run lint     # 0 errores, 4 warnings
 npm test         # 36/36
@@ -418,7 +420,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c` y `e909d25`. Verificación actual: `npm test` 53/53, `npm run lint` 0 errores (4 warnings preexistentes) y `npm run build` OK.
+Aplicado en los commits `c1af54c`, `e909d25` y los siguientes de dependencias. Verificación actual: `npm test` 53/53, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -433,7 +435,8 @@ Aplicado en los commits `c1af54c` y `e909d25`. Verificación actual: `npm test` 
 | Efectivo > 100 SBU | **Corregido** | Bloqueo en `Step1Datos` + validación de medio de pago desde USD 10.000 |
 | Duplicados, offline y Dashboard | **Corregido** | Guardado por `updateCase`, pendientes visibles/actualizables, navegación real, análisis IA persistido |
 | Parser de 56 señales | **Parcial** | Inicializa las 56; las reglas heurísticas cubren 14. Las no detectadas quedan en 0 explícito |
-| `xlsx@0.18.5` con CVEs sin parche npm | **Pendiente** | Migrar a `exceljs` o SheetJS 0.20.x desde el CDN oficial |
+| `xlsx@0.18.5` con CVEs sin parche npm | **Corregido** | Migrado a SheetJS 0.20.3 (tarball oficial) más overrides de `websocket-driver`, `zod` y `@grpc/grpc-js`; `npm audit` en 0 |
+| Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
 | Audit trail server-side con hash | **Pendiente** | Los logs del cliente siguen siendo forjables |
 | DDC/BF, RESU/NO-RESU y ROS/NO-ROS como workflow | **Pendiente** | Hoy son recomendaciones del dictamen, no estados del sistema |
 

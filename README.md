@@ -13,7 +13,7 @@ Aplicación web para notarios públicos del Ecuador que permite analizar el ries
 - **Groq** (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - **IndexedDB** (vía `idb`) para persistencia offline
 - **react-router-dom** para navegación
-- **Exports**: jspdf (PDF), xlsx (Excel), ROS
+- **Exports**: jspdf (PDF), SheetJS 0.20.3 (Excel), ROS
 - **recharts** para visualizaciones
 
 ## Comandos
@@ -25,6 +25,8 @@ npm run preview    # Preview dist/ build
 npm test           # Ejecutar tests (vitest)
 npm run test:watch # Tests en modo watch
 ```
+
+> **Instalación:** `npm ci` usa `.npmrc` con `legacy-peer-deps=true` por un fallo de npm 10 al resolver el peer opcional `canvas` de jsdom. SheetJS se instala desde el tarball oficial `cdn.sheetjs.com` (la versión npm está congelada en 0.18.5 con CVEs). `npm audit` debe quedar en 0; verificar tras cualquier actualización.
 
 ## Configuración
 1. Copiar `.env.example` a `.env` y completar las variables de Firebase
