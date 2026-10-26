@@ -98,14 +98,86 @@ const parsearJSON = (texto) => {
   });
 };
 
-const parsearCSV = async (texto) => {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.read(texto, { type: 'string' });
-  const hoja = wb.Sheets[wb.SheetNames[0]];
-  if (!hoja) return [];
+const detectarSeparador = (texto) => {
+  const primeraLinea = texto.split(/\r?\n/, 1)[0] || '';
+  let entreComillas = false;
+  let fuera = '';
 
-  const filas = XLSX.utils.sheet_to_json(hoja, { defval: '' });
-  return filas.map(fila => ({ nombre: extraerNombre(fila) }));
+  for (const caracter of primeraLinea) {
+    if (caracter === '"') entreComillas = !entreComillas;
+    else if (!entreComillas) fuera += caracter;
+  }
+
+  const candidatos = [',', ';', '\t']
+    .map(separador => [separador, fuera.split(separador).length - 1]);
+  candidatos.sort((a, b) => b[1] - a[1]);
+  return candidatos[0][1] > 0 ? candidatos[0][0] : ',';
+};
+
+const dividirCSV = (texto, separador) => {
+  const filas = [];
+  let fila = [];
+  let campo = '';
+  let entreComillas = false;
+
+  for (let i = 0; i < texto.length; i += 1) {
+    const caracter = texto[i];
+
+    if (entreComillas) {
+      if (caracter === '"' && texto[i + 1] === '"') {
+        campo += '"';
+        i += 1;
+      } else if (caracter === '"') {
+        entreComillas = false;
+      } else {
+        campo += caracter;
+      }
+      continue;
+    }
+
+    if (caracter === '"') {
+      entreComillas = true;
+      continue;
+    }
+    if (caracter === separador) {
+      fila.push(campo);
+      campo = '';
+      continue;
+    }
+    if (caracter === '\n' || caracter === '\r') {
+      if (caracter === '\r' && texto[i + 1] === '\n') i += 1;
+      fila.push(campo);
+      campo = '';
+      if (fila.some(valor => valor.trim() !== '')) filas.push(fila);
+      fila = [];
+      continue;
+    }
+    campo += caracter;
+  }
+
+  fila.push(campo);
+  if (fila.some(valor => valor.trim() !== '')) filas.push(fila);
+  return filas;
+};
+
+/**
+ * Parser CSV propio: las listas oficiales son texto plano y no hace falta
+ * cargar una librería completa de hojas de cálculo. Respeta campos entre
+ * comillas (con comas y saltos de línea internos) y detecta el separador.
+ */
+const parsearCSV = async (texto) => {
+  const limpio = String(texto || '').replace(/^\uFEFF/, '');
+  const filas = dividirCSV(limpio, detectarSeparador(limpio));
+  if (filas.length === 0) return [];
+
+  const encabezados = filas[0].map(encabezado => encabezado.trim());
+  return filas.slice(1).map(fila => {
+    const objeto = {};
+    encabezados.forEach((encabezado, indice) => {
+      objeto[encabezado] = fila[indice] ?? '';
+    });
+    return { nombre: extraerNombre(objeto) };
+  });
 };
 
 /**

@@ -362,7 +362,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Tests de reglas con emulador~~: `tests/rules/` cubre aislamiento por usuario, filtro `userId` y audit trail server-only; el CI ejecuta `npm run test:rules` además de lint, tests, auditorías y build. Faltan e2e y observabilidad.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
-- Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
+- ~~Migrar `xlsx` a `exceljs`~~: la lectura y la escritura usan `exceljs` cargado bajo demanda; el CSV de listas restrictivas tiene parser propio. Solo se acepta `.xlsx`.
 - ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF y guardado del caso.
 - ~~Observabilidad de errores del cliente y trazas de Functions~~: `observabilidad.js` redacta PII y limita el contexto a claves técnicas; `logClientError` recibe los eventos sin exigir sesión, con validación, tamaño máximo y rate limit por IP; `analyzeCase` deja una traza JSON por llamada (resultado, código HTTP, modelo, versión y duración) sin registrar el prompt ni el dictamen. Sin `VITE_LOG_ENDPOINT` los eventos quedan solo en la consola.
 
@@ -423,7 +423,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los 21 commits posteriores a `c1af54c`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`), tests de reglas (`0f12c98`), purga de evidencias (`89d2b08`), offline y duplicados (`b8fe95e`), e2e con Playwright (`a7c0de5`) y observabilidad. Verificación actual: `npm test` 290/290 + 13 de reglas + 2 e2e, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los 22 commits posteriores a `c1af54c`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`), tests de reglas (`0f12c98`), purga de evidencias (`89d2b08`), offline y duplicados (`b8fe95e`), e2e con Playwright (`a7c0de5`) observabilidad y migración a `exceljs`. Verificación actual: `npm test` 297/297 + 13 de reglas + 2 e2e, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -438,7 +438,7 @@ Aplicado en los 21 commits posteriores a `c1af54c`: scoring y residual (`e909d25
 | Efectivo > 100 SBU | **Corregido** | Bloqueo en `Step1Datos` + validación de medio de pago desde USD 10.000 |
 | Duplicados, offline y Dashboard | **Corregido** | Guardado por `updateCase`, pendientes visibles/actualizables, navegación real, análisis IA persistido |
 | Parser de 56 señales | **Corregido (parcial)** | Inicializa las 56; 36 se auto-evalúan con reglas trazables y motivo visible, 20 se marcan como manuales porque requieren documentos o entrevista |
-| `xlsx@0.18.5` con CVEs sin parche npm | **Corregido** | Migrado a SheetJS 0.20.3 (tarball oficial) más overrides de `websocket-driver`, `zod` y `@grpc/grpc-js`; `npm audit` en 0 |
+| `xlsx@0.18.5` con CVEs sin parche npm | **Corregido** | Migrado a `exceljs` (sin tarball externo) con carga diferida y parser CSV propio; `overrides` de `uuid`, `websocket-driver`, `zod` y `@grpc/grpc-js`; `npm audit` en 0 |
 | Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |

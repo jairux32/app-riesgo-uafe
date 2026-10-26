@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { autoEvaluateRisk, parseUAFEExcel } from '../utils/excelParser';
 import { FACTORES_SENALES_UAFE, SENALES_ALERTA_UAFE, SENALES_SIN_AUTOEVALUACION } from '../data/constants';
 
@@ -179,11 +179,11 @@ describe('autoEvaluateRisk', () => {
   });
 });
 
-const construirArchivo = (filas) => {
-  const hoja = XLSX.utils.aoa_to_sheet(filas);
-  const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, hoja, 'Reporte');
-  const buffer = XLSX.write(libro, { type: 'array', bookType: 'xlsx' });
+const construirArchivo = async (filas) => {
+  const libro = new ExcelJS.Workbook();
+  const hoja = libro.addWorksheet('Reporte');
+  filas.forEach(fila => hoja.addRow(fila));
+  const buffer = await libro.xlsx.writeBuffer();
   return new File([buffer], 'reporte.xlsx', {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   });
@@ -191,7 +191,7 @@ const construirArchivo = (filas) => {
 
 describe('parseUAFEExcel', () => {
   it('extrae los casos y aplica la auto-evaluación', async () => {
-    const archivo = construirArchivo([
+    const archivo = await construirArchivo([
       ['IDI', 'NOMBRE', 'ACTO', 'VALOR', 'MEDIO PAGO', 'ACTIVIDAD', 'OBSERVACIONES'],
       ['1790012345001', 'CONSTRUCTORA ANDES S.A.', 'Compraventa de inmueble', 120000, 'Efectivo', 'construcción', 'información inconsistente'],
       ['1713175071', 'ANA PEREZ', 'Poder especial', 5000, 'Transferencia', 'comercio', '']

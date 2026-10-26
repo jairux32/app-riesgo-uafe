@@ -27,6 +27,20 @@ describe('parsearArchivoLista', () => {
     expect(entradas[0].nombre).toBe('MOHAMMED AL SAID');
   });
 
+  it('detecta el separador de punto y coma', async () => {
+    const csv = 'Name;Program\nJUAN PEREZ;SDGT\n';
+    const { entradas } = await parsearArchivoLista(archivo(csv, 'lista.csv'));
+
+    expect(entradas[0].nombre).toBe('JUAN PEREZ');
+  });
+
+  it('respeta las comas dentro de campos entre comillas y el BOM', async () => {
+    const csv = '\uFEFFName,Program\r\n"PEREZ, JUAN",SDGT\r\n';
+    const { entradas } = await parsearArchivoLista(archivo(csv, 'lista.csv'));
+
+    expect(entradas[0].nombre).toBe('PEREZ, JUAN');
+  });
+
   it('acepta JSON con arreglo de strings', async () => {
     const json = JSON.stringify(['JUAN PEREZ', 'Ana Gómez']);
     const { entradas } = await parsearArchivoLista(archivo(json, 'lista.json', 'application/json'));

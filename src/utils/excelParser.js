@@ -1,5 +1,59 @@
-import * as XLSX from 'xlsx';
 import { FACTORES_SENALES_UAFE } from '../data/constants';
+
+/**
+ * Normaliza el valor de una celda de ExcelJS. Las celdas pueden traer fechas,
+ * fórmulas, texto enriquecido o hipervínculos además de primitivos.
+ */
+const valorCelda = (valor) => {
+  if (valor === null || valor === undefined) return '';
+  if (valor instanceof Date) {
+    return Number.isNaN(valor.getTime()) ? '' : valor.toISOString().slice(0, 10);
+  }
+  if (typeof valor !== 'object') return valor;
+
+  if (Array.isArray(valor.richText)) return valor.richText.map(parte => parte.text).join('');
+  if ('result' in valor) return valorCelda(valor.result);
+  if ('text' in valor) return String(valor.text);
+  return '';
+};
+
+/**
+ * Lee la primera hoja como una matriz de filas. `getCell` recorre las celdas
+ * reales de la fila, así no se generan huecos como con `row.values` (que es
+ * un arreglo base 1).
+ */
+const leerFilas = async (file) => {
+  // ExcelJS pesa más que el resto del parser: se carga solo al importar un
+  // archivo, no en el arranque del wizard.
+  const modulo = await import('exceljs');
+  const ExcelJS = modulo.default || modulo;
+
+  const buffer = await file.arrayBuffer();
+  const workbook = new ExcelJS.Workbook();
+
+  try {
+    await workbook.xlsx.load(buffer);
+  } catch {
+    throw new Error(
+      'El archivo no es un Excel .xlsx válido. Si viene del formato antiguo .xls, '
+      + 'ábralo y guárdelo como .xlsx antes de importarlo.'
+    );
+  }
+
+  const hoja = workbook.worksheets[0];
+  if (!hoja) throw new Error('El archivo no contiene hojas.');
+
+  const filas = [];
+  hoja.eachRow({ includeEmpty: false }, (row) => {
+    const valores = [];
+    for (let columna = 1; columna <= row.cellCount; columna += 1) {
+      valores.push(valorCelda(row.getCell(columna).value));
+    }
+    filas.push(valores);
+  });
+
+  return filas;
+};
 
 /**
  * Asigna valores de riesgo basados en señales de alerta UAFE (sistema v2.4)
@@ -195,106 +249,88 @@ const findColumnIndex = (headers, patterns) => {
  * Procesa un archivo Excel y extrae la información de los casos
  */
 export const parseUAFEExcel = async (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-        
-        // Detectar fila de encabezados de forma inteligente
-        let headerIndex = -1;
-        for (let i = 0; i < Math.min(rows.length, 10); i++) {
-          const row = rows[i];
-          if (row.some(cell => 
-            /cedula|idi|identificaci|rif|pasaporte/i.test(String(cell)) ||
-            /nombre|cliente|razon social|contribuyente/i.test(String(cell)) ||
-            /valor|monto|vam|cantidad/i.test(String(cell))
-          )) {
-            headerIndex = i;
-            break;
-          }
-        }
+  const rows = await leerFilas(file);
 
-        if (headerIndex === -1) throw new Error('No se encontraron cabeceras válidas en las primeras 10 filas.');
+  // Detectar fila de encabezados de forma inteligente
+  let headerIndex = -1;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i];
+    if (row.some(cell => 
+      /cedula|idi|identificaci|rif|pasaporte/i.test(String(cell)) ||
+      /nombre|cliente|razon social|contribuyente/i.test(String(cell)) ||
+      /valor|monto|vam|cantidad/i.test(String(cell))
+    )) {
+      headerIndex = i;
+      break;
+    }
+  }
 
-        const headers = rows[headerIndex];
-        const dataRows = rows.slice(headerIndex + 1);
+  if (headerIndex === -1) throw new Error('No se encontraron cabeceras válidas en las primeras 10 filas.');
 
-        // Mapeo inteligente con múltiples patrones por campo
-        const colMap = {
-          cedula: findColumnIndex(headers, ['IDI', 'CEDULA', 'IDENTIFICACION', 'RUC', 'PASAPORTE', 'NRO IDENTIFICACION', 'DOCUMENTO']),
-          cliente: findColumnIndex(headers, ['NRI', 'NOMBRE', 'CLIENTE', 'RAZON SOCIAL', 'CONTRIBUYENTE', 'TITULAR', 'BENEFICIARIO']),
-          acto: findColumnIndex(headers, ['TTR', 'ACTO', 'TIPO ACTO', 'TRANSACCION', 'OPERACION', 'SERVICIO']),
-          valor: findColumnIndex(headers, ['VAM', 'VALOR', 'MONTO', 'CANTIDAD', 'IMPORTE', 'MONTO OPERACION']),
-          origen: findColumnIndex(headers, ['ORIGEN DE LOS FONDOS', 'ORIGEN', 'PROCEDENCIA', 'FUENTE']),
-          medioPago: findColumnIndex(headers, ['FP', 'MEDIO PAGO', 'FORMA PAGO', 'PAGO', 'INSTRUMENTO']),
-          actividad: findColumnIndex(headers, ['ACTIV ECONOMICA', 'ACTIVIDAD', 'GIRO', 'SECTOR', 'OCUPACION']),
-          esPep: findColumnIndex(headers, ['PEPS', 'PEP', 'EXPUESTO', 'POLITICAMENTE']),
-          apoderado: findColumnIndex(headers, ['CON PODER', 'APODERADO', 'REPRESENTANTE', 'MANDATARIO']),
-          observaciones: findColumnIndex(headers, ['NOTAS', 'OBSERVACIONES', 'COMENTARIOS', 'DETALLE']),
-        };
+  const headers = rows[headerIndex];
+  const dataRows = rows.slice(headerIndex + 1);
 
-        // Reportar campos no encontrados
-        const missingFields = Object.entries(colMap)
-          .filter(([_, idx]) => idx === -1)
-          .map(([name]) => name);
-        
-        if (missingFields.length > 0) {
-          console.warn('Campos no encontrados en el Excel:', missingFields);
-        }
+  // Mapeo inteligente con múltiples patrones por campo
+  const colMap = {
+    cedula: findColumnIndex(headers, ['IDI', 'CEDULA', 'IDENTIFICACION', 'RUC', 'PASAPORTE', 'NRO IDENTIFICACION', 'DOCUMENTO']),
+    cliente: findColumnIndex(headers, ['NRI', 'NOMBRE', 'CLIENTE', 'RAZON SOCIAL', 'CONTRIBUYENTE', 'TITULAR', 'BENEFICIARIO']),
+    acto: findColumnIndex(headers, ['TTR', 'ACTO', 'TIPO ACTO', 'TRANSACCION', 'OPERACION', 'SERVICIO']),
+    valor: findColumnIndex(headers, ['VAM', 'VALOR', 'MONTO', 'CANTIDAD', 'IMPORTE', 'MONTO OPERACION']),
+    origen: findColumnIndex(headers, ['ORIGEN DE LOS FONDOS', 'ORIGEN', 'PROCEDENCIA', 'FUENTE']),
+    medioPago: findColumnIndex(headers, ['FP', 'MEDIO PAGO', 'FORMA PAGO', 'PAGO', 'INSTRUMENTO']),
+    actividad: findColumnIndex(headers, ['ACTIV ECONOMICA', 'ACTIVIDAD', 'GIRO', 'SECTOR', 'OCUPACION']),
+    esPep: findColumnIndex(headers, ['PEPS', 'PEP', 'EXPUESTO', 'POLITICAMENTE']),
+    apoderado: findColumnIndex(headers, ['CON PODER', 'APODERADO', 'REPRESENTANTE', 'MANDATARIO']),
+    observaciones: findColumnIndex(headers, ['NOTAS', 'OBSERVACIONES', 'COMENTARIOS', 'DETALLE']),
+  };
 
-        const cases = dataRows
-          .filter(row => row.length > 0 && (row[colMap.cedula] || row[colMap.cliente]))
-          .map(row => {
-            const valorRaw = row[colMap.valor];
-            const valorNum = typeof valorRaw === 'number' ? valorRaw : 
-              parseFloat(String(valorRaw).replace(/[$,]/g, '')) || 0;
-            
-            const datos = {
-              notaria: '', notario: '',
-              cliente: String(row[colMap.cliente] || '').trim(),
-              cedula: String(row[colMap.cedula] || '').trim(),
-              acto: String(row[colMap.acto] || 'Otro').trim(),
-              valor: valorNum,
-              origen: String(row[colMap.origen] || '').trim(),
-              medioPago: String(row[colMap.medioPago] || '').trim(),
-              actividad: String(row[colMap.actividad] || '').trim(),
-              tipoPersona: String(row[colMap.cedula] || '').trim().length === 13 ? 'juridica' : 'natural',
-              nacionalidad: 'ECU',
-              esPep: /si|yes|true|1/i.test(String(row[colMap.esPep])),
-              detallePep: String(row[colMap.observaciones] || '').trim(),
-              apoderado: /si|yes|true|1/i.test(String(row[colMap.apoderado])),
-              ofac: false, onu: false, pepUafe: /si|yes|true|1/i.test(String(row[colMap.esPep])),
-              reportesPrevios: false,
-              observaciones: String(row[colMap.observaciones] || '').trim(),
-              usoEfectivo: /efectivo|cash/i.test(String(row[colMap.medioPago])),
-              usoActivosVirtuales: /cripto|crypto|bitcoin|virtual/i.test(String(row[colMap.origen] || '')),
-            };
+  // Reportar campos no encontrados
+  const missingFields = Object.entries(colMap)
+    .filter(([_, idx]) => idx === -1)
+    .map(([name]) => name);
+  
+  if (missingFields.length > 0) {
+    console.warn('Campos no encontrados en el Excel:', missingFields);
+  }
 
-            const contexto = {
-              tieneActividad: colMap.actividad !== -1
-            };
+  const cases = dataRows
+    .filter(row => row.length > 0 && (row[colMap.cedula] || row[colMap.cliente]))
+    .map(row => {
+      const valorRaw = row[colMap.valor];
+      const valorNum = typeof valorRaw === 'number' ? valorRaw : 
+        parseFloat(String(valorRaw).replace(/[$,]/g, '')) || 0;
+      
+      const datos = {
+        notaria: '', notario: '',
+        cliente: String(row[colMap.cliente] || '').trim(),
+        cedula: String(row[colMap.cedula] || '').trim(),
+        acto: String(row[colMap.acto] || 'Otro').trim(),
+        valor: valorNum,
+        origen: String(row[colMap.origen] || '').trim(),
+        medioPago: String(row[colMap.medioPago] || '').trim(),
+        actividad: String(row[colMap.actividad] || '').trim(),
+        tipoPersona: String(row[colMap.cedula] || '').trim().length === 13 ? 'juridica' : 'natural',
+        nacionalidad: 'ECU',
+        esPep: /si|yes|true|1/i.test(String(row[colMap.esPep])),
+        detallePep: String(row[colMap.observaciones] || '').trim(),
+        apoderado: /si|yes|true|1/i.test(String(row[colMap.apoderado])),
+        ofac: false, onu: false, pepUafe: /si|yes|true|1/i.test(String(row[colMap.esPep])),
+        reportesPrevios: false,
+        observaciones: String(row[colMap.observaciones] || '').trim(),
+        usoEfectivo: /efectivo|cash/i.test(String(row[colMap.medioPago])),
+        usoActivosVirtuales: /cripto|crypto|bitcoin|virtual/i.test(String(row[colMap.origen] || '')),
+      };
 
-            return {
-              datos,
-              evaluaciones: autoEvaluateRisk(datos, contexto),
-              controlesEval: {}
-            };
-          });
+      const contexto = {
+        tieneActividad: colMap.actividad !== -1
+      };
 
-        resolve(cases);
-      } catch (error) {
-        reject(error);
-      }
-    };
+      return {
+        datos,
+        evaluaciones: autoEvaluateRisk(datos, contexto),
+        controlesEval: {}
+      };
+    });
 
-    reader.onerror = (error) => reject(error);
-    reader.readAsArrayBuffer(file);
-  });
+  return cases;
 };

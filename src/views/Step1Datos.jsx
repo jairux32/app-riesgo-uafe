@@ -606,7 +606,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             type="file"
             ref={fileInputRef}
             onChange={handleImportExcel}
-            accept=".xlsx,.xls"
+            accept=".xlsx"
             style={{ display: 'none' }}
           />
         </div>

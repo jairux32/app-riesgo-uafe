@@ -13,7 +13,7 @@ Aplicación web para notarios públicos del Ecuador que permite analizar el ries
 - **Groq** (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - **IndexedDB** (vía `idb`) para persistencia offline
 - **react-router-dom** para navegación
-- **Exports**: jspdf (PDF), SheetJS 0.20.3 (Excel), ROS
+- **Exports**: jspdf (PDF), exceljs (Excel), ROS
 - **recharts** para visualizaciones
 
 ## Comandos
@@ -28,7 +28,7 @@ npm run test:rules # Tests de reglas con el emulador (requiere Java)
 npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 ```
 
-> **Instalación:** `npm ci` usa `.npmrc` con `legacy-peer-deps=true` por un fallo de npm 10 al resolver el peer opcional `canvas` de jsdom. SheetJS se instala desde el tarball oficial `cdn.sheetjs.com` (la versión npm está congelada en 0.18.5 con CVEs). `npm audit` debe quedar en 0; verificar tras cualquier actualización.
+> **Instalación:** `npm ci` usa `.npmrc` con `legacy-peer-deps=true` por un fallo de npm 10 al resolver el peer opcional `canvas` de jsdom. Excel se genera y se lee con **exceljs**, que se carga en un chunk aparte solo al importar o exportar. `overrides` fija `uuid` para que `npm audit` quede en 0; verificar tras cualquier actualización.
 
 ## Configuración
 1. Copiar `.env.example` a `.env` y completar las variables de Firebase
@@ -126,7 +126,7 @@ La Function no exige sesión —un error puede ocurrir antes del login— pero v
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (290 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (297 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
@@ -141,6 +141,7 @@ Tests con **vitest** + **@testing-library/react** (290 tests de unidad):
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos
 - `src/test/observabilidad.test.js` — Redacción de PII, contexto permitido, deduplicación y límites
+- `src/test/excelExport.test.js` — Exportación del dictamen y del resumen, verificada releyendo el .xlsx
 
 ### Flujo e2e
 `npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, más guardar el caso y verlo reflejado en el Dashboard. La IA no se prueba: la Cloud Function no corre en local.

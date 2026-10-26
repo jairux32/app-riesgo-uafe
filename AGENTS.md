@@ -9,7 +9,7 @@
 - AI: Groq (`llama-3.3-70b-versatile`) vía Cloud Function autenticada
 - Routing: react-router-dom
 - Local Storage: IndexedDB (vía idb)
-- Exports: jspdf, SheetJS 0.20.3, ROS
+- Exports: jspdf, exceljs, ROS
 - Tests: vitest + @testing-library/react
 
 ## Commands
@@ -111,7 +111,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
-- **Dependencias**: SheetJS 0.20.3 se instala desde el tarball de `cdn.sheetjs.com`; `.npmrc` fija `legacy-peer-deps=true` por el peer opcional `canvas` de jsdom. `overrides` en `package.json` mantiene `npm audit` en 0 (frontend y `functions/`). `react-router-dom` y `react-is` son dependencias directas: no quitarlas.
+- **Dependencias**: Excel se lee y se escribe con `exceljs`, importado dinámicamente para no cargarlo en el bundle inicial; solo admite `.xlsx` (el formato antiguo `.xls` debe convertirse antes). `.npmrc` fija `legacy-peer-deps=true` por el peer opcional `canvas` de jsdom. `overrides` en `package.json` (incluido `uuid`) mantiene `npm audit` en 0 (frontend y `functions/`). `react-router-dom` y `react-is` son dependencias directas: no quitarlas.
 
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
@@ -119,7 +119,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - `tests/e2e/` se ejecuta solo con `npm run test:e2e` (Playwright + emuladores de Auth y Firestore); el CI tiene un job `e2e` independiente que bloquea el deploy.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad (290 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport (297 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 - Tests e2e en `tests/e2e/` (2 tests): login, wizard completo, exportación PDF y persistencia del caso
 
@@ -142,4 +142,5 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos de cierre
 - `src/test/observabilidad.test.js` — Redacción de PII, contexto permitido, deduplicación y límites
+- `src/test/excelExport.test.js` — Exportación del dictamen y del resumen, verificada releyendo el archivo
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

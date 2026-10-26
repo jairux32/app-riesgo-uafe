@@ -6,23 +6,67 @@ import { describirRevisiones } from './revisionCoincidencias';
 import { filasEvidencias } from './evidencias';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
-const setCols = (ws, widths) => {
-  ws['!cols'] = widths.map(w => ({ wch: w }));
+const TIPO_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+// ExcelJS se carga al exportar: así no entra en el bundle inicial ni en el
+// del wizard, que solo lo necesita cuando el usuario pide el archivo.
+const cargarExcelJS = async () => {
+  const modulo = await import('exceljs');
+  return modulo.default || modulo;
 };
 
-const addStyle = (cell, style) => {
-  if (cell) cell.s = style;
+const crearHoja = (workbook, nombre, filas, anchos = []) => {
+  const hoja = workbook.addWorksheet(nombre);
+  filas.forEach(fila => hoja.addRow(fila.length > 0 ? fila : ['']));
+  anchos.forEach((ancho, indice) => {
+    hoja.getColumn(indice + 1).width = ancho;
+  });
+  return hoja;
+};
+
+const aplicarEstilo = (hoja, fila, columna, { negrita, tamano, color, centrado } = {}) => {
+  const celda = hoja.getCell(fila, columna);
+  const font = {};
+  if (negrita) font.bold = true;
+  if (tamano) font.size = tamano;
+  if (Object.keys(font).length > 0) celda.font = font;
+  if (color) {
+    celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: `FF${color}` } };
+  }
+  if (centrado) celda.alignment = { horizontal: 'center' };
 };
 
 const scoreColor = (score) =>
   score <= 8 ? '10B981' : score <= 14 ? 'F59E0B' : score <= 19 ? 'F97316' : 'EF4444';
 
-const headerStyle = { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: '1F6FEB' } } };
-const subheaderStyle = { font: { bold: true }, fill: { fgColor: { rgb: '112233' } } };
+const headerStyle = { negrita: true, tamano: 12, color: '1F6FEB' };
+const subheaderStyle = { negrita: true, color: '112233' };
+
+/**
+ * Descarga el libro en el navegador. ExcelJS devuelve un buffer; se crea un
+ * enlace temporal con `download` para que el navegador lo guarde con nombre.
+ */
+const descargarLibro = async (workbook, nombreArchivo) => {
+  const contenido = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([contenido], { type: TIPO_MIME });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombreArchivo;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  // Se libera en el siguiente ciclo: revocar de inmediato puede cancelar la
+  // descarga en algunos navegadores.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+};
 
 export const exportToExcel = async (datos, scores, factoresResult, controlesResult, geminiAnalysis) => {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.utils.book_new();
+  const ExcelJS = await cargarExcelJS();
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Sistema de Análisis de Riesgo LA/FT';
+  wb.created = new Date();
+
   const ddc = validarDDC(datos);
   const ddcTexto = ddc.completa
     ? `COMPLETA${ddc.advertencias?.length ? ` — advertencia: ${ddc.advertencias.join(' ')}` : ''}`
@@ -48,7 +92,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
   const reporteRos = reportes.ros;
 
   // ==================== 1. PORTADA ====================
-  const ws1 = XLSX.utils.aoa_to_sheet([
+  const ws1 = crearHoja(wb, 'PORTADA', [
     ['SISTEMA DE ANALISIS DE RIESGO LA/FD'],
     ['PARA EL SECTOR NOTARIAL ECUATORIANO'],
     [''],
@@ -74,25 +118,22 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UK: ${estadoVerificacion('uk')} | UAFE: ${estadoVerificacion('uafe')}`],
     ['Reporte SISLAFT - RESU/NO-RESU:', `${reporteResu.tipo} — ${reporteResu.fechaLimite} — ${reporteResu.estado}`],
     ['Reporte SISLAFT - ROS/NO-ROS:', `${reporteRos.tipo} — ${reporteRos.fechaLimite} — ${reporteRos.estado}`]
-  ]);
+  ], [30, 25, 30]);
 
-  setCols(ws1, [30, 25, 30]);
-  addStyle(ws1['A1'], { font: { bold: true, sz: 14 }, alignment: { horizontal: 'center' } });
-  addStyle(ws1['A2'], { font: { sz: 11 }, alignment: { horizontal: 'center' } });
-  ['A6', 'A14'].forEach(addr => addStyle(ws1[addr], { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: '1F6FEB' } } }));
-  ['A15', 'B15', 'C15'].forEach(addr => addStyle(ws1[addr], { font: { bold: true }, fill: { fgColor: { rgb: '112233' } } }));
+  aplicarEstilo(ws1, 1, 1, { negrita: true, tamano: 14, centrado: true });
+  aplicarEstilo(ws1, 2, 1, { tamano: 11, centrado: true });
+  [6, 14].forEach(fila => aplicarEstilo(ws1, fila, 1, headerStyle));
+  [1, 2, 3].forEach(columna => aplicarEstilo(ws1, 15, columna, subheaderStyle));
 
   const r18c = scoreColor(scores.inherente);
   const r19c = scoreColor(controlesResult.residual);
-  addStyle(ws1['B16'], { font: { bold: true }, fill: { fgColor: { rgb: r18c } }, alignment: { horizontal: 'center' } });
-  addStyle(ws1['C16'], { font: { bold: true }, fill: { fgColor: { rgb: r18c } }, alignment: { horizontal: 'center' } });
-  addStyle(ws1['B17'], { font: { bold: true }, fill: { fgColor: { rgb: r19c } }, alignment: { horizontal: 'center' } });
-  addStyle(ws1['C17'], { font: { bold: true }, fill: { fgColor: { rgb: r19c } }, alignment: { horizontal: 'center' } });
-
-  XLSX.utils.book_append_sheet(wb, ws1, "PORTADA");
+  aplicarEstilo(ws1, 16, 2, { negrita: true, color: r18c, centrado: true });
+  aplicarEstilo(ws1, 16, 3, { negrita: true, color: r18c, centrado: true });
+  aplicarEstilo(ws1, 17, 2, { negrita: true, color: r19c, centrado: true });
+  aplicarEstilo(ws1, 17, 3, { negrita: true, color: r19c, centrado: true });
 
   // ==================== 2. DATOS CLIENTE ====================
-  const ws2 = XLSX.utils.aoa_to_sheet([
+  const ws2 = crearHoja(wb, 'DATOS CLIENTE', [
     ['FICHA DE IDENTIFICACION DEL CLIENTE'], [''],
     ['CAMPO', 'VALOR'],
     ['Notaria', datos.notaria || 'N/A'],
@@ -142,32 +183,26 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
         ]
       : []),
     ['Debida Diligencia (art. 47)', ddcTexto]
-  ]);
+  ], [30, 45]);
 
-  setCols(ws2, [30, 45]);
-  addStyle(ws2['A1'], headerStyle);
-  [3, 14, 20].forEach(r => addStyle(ws2[`A${r}`], subheaderStyle));
-
-  XLSX.utils.book_append_sheet(wb, ws2, "DATOS CLIENTE");
+  aplicarEstilo(ws2, 1, 1, headerStyle);
+  [3, 14, 20].forEach(fila => aplicarEstilo(ws2, fila, 1, subheaderStyle));
 
   // ==================== 3. ESCALAS ====================
-  const ws3 = XLSX.utils.aoa_to_sheet([
+  const ws3 = crearHoja(wb, 'ESCALAS', [
     ['ESCALA DE CALIFICACION DE RIESGO'], [''],
     ['NIVEL', 'RANGO', 'DILIGENCIA'],
     ...NIVELES_RIESGO.map(n => [n.nivel, `1 - ${n.max}`, n.diligencia])
-  ]);
+  ], [18, 18, 50]);
 
-  setCols(ws3, [18, 18, 50]);
-  addStyle(ws3['A1'], headerStyle);
-  addStyle(ws3['A3'], subheaderStyle);
-  ['10B981', 'F59E0B', 'F97316', 'EF4444'].forEach((color, i) => {
-    addStyle(ws3[`A${4 + i}`], { font: { bold: true }, fill: { fgColor: { rgb: color } }, alignment: { horizontal: 'center' } });
+  aplicarEstilo(ws3, 1, 1, headerStyle);
+  aplicarEstilo(ws3, 3, 1, subheaderStyle);
+  ['10B981', 'F59E0B', 'F97316', 'EF4444'].forEach((color, indice) => {
+    aplicarEstilo(ws3, 4 + indice, 1, { negrita: true, color, centrado: true });
   });
 
-  XLSX.utils.book_append_sheet(wb, ws3, "ESCALAS");
-
   // ==================== 4. MATRIZ RIESGO ====================
-  const matrizData = [
+  const ws4 = crearHoja(wb, 'MATRIZ RIESGO', [
     ['FACTOR', 'PESO', 'SCORE PROMEDIO', 'SCORE PONDERADO'],
     ...factoresResult.map(f => [f.nombre, `${(f.peso * 100).toFixed(0)}%`, f.promedio, f.ponderado]),
     ['', '', '', ''],
@@ -176,17 +211,13 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ...FACTORES_RIESGO.flatMap(factor =>
       factor.subcriterios.map(sub => [factor.nombre, sub.id, sub.pregunta])
     )
-  ];
+  ], [25, 12, 15, 18]);
 
-  const ws4 = XLSX.utils.aoa_to_sheet(matrizData);
-  setCols(ws4, [25, 12, 15, 18]);
-  addStyle(ws4['A1'], headerStyle);
-  addStyle(ws4['A2'], subheaderStyle);
-
-  XLSX.utils.book_append_sheet(wb, ws4, "MATRIZ RIESGO");
+  aplicarEstilo(ws4, 1, 1, headerStyle);
+  aplicarEstilo(ws4, 2, 1, subheaderStyle);
 
   // ==================== 5. MAPA DE CALOR ====================
-  const ws5 = XLSX.utils.aoa_to_sheet([
+  const ws5 = crearHoja(wb, 'MAPA DE CALOR', [
     ['MAPA DE CALOR: PROBABILIDAD x IMPACTO'], [''],
     ['Probabilidad ->', '1', '2', '3', '4', '5'],
     ['Impacto 1', 'BAJO', 'BAJO', 'BAJO', 'BAJO', 'MEDIO'],
@@ -199,15 +230,12 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['MEDIO', '9-14 puntos', '', '', '', ''],
     ['MEDIO-ALTO', '15-19 puntos', '', '', '', ''],
     ['ALTO', '20-25 puntos', '', '', '', '']
-  ]);
+  ], [20, 15, 15, 15, 15, 15]);
 
-  setCols(ws5, [20, 15, 15, 15, 15, 15]);
-  addStyle(ws5['A1'], headerStyle);
-
-  XLSX.utils.book_append_sheet(wb, ws5, "MAPA DE CALOR");
+  aplicarEstilo(ws5, 1, 1, headerStyle);
 
   // ==================== 6. CONTROLES ====================
-  const ctrlData = [
+  const ws6 = crearHoja(wb, 'CONTROLES', [
     ['#', 'CONTROL', 'EXISTE', 'EFECTIVIDAD'],
     ...CONTROLES_INTERNOS.map((ctrl, i) => {
       const c = controlesResult.lista.find(x => x.id === ctrl.id);
@@ -217,14 +245,10 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['RESUMEN'],
     ['Controles Existentes:', controlesResult.lista.filter(x => x.existe).length],
     ['Efectividad Promedio:', `${Math.round(controlesResult.efectividadPromedio * 100)}%`]
-  ];
+  ], [5, 45, 12, 15]);
 
-  const ws6 = XLSX.utils.aoa_to_sheet(ctrlData);
-  setCols(ws6, [5, 45, 12, 15]);
-  addStyle(ws6['A1'], headerStyle);
-  addStyle(ws6['A2'], subheaderStyle);
-
-  XLSX.utils.book_append_sheet(wb, ws6, "CONTROLES");
+  aplicarEstilo(ws6, 1, 1, headerStyle);
+  aplicarEstilo(ws6, 2, 1, subheaderStyle);
 
   // ==================== 7. REPORTE EJECUTIVO ====================
   const analysisText = typeof geminiAnalysis === 'string'
@@ -232,7 +256,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     : geminiAnalysis ? JSON.stringify(geminiAnalysis, null, 2) : '';
   const metaIA = typeof geminiAnalysis === 'object' ? geminiAnalysis?._meta : null;
   const execLines = analysisText ? analysisText.split('\n') : ['No se genero analisis de IA.'];
-  const ws7 = XLSX.utils.aoa_to_sheet([
+  const ws7 = crearHoja(wb, 'REPORTE EJECUTIVO', [
     ['REPORTE EJECUTIVO Y ANALISIS DE IA'], [''],
     ['RESUMEN DE SCORES'],
     ['Score Inherente:', scores.inherente, '/25'],
@@ -254,22 +278,21 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
       : []),
     ['ANALISIS JURIDICO-NORMATIVO (GEMINI IA)'],
     ...execLines.map(line => [line])
-  ]);
+  ], [80]);
 
-  setCols(ws7, [80]);
-  addStyle(ws7['A1'], headerStyle);
-  addStyle(ws7['A3'], subheaderStyle);
-  addStyle(ws7[`A${metaIA ? 17 : 11}`], headerStyle);
-
-  XLSX.utils.book_append_sheet(wb, ws7, "REPORTE EJECUTIVO");
+  aplicarEstilo(ws7, 1, 1, headerStyle);
+  aplicarEstilo(ws7, 3, 1, subheaderStyle);
+  aplicarEstilo(ws7, metaIA ? 17 : 11, 1, headerStyle);
 
   const fileName = `Reporte_Riesgo_${datos.cedula || 'Caso'}_${new Date().getTime()}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  await descargarLibro(wb, fileName);
 };
 
 export const exportMultipleToExcel = async (cases) => {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.utils.book_new();
+  const ExcelJS = await cargarExcelJS();
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Sistema de Análisis de Riesgo LA/FT';
+  wb.created = new Date();
 
   const data = cases.map((c, i) => {
     const riskScore = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
@@ -293,15 +316,14 @@ export const exportMultipleToExcel = async (cases) => {
     };
   });
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const setCols = (ws, widths) => { ws['!cols'] = widths.map(w => ({ wch: w })); };
-  setCols(ws, [5, 30, 15, 25, 15, 15, 12, 12, 8, 10]);
+  const columnas = Object.keys(data[0] || {});
+  const ws = crearHoja(wb, 'Resumen de Casos', [
+    columnas,
+    ...data.map(fila => columnas.map(columna => fila[columna]))
+  ], [5, 30, 15, 25, 15, 15, 12, 12, 8, 10]);
 
-  const addStyle = (cell, style) => { if (cell) cell.s = style; };
-  addStyle(ws['A1'], { font: { bold: true, sz: 12 }, fill: { fgColor: { rgb: '1F6FEB' } } });
-
-  XLSX.utils.book_append_sheet(wb, ws, "Resumen de Casos");
+  aplicarEstilo(ws, 1, 1, { negrita: true, tamano: 12, color: '1F6FEB' });
 
   const fileName = `Resumen_Casos_${cases.length}_${new Date().getTime()}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  await descargarLibro(wb, fileName);
 };
