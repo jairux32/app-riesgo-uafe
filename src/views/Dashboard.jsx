@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserCases } from '../firebase/firestore';
+import { getNotaryProfile } from '../firebase/profileStore';
 import { useAuth } from '../context/AuthContext';
 import { useCase } from '../context/CaseContext';
 import { calculateInherentRisk } from '../utils/calculations';
 import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download, Bell } from 'lucide-react';
 import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../utils/alertasInteligentes';
+import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
 import { ESTADOS_CASO } from '../data/constants';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
@@ -22,6 +24,7 @@ export const Dashboard = ({ onGenerateReport }) => {
   const [riskFilter, setRiskFilter] = useState('all');
   const [actoFilter, setActoFilter] = useState('all');
   const [alertas, setAlertas] = useState([]);
+  const [perfil, setPerfil] = useState(null);
 
   // Los botones del panel antes emitían eventos que nadie escuchaba.
   const abrirCaso = (caso, paso = 1) => {
@@ -35,6 +38,8 @@ export const Dashboard = ({ onGenerateReport }) => {
     setLoading(true);
     try {
       const allCases = await getUserCases(user.uid);
+      const profile = await getNotaryProfile(user.uid).catch(() => null);
+      setPerfil(profile);
       const now = new Date();
       let filtered = allCases;
 
@@ -179,6 +184,12 @@ export const Dashboard = ({ onGenerateReport }) => {
           >
             <FileCheck size={16} /> Generar ahora
           </button>
+        </div>
+      )}
+
+      {perfil && (
+        <div style={{ marginBottom: '20px' }}>
+          <CumplimientoInstitucional perfil={perfil} compacto />
         </div>
       )}
 

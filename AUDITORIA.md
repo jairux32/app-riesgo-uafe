@@ -320,7 +320,7 @@ Scheduler diario → Cloud Function de ingesta
 | ROS/NO-ROS (5+3 días; reserva art. 62) | Panel de seguimiento con plazo, prórroga, estado y acuse; el PDF ROS sigue siendo el documento a presentar | **Medio** | Firma electrónica y acuse automatizado (P2) |
 | Conservación 10 años y trazabilidad | Solo `CASE_CREATED`; logs forjables | **Alto** | Audit trail server-side con hash |
 | Protección de datos (LOPDP) | JSON público + `sessionStorage` | **Crítico** | Retirar JSON, controlar acceso, cifrar |
-| Código SISLAFT, OC, Manual, EBR anual | Inexistentes | **Alto** | Módulo de cumplimiento institucional |
+| Código SISLAFT, OC, Manual, EBR anual | Panel en el perfil con fechas de designación, manual, EBR y capacitación, y alertas de vencimiento | **Bajo** | Confirmar requisitos en el portal UAFE |
 | Capacitación (Res. 2024-0621) | Inexistente | **Medio** | Registro con evidencias |
 | Prohibición de efectivo > 100 SBU | No implementada | **Alto** | Bloqueo en el flujo de protocolización |
 | Gobierno de IA y no repudio | Salida no validada ni persistida | **Alto** | JSON Schema, versionado de prompt/modelo |
@@ -420,7 +420,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 82/82, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 91/91, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -441,6 +441,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
 | DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y campos de BF para personas jurídicas; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
+| Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; no bloquea operaciones |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
 

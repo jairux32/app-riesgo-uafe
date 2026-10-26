@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { saveNotaryProfile, getNotaryProfile } from '../firebase/profileStore';
-import { Building2, UserCheck, Save, RefreshCw } from 'lucide-react';
+import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
+import { Building2, UserCheck, Save, RefreshCw, ShieldCheck } from 'lucide-react';
 
 export const NotaryProfile = ({ onClose }) => {
   const { user } = useAuth();
@@ -22,6 +23,11 @@ export const NotaryProfile = ({ onClose }) => {
     oficialCumplimiento: '',
     cargoOficial: '',
     emailOficial: '',
+    fechaDesignacionOC: '',
+    manualAprobado: false,
+    manualFecha: '',
+    ebrFecha: '',
+    capacitacionFecha: '',
     emailReportes: '',
     reporteAutomatico: false,
   });
@@ -38,8 +44,8 @@ export const NotaryProfile = ({ onClose }) => {
   }, [loadProfile]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setProfile(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSave = async () => {
@@ -137,7 +143,36 @@ export const NotaryProfile = ({ onClose }) => {
           <label>Email del Oficial</label>
           <input type="email" className="input-field" name="emailOficial" value={profile.emailOficial} onChange={handleChange} />
         </div>
+        <div className="form-group">
+          <label>Fecha de designación del Oficial</label>
+          <input type="date" className="input-field" name="fechaDesignacionOC" value={profile.fechaDesignacionOC || ''} onChange={handleChange} />
+        </div>
       </div>
+
+      <h3 style={{ fontSize: '1rem', color: 'var(--accent)', margin: '25px 0 15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <ShieldCheck size={18} /> Cumplimiento Institucional
+      </h3>
+
+      <div className="grid-2">
+        <div className="form-group">
+          <label>Fecha de aprobación del Manual de Prevención</label>
+          <input type="date" className="input-field" name="manualFecha" value={profile.manualFecha || ''} onChange={handleChange} />
+        </div>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '28px' }}>
+          <input type="checkbox" name="manualAprobado" checked={Boolean(profile.manualAprobado)} onChange={handleChange} style={{ width: '20px', height: '20px' }} />
+          <label style={{ margin: 0, cursor: 'pointer' }}>Manual aprobado y vigente</label>
+        </div>
+        <div className="form-group">
+          <label>Última Evaluación Basada en Riesgos (EBR)</label>
+          <input type="date" className="input-field" name="ebrFecha" value={profile.ebrFecha || ''} onChange={handleChange} />
+        </div>
+        <div className="form-group">
+          <label>Última capacitación anual</label>
+          <input type="date" className="input-field" name="capacitacionFecha" value={profile.capacitacionFecha || ''} onChange={handleChange} />
+        </div>
+      </div>
+
+      <CumplimientoInstitucional perfil={profile} />
 
       <div style={{ marginTop: '25px', padding: '20px', background: 'var(--bg-input)', borderRadius: '8px' }}>
         <h3 style={{ fontSize: '1rem', color: 'var(--accent)', marginBottom: '15px' }}>
