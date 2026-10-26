@@ -1,5 +1,6 @@
 import { validarDDC } from './validators';
 import { describirCadenaPropiedad } from './beneficiarioFinal';
+import { describirRevisiones } from './revisionCoincidencias';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 export const generatePDFSignatureBlock = (doc, y, profile, signatures = {}) => {
@@ -131,6 +132,17 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   }
   doc.text(`Listas: OFAC ${estadoVerificacion('ofac')} | ONU ${estadoVerificacion('onu')} | UK ${estadoVerificacion('uk')} | UAFE ${estadoVerificacion('uafe')}`, 15, y);
   y += 5;
+
+  const revisionLineas = doc.splitTextToSize(
+    `Revisión de coincidencias: ${describirRevisiones(datos.verificaciones || {})}`,
+    180
+  );
+  for (const linea of revisionLineas) {
+    addPageIfNeeded(8);
+    doc.text(linea, 15, y);
+    y += 5;
+  }
+  y += 1;
 
   const obligaciones = calcularObligaciones(datos, {
     scoreInherente: scores.inherente,

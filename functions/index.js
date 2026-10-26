@@ -273,11 +273,32 @@ exports.auditCaseChanges = onDocumentWritten(
     });
     detalles.cadenaPropiedadNiveles = cadena.length;
     detalles.cadenaPropiedadCompleta = cadena.length === 0 ? null : cadenaCompleta;
+
+    // Fichas de revisión de coincidencias en listas: permiten demostrar que
+    // un falso positivo fue descartado con fundamento y por quién.
+    const verificaciones = data.datos?.verificaciones || {};
+    const coincidencias = Object.entries(verificaciones)
+      .filter(([, verificacion]) =>
+        verificacion?.estado === 'posible' || verificacion?.estado === 'coincidencia'
+      )
+      .map(([tipo, verificacion]) => ({
+        tipo,
+        estado: verificacion.estado,
+        decision: verificacion.revision?.decision || null,
+        revisor: verificacion.revision?.revisor || null,
+        fecha: verificacion.revision?.fecha || null,
+        justificacion: verificacion.revision?.justificacion || null
+      }));
+    detalles.coincidenciasListas = coincidencias.length;
+    detalles.coincidenciasRevisadas = coincidencias.filter(c => c.decision).length;
+    detalles.coincidenciasConfirmadas = coincidencias.filter(c => c.decision === 'confirmado').length;
+    detalles.revisionCoincidencias = coincidencias;
     detalles.ddcCompleta = Boolean(
       ddc.identificacion
       && ddc.proposito
       && ddc.origenFondos
       && (ddc.listas || ddc.listasNoDisponibles)
+      && coincidencias.every(c => c.decision)
       && cadenaCompleta
       && (!esJuridica || (ddc.beneficiarioFinal && beneficiario.nombre && beneficiario.cedula))
     );

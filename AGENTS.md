@@ -49,6 +49,7 @@ npm run test:watch # Tests in watch mode
 - `obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `cumplimiento.js` — Código SISLAFT, OC, manual, EBR y capacitación con alertas de vencimiento
 - `listasDB.js` — Snapshots de OFAC/ONU/UK/PEP en IndexedDB con versión, fecha y hash
+- `revisionCoincidencias.js` — Ficha de descarte/confirmación y bloqueo de DDC
 - `beneficiarioFinal.js` — Cadena de propiedad, participación efectiva y umbral del 10%
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `monthlyReport.js` — Reporte mensual PDF
@@ -90,6 +91,7 @@ npm run test:watch # Tests in watch mode
 - **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas, con cadena de propiedad editable y participación efectiva calculada; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
 - **Screening con snapshots**: Importación de listas OFAC/ONU/UK/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
+- **Ficha de falsos positivos**: toda coincidencia `posible`/`coincidencia` exige responsable, fecha y justificación antes de completar la DDC; se exporta y queda en el audit trail
 - **Cumplimiento institucional**: Código SISLAFT, designación del OC, manual, EBR y capacitación anual con alertas de vencimiento en el perfil y el Dashboard
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
@@ -99,7 +101,7 @@ npm run test:watch # Tests in watch mode
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.
 - Run `npm test` for unit tests. Config in `vite.config.js` (vitest).
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal (128 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias (145 tests)
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom
@@ -112,4 +114,5 @@ npm run test:watch # Tests in watch mode
 - `src/test/cumplimiento.test.js` — Vigencia de los requisitos institucionales
 - `src/test/listasDB.test.js` — Parseo de listas restrictivas CSV/JSON
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
+- `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE

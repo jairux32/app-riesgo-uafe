@@ -1,5 +1,6 @@
 import { validarDDC } from './validators';
 import { describirCadenaPropiedad } from './beneficiarioFinal';
+import { describirRevisiones } from './revisionCoincidencias';
 
 export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
   const { jsPDF } = await import('jspdf');
@@ -113,6 +114,11 @@ export const exportROSPDF = async (datos, scores, evaluaciones, profile) => {
       seccionC.push(['Conyuge', datos.conyuge?.nombre || 'Por completar']);
     }
   }
+
+  seccionC.push([
+    'Revision de coincidencias en listas',
+    describirRevisiones(datos.verificaciones || {})
+  ]);
 
   seccionC.push([
     'Debida Diligencia (art. 47)',

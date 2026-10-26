@@ -20,7 +20,13 @@ import { cargarListas, getEstadoListas } from '../utils/listasDB';
 import { ClientSearchModal } from '../components/ClientSearchModal';
 import { GestionListasModal } from '../components/GestionListasModal';
 import { CadenaPropiedad } from '../components/CadenaPropiedad';
+import { RevisionCoincidenciaModal } from '../components/RevisionCoincidenciaModal';
 import { NIVEL_PROPIEDAD_INICIAL } from '../utils/beneficiarioFinal';
+import {
+  requiereRevision,
+  estaRevisada,
+  todasLasListasVerificadas
+} from '../utils/revisionCoincidencias';
 
 const verificacionesPendientes = () => ({
   ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
@@ -54,6 +60,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const suggestionsRef = useRef(null);
   const [verificando, setVerificando] = useState(false);
   const [showListasModal, setShowListasModal] = useState(false);
+  const [revisionAbierta, setRevisionAbierta] = useState(null);
   const [listasActualizadas, setListasActualizadas] = useState(0);
   const [estadoListas, setEstadoListas] = useState({});
   const [cantones, setCantones] = useState([]);
@@ -353,11 +360,47 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       const resultados = await verificarListasRestrictivas(datos.cliente, 'todos', fuentes);
 
       // La DDC solo se considera cumplida si el screening se ejecutó contra
-      // fuentes reales. "no_configurado" no equivale a "verificado".
-      const estadosConFuente = ['no_encontrado', 'posible', 'coincidencia'];
-      const valores = Object.values(resultados);
-      const listasVerificadas = valores.length > 0
-        && valores.every(r => estadosConFuente.includes(r.estado));
+      // fuentes reales y, cuando hubo coincidencias, si alguien las revisó.
+      // "no_configurado" no equivale a "verificado".
+      const nuevasVerificaciones = {
+        ofac: {
+          estado: resultados.ofac?.estado || 'error',
+          fecha: resultados.ofac?.fecha,
+          resultado: resultados.ofac?.mensaje,
+          coincidencias: resultados.ofac?.coincidencias || [],
+          versionLista: resultados.ofac?.versionLista || null,
+          revision: null
+        },
+        onu: {
+          estado: resultados.onu?.estado || 'error',
+          fecha: resultados.onu?.fecha,
+          resultado: resultados.onu?.mensaje,
+          coincidencias: resultados.onu?.coincidencias || [],
+          versionLista: resultados.onu?.versionLista || null,
+          revision: null
+        },
+        uk: {
+          estado: resultados.uk?.estado || 'error',
+          fecha: resultados.uk?.fecha,
+          resultado: resultados.uk?.mensaje,
+          coincidencias: resultados.uk?.coincidencias || [],
+          versionLista: resultados.uk?.versionLista || null,
+          revision: null
+        },
+        uafe: {
+          estado: resultados.uafe?.estado || 'error',
+          fecha: resultados.uafe?.fecha,
+          resultado: resultados.uafe?.mensaje,
+          coincidencias: resultados.uafe?.coincidencias || [],
+          versionLista: resultados.uafe?.versionLista || null,
+          revision: null
+        }
+      };
+
+      // `listas` refleja que el screening se hizo contra fuentes reales. Las
+      // coincidencias se controlan aparte con la ficha de revisión, para no
+      // mezclar "no se verificó" con "se verificó y hay que revisar".
+      const listasVerificadas = todasLasListasVerificadas(nuevasVerificaciones);
 
       setDatos(prev => ({
         ...prev,
@@ -368,36 +411,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           // sin fuente, el usuario debe volver a dejarla explícitamente.
           listasNoDisponibles: false
         },
-        verificaciones: {
-          ofac: {
-            estado: resultados.ofac?.estado || 'error',
-            fecha: resultados.ofac?.fecha,
-            resultado: resultados.ofac?.mensaje,
-            coincidencias: resultados.ofac?.coincidencias || [],
-            versionLista: resultados.ofac?.versionLista || null
-          },
-          onu: {
-            estado: resultados.onu?.estado || 'error',
-            fecha: resultados.onu?.fecha,
-            resultado: resultados.onu?.mensaje,
-            coincidencias: resultados.onu?.coincidencias || [],
-            versionLista: resultados.onu?.versionLista || null
-          },
-          uk: {
-            estado: resultados.uk?.estado || 'error',
-            fecha: resultados.uk?.fecha,
-            resultado: resultados.uk?.mensaje,
-            coincidencias: resultados.uk?.coincidencias || [],
-            versionLista: resultados.uk?.versionLista || null
-          },
-          uafe: {
-            estado: resultados.uafe?.estado || 'error',
-            fecha: resultados.uafe?.fecha,
-            resultado: resultados.uafe?.mensaje,
-            coincidencias: resultados.uafe?.coincidencias || [],
-            versionLista: resultados.uafe?.versionLista || null
-          }
-        }
+        verificaciones: nuevasVerificaciones
       }));
 
       const estados = Object.values(resultados).map(r => r.estado);
@@ -419,6 +433,28 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     } finally {
       setVerificando(false);
     }
+  };
+
+  const handleGuardarRevision = (clave, revision) => {
+    setDatos(prev => {
+      const verificaciones = {
+        ...(prev.verificaciones || {}),
+        [clave]: {
+          ...(prev.verificaciones?.[clave] || {}),
+          revision
+        }
+      };
+      return {
+        ...prev,
+        verificaciones,
+        ddc: {
+          ...(prev.ddc || DDC_INICIAL),
+          listas: todasLasListasVerificadas(verificaciones)
+        }
+      };
+    });
+    setRevisionAbierta(null);
+    toast.success('Revisión registrada');
   };
 
   const validacionMedioPago = validarMedioPago(datos.valor, datos.medioPago);
@@ -1079,6 +1115,46 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
                     ))}
                   </div>
                 )}
+
+                {requiereRevision(verif) && (
+                  <div className="mt-2">
+                    {estaRevisada(verif) ? (
+                      <div className="flex justify-between items-center gap-2" style={{ flexWrap: 'wrap' }}>
+                        <p
+                          className="text-xs"
+                          style={{
+                            margin: 0,
+                            color: verif.revision?.decision === 'confirmado' ? 'var(--rojo)' : 'var(--verde)'
+                          }}
+                        >
+                          {verif.revision?.decision === 'confirmado'
+                            ? 'Coincidencia confirmada'
+                            : 'Falso positivo descartado'}
+                          {' · '}{verif.revision?.revisor}
+                          {verif.revision?.fecha ? ` · ${verif.revision.fecha}` : ''}
+                        </p>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setRevisionAbierta(key)}
+                        >
+                          Editar
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs" style={{ margin: '0 0 4px', color: 'var(--naranja, #f97316)' }}>
+                          Revisión pendiente: no se puede completar la DDC.
+                        </p>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setRevisionAbierta(key)}
+                        >
+                          Registrar revisión
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className="flex justify-between items-center mt-2">
                   {verif.fecha && (
                     <span className="text-xs text-muted">{new Date(verif.fecha).toLocaleDateString('es-EC')}</span>
@@ -1199,6 +1275,15 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
         <GestionListasModal
           onClose={() => setShowListasModal(false)}
           onCambio={() => setListasActualizadas(n => n + 1)}
+        />
+      )}
+
+      {revisionAbierta && (
+        <RevisionCoincidenciaModal
+          tipo={revisionAbierta}
+          verificacion={datos.verificaciones?.[revisionAbierta]}
+          onSave={(revision) => handleGuardarRevision(revisionAbierta, revision)}
+          onClose={() => setRevisionAbierta(null)}
         />
       )}
     </div>

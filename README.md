@@ -62,6 +62,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `src/utils/cumplimiento.js` — Código SISLAFT, OC, manual, EBR y capacitación con alertas
 - `src/utils/listasDB.js` — Snapshots de OFAC/ONU/UK/PEP con versión, fecha y hash
+- `src/utils/revisionCoincidencias.js` — Ficha de descarte o confirmación de coincidencias
 - `src/utils/beneficiarioFinal.js` — Cadena de propiedad y participación efectiva (art. 92)
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
@@ -85,13 +86,14 @@ La base de clientes **no se publica** en el hosting. `data-local/` está ignorad
 Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt (`PROMPT_VERSION` en `src/utils/geminiApi.js`), la versión del contexto legal (`LEGAL_CONTEXT_VERSION` en `functions/index.js`) y la fecha de generación. La metadata se muestra en Step4, se incluye en el PDF/Excel y queda en el audit trail (`audit_logs`). Al cambiar el prompt o el contexto legal hay que subir la versión correspondiente.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (128 tests):
+Tests con **vitest** + **@testing-library/react** (145 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
 - `src/test/listasDB.test.js` — Parseo de CSV/JSON de listas restrictivas
 - `src/test/excelParser.test.js` — Auto-evaluación de señales y parseo UAFE
 - `src/test/beneficiarioFinal.test.js` — Cadena de propiedad y beneficiario final
+- `src/test/revisionCoincidencias.test.js` — Ficha de descarte de falsos positivos
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor

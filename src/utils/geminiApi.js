@@ -3,6 +3,7 @@ import app from '../firebase/config';
 import { CONTROLES_INTERNOS } from '../data/constants';
 import { validarDDC } from './validators';
 import { describirCadenaPropiedad, evaluarCadenaPropiedad } from './beneficiarioFinal';
+import { describirRevisiones, resumenRevisiones } from './revisionCoincidencias';
 import { validarRespuestaAuditoria } from './auditValidator';
 
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
@@ -146,6 +147,7 @@ DATOS DEL ACTO NOTARIAL:
 - ¿Es PEP?: ${datos.esPep ? 'Sí' : 'No'} ${datos.detallePep ? `(${datos.detallePep})` : ''}
 - ¿Actúa mediante apoderado?: ${datos.apoderado ? 'Sí' : 'No'}
 - Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | UK: ${describirVerificacion(datos, 'uk')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
+- Revisión de coincidencias: ${describirRevisiones(datos.verificaciones || {})}${resumenRevisiones(datos.verificaciones || {}).confirmadas.length > 0 ? ' — hay coincidencias confirmadas, evalúe ROS' : ''}
 - Reportes previos UAFE: ${datos.reportesPrevios ? 'Sí' : 'No'}
 - Observaciones: ${datos.observaciones || 'Ninguna'}
 

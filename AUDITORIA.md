@@ -344,14 +344,14 @@ Scheduler diario → Cloud Function de ingesta
 
 ### P1 — 60–90 días
 
-- Persistir el análisis de IA, validar con `AUDIT_RESPONSE_SCHEMA` y versionar prompt/modelo/contexto.
-- Audit trail server-side, append-only y con hash encadenado.
-- Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse.
+- ~~Persistir el análisis de IA, validar con `AUDIT_RESPONSE_SCHEMA` y versionar prompt/modelo/contexto~~: implementado con `_meta`, validación previa y trazabilidad en PDF, Excel y audit trail.
+- ~~Audit trail server-side, append-only y con hash encadenado~~: `auditCaseChanges` escribe `audit_logs` y `audit_heads` con SHA-256; el cliente solo lee.
+- ~~Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse~~: panel en Step4 y cálculo de plazos en `obligaciones.js`.
 - Corregir duplicados, offline, Dashboard, filtro OFAC y reporte mensual.
-- ~~Screening real OFAC + ONU + UK con snapshots versionados~~: implementado para OFAC, ONU, UK (Name 1..N) y lista PEP interna con hash; falta la ficha de descarte de falsos positivos.
+- ~~Screening real OFAC + ONU + UK con snapshots versionados~~ y ficha de descarte de falsos positivos: implementado para OFAC, ONU, UK (Name 1..N) y lista PEP interna con hash, con revisión documentada y bloqueo de la DDC.
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
-- Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento.
+- ~~Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento~~: implementado en el perfil y el Dashboard; solo alerta, no bloquea.
 
 ### P2 — 3–12 meses
 
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 128/128, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 145/145, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -429,7 +429,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Residual mal calculado | **Corregido** | Denominador fijo de 10 controles y reducción máxima del 50% |
 | Contexto legal desactualizado | **Corregido** | Ley LA/FT 2024, Reglamento D.E. 298, COIP 317/318 derogado, sanciones 1–10/11–20/21–40 SBU, retención 10 años, efectivo 100 SBU = USD 48.200 |
 | Deriva cliente/servidor del contexto legal | **Corregido** | `functions/legalContext.js` replicado y test anti-deriva |
-| Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio”. Ahora se importan snapshots oficiales de OFAC, ONU, UK y PEP con versión, fecha y SHA-256 |
+| Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio”. Snapshots oficiales de OFAC, ONU, UK y PEP con versión, fecha y SHA-256, más ficha de descarte de falsos positivos con responsable y justificación |
 | PII pública (`clientes.json`) | **Corregido** | Retirado de `public/`; carga manual desde archivo local; `data-local/` ignorado |
 | Reglas Firestore demasiado abiertas | **Corregido** | `list/get` exigen `userId`; `audit_logs`/`audit_heads` solo los escribe la Function. Falta probar con emulador |
 | `analyzeCase` abierta a Internet | **Corregido** | Bearer token con revocación, POST, CORS, límites y rate limit por usuario. App Check opcional disponible (`ENFORCE_APP_CHECK=true`) |

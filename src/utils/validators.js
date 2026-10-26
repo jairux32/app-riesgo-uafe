@@ -4,6 +4,7 @@
 
 import { LIMITE_EFECTIVO_USD, UMBRAL_MEDIO_PAGO_USD } from '../data/constants';
 import { evaluarCadenaPropiedad } from './beneficiarioFinal';
+import { resumenRevisiones } from './revisionCoincidencias';
 
 /**
  * Controla el límite legal de efectivo (Ley Notarial art. 20.8) y la
@@ -189,6 +190,16 @@ export const validarDDC = (datos = {}) => {
   if (!ddc.origenFondos) faltantes.push('origen y licitud de los fondos');
   if (!ddc.listas && !ddc.listasNoDisponibles) {
     faltantes.push('verificación en listas o constancia de fuente no disponible');
+  }
+
+  const revisiones = resumenRevisiones(datos.verificaciones || {});
+  if (revisiones.pendientes.length > 0) {
+    faltantes.push('revisión documentada de las coincidencias en listas');
+  }
+  if (revisiones.confirmadas.length > 0) {
+    advertencias.push(
+      'Hay coincidencias confirmadas: documente la debida diligencia reforzada y evalúe el ROS (Ley art. 61).'
+    );
   }
 
   if (esJuridica) {

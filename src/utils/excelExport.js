@@ -2,6 +2,7 @@ import { FACTORES_RIESGO, CONTROLES_INTERNOS, NIVELES_RIESGO } from '../data/con
 import { calculateInherentRisk } from './calculations';
 import { validarDDC } from './validators';
 import { filasCadenaPropiedad } from './beneficiarioFinal';
+import { describirRevisiones } from './revisionCoincidencias';
 import { calcularObligaciones, combinarReportes } from './obligaciones';
 
 const setCols = (ws, widths) => {
@@ -114,6 +115,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['ONU', estadoVerificacion('onu')],
     ['UK', estadoVerificacion('uk')],
     ['PEP UAFE', estadoVerificacion('uafe')],
+    ['Revisión de coincidencias', describirRevisiones(datos.verificaciones || {})],
     [''],
     ['OBSERVACIONES', datos.observaciones || 'Ninguna'],
     [''],
