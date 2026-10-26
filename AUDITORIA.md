@@ -358,7 +358,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Perfil transaccional y monitoreo continuo de desviaciones~~: perfil por cliente (monto, acto, pago, origen y frecuencia), alertas en Step1 y en el portfolio, y registro en el dictamen y el audit trail.
 - Calibración del modelo con ROS históricos y tablero de calidad (FP/FN, tiempo de cierre).
 - ~~Gestión documental con evidencias y hash~~: expediente con SHA-256, verificación de integridad, exportación y registro en el audit trail; los archivos permanecen en el dispositivo.
-- Módulo de capacitación con registro y evidencias.
+- ~~Módulo de capacitación con registro y evidencias~~: registro por jornada con horas, participantes, responsable y certificado o lista de asistencia con hash SHA-256; vigencia anual calculada y alerta de horas.
 - Tests de reglas con emulador, e2e y observabilidad; el CI de calidad ya ejecuta lint, tests, auditorías y build en cada push/PR y bloquea el deploy si falla.
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - Evaluación de impacto en protección de datos y política de retención, incluida la purga de archivos de evidencia huérfanos en IndexedDB.
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 180/180, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 210/210, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -443,7 +443,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Versionado del dictamen | **Corregido** | `_meta` con modelo, `promptVersion`, `contextoVersion` y fecha; se muestra en Step4, se exporta en PDF/Excel y queda en `audit_logs` |
 | DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante, BF con cadena de propiedad y participación efectiva, y evidencias documentales con hash SHA-256; todo se incluye en prompt, PDF, Excel, ROS y audit trail. Falta sello temporal de tercero |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
-| Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; no bloquea operaciones |
+| Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; la capacitación tiene registro detallado con evidencia y hash. No bloquea operaciones |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
 

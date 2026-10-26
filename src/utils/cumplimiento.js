@@ -1,3 +1,8 @@
+import {
+  evaluarVigenciaCapacitacion,
+  fechaCapacitacionVigente
+} from './capacitacion';
+
 const MS_DIA = 24 * 60 * 60 * 1000;
 const DIAS_POR_VENCER = 30;
 
@@ -102,6 +107,33 @@ export const evaluarCumplimientoInstitucional = (perfil = {}, opciones = {}) => 
   const hoy = parseFecha(opciones.hoy) || new Date();
   const diasPorVencer = opciones.diasPorVencer ?? DIAS_POR_VENCER;
 
+  // La capacitación puede venir del registro detallado o del campo simple de
+  // perfiles anteriores. Se usa la fecha más reciente de ambos.
+  const capacitacionResumen = evaluarVigenciaCapacitacion(
+    perfil.capacitaciones || [],
+    { hoy, diasPorVencer }
+  );
+  const capacitacionFecha = fechaCapacitacionVigente(
+    perfil.capacitaciones || [],
+    perfil.capacitacionFecha,
+    { hoy }
+  );
+  const capacitacion = evaluarAnual(
+    'capacitacion',
+    'Capacitación anual del personal',
+    capacitacionFecha,
+    'Programa anual de capacitación',
+    hoy,
+    diasPorVencer
+  );
+  capacitacion.registros = capacitacionResumen.total;
+  capacitacion.horasUltimos12Meses = capacitacionResumen.horasUltimos12Meses;
+  capacitacion.horasMinimas = capacitacionResumen.horasMinimas;
+  capacitacion.cumpleHoras = capacitacionResumen.total === 0
+    ? null
+    : capacitacionResumen.cumpleHoras;
+  capacitacion.participantesUltima = capacitacionResumen.participantesUltima;
+
   const items = [
     evaluarAtestacion(
       'codigoSISLAFT',
@@ -129,19 +161,18 @@ export const evaluarCumplimientoInstitucional = (perfil = {}, opciones = {}) => 
       hoy,
       diasPorVencer
     ),
-    evaluarAnual(
-      'capacitacion',
-      'Capacitación anual del personal',
-      perfil.capacitacionFecha,
-      'Programa anual de capacitación',
-      hoy,
-      diasPorVencer
-    )
+    capacitacion
   ];
 
   const pendientes = items.filter(item => !ESTADOS_OK.includes(item.estado));
   const vencidos = items.filter(item => item.estado === 'vencido');
   const porVencer = items.filter(item => item.estado === 'por_vencer');
+  const alertasCapacitacion = capacitacion.cumpleHoras === false
+    ? [
+        `Capacitación: ${capacitacion.horasUltimos12Meses} h registradas en los últimos 12 meses `
+        + `frente a ${capacitacion.horasMinimas} h de referencia interna.`
+      ]
+    : [];
 
   return {
     items,
@@ -149,6 +180,7 @@ export const evaluarCumplimientoInstitucional = (perfil = {}, opciones = {}) => 
     pendientes,
     vencidos,
     porVencer,
+    alertasCapacitacion,
     requiereAtencion: pendientes.length > 0
   };
 };

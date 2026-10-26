@@ -62,6 +62,9 @@ export const CumplimientoInstitucional = ({ perfil, compacto = false }) => {
                 <span style={{ fontSize: '0.9rem' }}>{item.etiqueta}</span>
                 <span className="text-xs text-muted" style={{ display: 'block' }}>
                   {describirVencimiento(item)} · {item.fundamento}
+                  {item.clave === 'capacitacion' && item.registros > 0
+                    ? ` · ${item.horasUltimos12Meses} h en 12 meses (${item.registros} registro(s))`
+                    : ''}
                 </span>
               </div>
               <span style={{ fontSize: '0.75rem', fontWeight: '600', color: estilo.color }}>
@@ -71,6 +74,12 @@ export const CumplimientoInstitucional = ({ perfil, compacto = false }) => {
           );
         })}
       </div>
+
+      {resultado.alertasCapacitacion?.length > 0 && (
+        <p className="text-xs" style={{ color: 'var(--naranja, #f97316)', marginTop: '12px', marginBottom: 0 }}>
+          {resultado.alertasCapacitacion.join(' ')}
+        </p>
+      )}
 
       {resultado.requiereAtencion ? (
         <p className="text-xs" style={{ color: 'var(--naranja, #f97316)', marginTop: '12px', marginBottom: 0 }}>

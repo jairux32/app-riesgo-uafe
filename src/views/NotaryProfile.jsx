@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { saveNotaryProfile, getNotaryProfile } from '../firebase/profileStore';
 import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
+import { CapacitacionPanel } from '../components/CapacitacionPanel';
 import { Building2, UserCheck, Save, RefreshCw, ShieldCheck } from 'lucide-react';
 
 export const NotaryProfile = ({ onClose }) => {
@@ -28,6 +29,7 @@ export const NotaryProfile = ({ onClose }) => {
     manualFecha: '',
     ebrFecha: '',
     capacitacionFecha: '',
+    capacitaciones: [],
     emailReportes: '',
     reporteAutomatico: false,
   });
@@ -167,10 +169,16 @@ export const NotaryProfile = ({ onClose }) => {
           <input type="date" className="input-field" name="ebrFecha" value={profile.ebrFecha || ''} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label>Última capacitación anual</label>
+          <label>Última capacitación anual (registro simple)</label>
           <input type="date" className="input-field" name="capacitacionFecha" value={profile.capacitacionFecha || ''} onChange={handleChange} />
         </div>
       </div>
+
+      <CapacitacionPanel
+        registros={profile.capacitaciones || []}
+        responsable={profile.oficialCumplimiento}
+        onChange={(capacitaciones) => setProfile(prev => ({ ...prev, capacitaciones }))}
+      />
 
       <CumplimientoInstitucional perfil={profile} />
 
