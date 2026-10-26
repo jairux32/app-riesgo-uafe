@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getUserCases } from '../firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { useCase } from '../context/CaseContext';
 import { calculateInherentRisk } from '../utils/calculations';
 import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download, Bell } from 'lucide-react';
 import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../utils/alertasInteligentes';
@@ -12,6 +14,8 @@ const RISK_LABELS = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
 
 export const Dashboard = ({ onGenerateReport }) => {
   const { user } = useAuth();
+  const { loadCase, setStep } = useCase();
+  const navigate = useNavigate();
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('month');
@@ -19,11 +23,14 @@ export const Dashboard = ({ onGenerateReport }) => {
   const [actoFilter, setActoFilter] = useState('all');
   const [alertas, setAlertas] = useState([]);
 
-  useEffect(() => {
-    loadData();
-  }, [user, filter, riskFilter, actoFilter]);
+  // Los botones del panel antes emitían eventos que nadie escuchaba.
+  const abrirCaso = (caso, paso = 1) => {
+    loadCase(caso);
+    setStep(paso);
+    navigate('/');
+  };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -58,7 +65,6 @@ export const Dashboard = ({ onGenerateReport }) => {
       }
 
       setCases(filtered);
-      // Generar alertas inteligentes con todos los casos del usuario (no filtrados)
       const allAlertas = generarAlertas(allCases);
       setAlertas(allAlertas);
     } catch (err) {
@@ -66,7 +72,12 @@ export const Dashboard = ({ onGenerateReport }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, filter, riskFilter, actoFilter]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
+  }, [loadData]);
 
   const getUniqueActos = () => {
     const actos = new Set();
@@ -87,23 +98,22 @@ export const Dashboard = ({ onGenerateReport }) => {
   };
 
   const getFactorAnalysis = () => {
+    // Se usa el desglose del motor de scoring, que conoce las 7 categorías de
+    // señales. El mapeo anterior por la primera letra asignaba todas las SA*
+    // a CUMPLIMIENTO y mostraba un análisis por factor falso.
     const factors = {};
     cases.forEach(c => {
-      if (c.evaluaciones) {
-        Object.entries(c.evaluaciones).forEach(([key, val]) => {
-          const factorId = key.substring(0, 1) === 'c' ? 'CLIENTE' :
-                          key.substring(0, 1) === 'p' ? 'PRODUCTO' :
-                          key.substring(0, 1) === 'd' ? 'CANAL' :
-                          key.substring(0, 1) === 'z' ? 'ZONA' : 'CUMPLIMIENTO';
-          if (!factors[factorId]) factors[factorId] = { total: 0, count: 0 };
-          factors[factorId].total += val.prob * val.imp;
-          factors[factorId].count++;
-        });
-      }
+      if (!c.evaluaciones) return;
+      const { factores } = calculateInherentRisk(c.evaluaciones);
+      factores.forEach(factor => {
+        if (!factors[factor.nombre]) factors[factor.nombre] = { total: 0, count: 0 };
+        factors[factor.nombre].total += Number(factor.promedio);
+        factors[factor.nombre].count++;
+      });
     });
     return Object.entries(factors).map(([name, data]) => ({
       name,
-      promedio: Math.round(data.total / data.count)
+      promedio: data.count > 0 ? Math.round(data.total / data.count) : 0
     }));
   };
 
@@ -362,7 +372,7 @@ export const Dashboard = ({ onGenerateReport }) => {
                   <button
                     className="btn btn-secondary"
                     style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                    onClick={() => window.dispatchEvent(new CustomEvent('openCase', { detail: c }))}
+                    onClick={() => abrirCaso(c, 1)}
                     title="Abrir caso"
                   >
                     <FileText size={14} />
@@ -370,7 +380,7 @@ export const Dashboard = ({ onGenerateReport }) => {
                   <button
                     className="btn btn-secondary"
                     style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                    onClick={() => window.dispatchEvent(new CustomEvent('analyzeCase', { detail: c }))}
+                    onClick={() => abrirCaso(c, 4)}
                     title="Generar análisis IA"
                   >
                     <Bot size={14} />
@@ -378,7 +388,7 @@ export const Dashboard = ({ onGenerateReport }) => {
                   <button
                     className="btn btn-secondary"
                     style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                    onClick={() => window.dispatchEvent(new CustomEvent('exportCasePDF', { detail: c }))}
+                    onClick={() => abrirCaso(c, 4)}
                     title="Exportar PDF"
                   >
                     <Download size={14} />

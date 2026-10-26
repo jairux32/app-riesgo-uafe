@@ -50,7 +50,7 @@ export function generarAlertas(cases) {
     clientesMap.get(cliente).scores.push(risk.inherente);
   });
 
-  clientesMap.forEach((data, cliente) => {
+  clientesMap.forEach((data) => {
     const casosAltos = data.scores.filter(s => s >= SCORE_ALTO_RIESGO).length;
     if (casosAltos >= 2) {
       const maxScore = Math.max(...data.scores);

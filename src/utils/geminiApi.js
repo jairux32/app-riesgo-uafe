@@ -1,13 +1,107 @@
-import { CONTEXTO_LEGAL_COMPLETO_ECUADOR, CONTROLES_INTERNOS } from '../data/constants';
-import { AUDIT_RESPONSE_SCHEMA } from './auditSchema';
+import { getAuth } from 'firebase/auth';
+import app from '../firebase/config';
+import { CONTROLES_INTERNOS } from '../data/constants';
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
+  || 'https://us-central1-app-riesgo-uafe.cloudfunctions.net/analyzeCase';
 
-const getApiKey = () => {
-  const key = sessionStorage.getItem('gemini_api_key');
-  if (!key) throw new Error('API Key de Gemini no configurada. Guárdela en Ajustes.');
-  return key;
-};
+/**
+ * Describe el estado real de una verificación de listas. Nunca convierte
+ * "no configurado" en "verificado": eso producía dictámenes que afirmaban
+ * controles que no se habían ejecutado.
+ */
+function describirVerificacion(datos, clave) {
+  const verificacion = datos.verificaciones?.[clave];
+  if (!verificacion?.estado || verificacion.estado === 'pendiente') {
+    return 'NO VERIFICADO';
+  }
+  if (verificacion.estado === 'no_configurado') {
+    return 'SIN FUENTE CONFIGURADA (no se realizó verificación)';
+  }
+  const fecha = verificacion.fecha ? ` del ${String(verificacion.fecha).slice(0, 10)}` : '';
+  return `${String(verificacion.estado).toUpperCase()}${fecha}`;
+}
+
+const SCHEMA_DESCRIPTION = `
+Devuelve EXCLUSIVAMENTE un JSON válido (sin texto adicional, sin markdown) con esta estructura exacta:
+
+{
+  "meta": {
+    "version": "string",
+    "fecha_analisis": "ISO 8601",
+    "modelo_ia": "string",
+    "confianza_global": "number 0-1"
+  },
+  "dictamen": {
+    "nivel_riesgo_inherente": "BAJO | MEDIO | MEDIO-ALTO | ALTO",
+    "nivel_riesgo_residual": "BAJO | MEDIO | MEDIO-ALTO | ALTO",
+    "clasificacion_final": "string",
+    "resumen_ejecutivo": "string (max 1000 chars)",
+    "fundamento_score": "string"
+  },
+  "senales_alerta_identificadas": [
+    {
+      "codigo": "SA01-SA201 (patrón ^SA\\d{2,3}$)",
+      "descripcion": "string",
+      "categoria": "identidad | corporativa | transaccional | internacional | bienes_raices | activos_virtuales | otra",
+      "evidencia": "string",
+      "norma_sustento": "string",
+      "severidad": "baja | media | alta | critica"
+    }
+  ],
+  "fundamento_legal": {
+    "articulos_aplicables": [
+      { "norma": "string", "articulo": "string", "numeral": "string", "texto_referencia": "string", "aplicacion_caso": "string" }
+    ],
+    "resoluciones_aplicables": [
+      { "resolucion": "string", "articulo": "string", "aplicacion_caso": "string" }
+    ],
+    "criterios_gafiat": [
+      { "criterio": "string", "aplicacion": "string" }
+    ]
+  },
+  "obligaciones_activadas": [
+    { "obligacion": "string", "plazo": "string", "procedimiento": "string", "responsable": "string", "consecuencia_incumplimiento": "string" }
+  ],
+  "evaluacion_controles": {
+    "controles_efectivos": [{ "id": "string", "nombre": "string", "evaluacion": "string" }],
+    "controles_deficientes": [{ "id": "string", "nombre": "string", "evaluacion": "string", "recomendacion": "string" }],
+    "brechas_criticas": ["string"],
+    "efectividad_global": "number 0-1"
+  },
+  "analisis_tipologia": {
+    "tipologias_detectadas": [{ "tipo": "string", "descripcion": "string", "fuente": "string" }],
+    "factores_amplificadores": ["string"],
+    "factores_atenuantes": ["string"]
+  },
+  "ros": {
+    "amerita_ros": "boolean",
+    "probabilidad_escalada": "number 0-1",
+    "justificacion": "string",
+    "plazo_reporte": "string",
+    "procedimiento": "string",
+    "senales_escalada": ["string"]
+  },
+  "recomendacion_final": {
+    "decision": "ELEVAR_CON_DILIGENCIAS | SOLICITAR_INFO | NO_ELEVAR",
+    "fundamento": "string",
+    "acciones_inmediatas": [{ "accion": "string", "plazo": "string", "responsable": "string" }],
+    "condiciones_para_proceder": ["string"],
+    "seguimiento_requerido": "boolean",
+    "proxima_revision": "string"
+  },
+  "evidencias": [
+    { "tipo": "documento | verificacion | comportamiento | datos_externos", "descripcion": "string", "fuente": "string", "fiabilidad": "alta | media | baja", "relevancia": "string" }
+  ],
+  "trazabilidad": {
+    "factores_evaluados": ["string"],
+    "senales_verificadas": "number",
+    "senales_activadas": "number",
+    "articulos_citados": "number",
+    "metodologia": "string"
+  }
+}
+`;
 
 export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
   const controlesEvaluados = controlesResult.lista.map(c => {
@@ -15,11 +109,7 @@ export const buildPrompt = (datos, scores, factoresResult, controlesResult) => {
     return { ...c, nombre: ctrl ? ctrl.nombre : c.id };
   });
 
-  return `${CONTEXTO_LEGAL_COMPLETO_ECUADOR}
-
----
-
-CASO A ANALIZAR:
+  return `CASO A ANALIZAR:
 
 DATOS DEL ACTO NOTARIAL:
 - Notaría: ${datos.notaria || 'N/A'} — Notario/a: ${datos.notario || 'N/A'}
@@ -31,7 +121,7 @@ DATOS DEL ACTO NOTARIAL:
 - Actividad económica: ${datos.actividad || 'N/A'}
 - ¿Es PEP?: ${datos.esPep ? 'Sí' : 'No'} ${datos.detallePep ? `(${datos.detallePep})` : ''}
 - ¿Actúa mediante apoderado?: ${datos.apoderado ? 'Sí' : 'No'}
-- Verificado en OFAC: ${datos.ofac ? 'Sí' : 'No'} | ONU: ${datos.onu ? 'Sí' : 'No'} | PEP UAFE: ${datos.pepUafe ? 'Sí' : 'No'}
+- Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
 - Reportes previos UAFE: ${datos.reportesPrevios ? 'Sí' : 'No'}
 - Observaciones: ${datos.observaciones || 'Ninguna'}
 
@@ -53,72 +143,59 @@ ${controlesEvaluados.map(c => `  • ${c.nombre}: ${c.existe ? 'Existe' : 'NO ex
 ---
 
 INSTRUCCIÓN:
-Basándote EXCLUSIVAMENTE en la normativa ecuatoriana vigente detallada arriba,
+Basándote EXCLUSIVAMENTE en la normativa ecuatoriana vigente del contexto legal proporcionado,
 genera un análisis jurídico-normativo del caso en formato JSON estructurado.
 
-El JSON debe incluir EXACTAMENTE las siguientes secciones:
-
-1. "meta": Metadata del análisis (versión, fecha, modelo, confianza)
-2. "dictamen": Dictamen formal con niveles de riesgo y resumen ejecutivo
-3. "senales_alerta_identificadas": Array de señales de alerta detectadas con evidencia y norma
-4. "fundamento_legal": Artículos y resoluciones aplicables con aplicación al caso
-5. "obligaciones_activadas": Obligaciones concretas para la notaría con plazos
-6. "evaluacion_controles": Evaluación de controles internos (efectivos, deficientes, brechas)
-7. "analisis_tipologia": Tipologías de lavado detectadas y factores amplificadores/atenuantes
-8. "ros": Análisis sobre si amerita Reporte de Operación Sospechosa
-9. "recomendacion_final": Decisión clara (ELEVAR_CON_DILIGENCIAS, SOLICITAR_INFO, o NO_ELEVAR)
-10. "evidencias": Lista de evidencias que soportan el análisis
-11. "trazabilidad": Metadatos del análisis (factores evaluados, señales verificadas, artículos citados)
+${SCHEMA_DESCRIPTION}
 
 IMPORTANTE:
 - Usa EXACTAMENTE los códigos de señales de alerta del catálogo (SA01, SA05, etc.)
 - Cita artículos específicos de la Ley Orgánica 2024 y resoluciones UAFE
 - Sé estrictamente jurídico, objetivo y basado en normativa ecuatoriana vigente
 - No inventes hechos, solo analiza los datos proporcionados
-- El JSON debe ser válido y seguir el esquema proporcionado
+- Devuelve SOLO el JSON, sin texto adicional ni markdown
 `;
 };
 
 export const analizarConGemini = async (promptText) => {
-  const apiKey = getApiKey();
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const auth = getAuth(app);
+  if (!auth.currentUser) {
+    throw new Error('Debe iniciar sesión para usar el análisis con IA');
+  }
 
-  const body = {
-    contents: [{ parts: [{ text: promptText }] }],
-    generationConfig: {
-      temperature: 0.2,
-      topP: 0.8,
-      maxOutputTokens: 8192,
-      responseMimeType: "application/json",
-      responseSchema: AUDIT_RESPONSE_SCHEMA,
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-    ],
-  };
+  const token = await auth.currentUser.getIdToken();
 
-  const response = await fetch(url, {
+  const response = await fetch(CF_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      prompt: promptText,
+      generationConfig: {
+        temperature: 0.2,
+        topP: 0.8,
+        maxOutputTokens: 5000,
+      },
+    }),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    const msg = err.error?.message || `Error HTTP ${response.status}`;
-    throw new Error(`Gemini API: ${msg}`);
+    throw new Error(err.error || `Error HTTP ${response.status}`);
   }
 
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Gemini no devolvió texto en la respuesta');
+  const result = await response.json();
+  const text = result.text;
+
+  if (!text) throw new Error('El servidor no devolvió respuesta de IA');
 
   try {
     return JSON.parse(text);
   } catch (parseError) {
-    throw new Error(`Error parsing Gemini response as JSON: ${parseError.message}`, { cause: parseError });
+    throw new Error(`Error al procesar respuesta de IA: ${parseError.message}`, { cause: parseError });
   }
 };
+
+export { analizarConGemini as analizarConIA };

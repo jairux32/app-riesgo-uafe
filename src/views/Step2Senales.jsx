@@ -27,10 +27,13 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
 
   const handleToggleSenal = (subId, presente) => {
     setEvaluaciones(prev => {
-      const actual = prev[subId] || { prob: 0, imp: 1 };
+      const actual = prev[subId];
+      // Al marcar por primera vez una señal se asume gravedad moderada (3);
+      // dejarla en 1 hacía que un caso con señales presentes puntuara como BAJO.
+      const imp = actual?.imp ?? (presente ? 3 : 1);
       return {
         ...prev,
-        [subId]: { prob: presente ? 1 : 0, imp: actual.imp }
+        [subId]: { prob: presente ? 1 : 0, imp }
       };
     });
   };

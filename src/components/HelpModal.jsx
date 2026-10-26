@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { HelpCircle, X, FileSpreadsheet, PlayCircle, Download } from 'lucide-react';
+import { useState } from 'react';
+import { HelpCircle, X, FileSpreadsheet, FolderOpen, PlayCircle, Download } from 'lucide-react';
 
 export const HelpModal = () => {
   const [isOpen, setIsOpen] = useState(false);

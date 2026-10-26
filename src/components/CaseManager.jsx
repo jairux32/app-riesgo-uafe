@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldCheck, Shield, Download, GitCompare, History } from 'lucide-react';
-import { getAllCases, saveCase, deleteCase } from '../utils/storage';
+import { getAllCases, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
+import { useCase } from '../context/CaseContext';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 
-export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProgress }) => {
+export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
+  const { handleSave: saveCurrentCase } = useCase();
   const [isOpen, setIsOpen] = useState(false);
   const [cases, setCases] = useState([]);
-  const [filteredCases, setFilteredCases] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,14 +33,20 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) loadHistory();
-  }, [isOpen]);
+  const loadHistory = useCallback(async () => {
+    const data = await getAllCases();
+    const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    setCases(sorted);
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isOpen) loadHistory();
+  }, [isOpen, loadHistory]);
+
+  const filteredCases = useMemo(() => {
     let filtered = cases;
     
-    // Filtro de búsqueda por texto
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(c =>
@@ -49,7 +56,6 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
       );
     }
     
-    // Filtros avanzados
     if (advancedFilters.fechaDesde) {
       const desde = new Date(advancedFilters.fechaDesde);
       filtered = filtered.filter(c => new Date(c.createdAt) >= desde);
@@ -78,7 +84,10 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
       filtered = filtered.filter(c => c.datos?.apoderado);
     }
     if (advancedFilters.ofac) {
-      filtered = filtered.filter(c => c.datos?.ofac);
+      filtered = filtered.filter(c => {
+        const estado = c.datos?.verificaciones?.ofac?.estado;
+        return estado === 'coincidencia' || estado === 'posible' || c.datos?.ofac === true;
+      });
     }
     if (advancedFilters.estado) {
       filtered = filtered.filter(c => (c.datos?.estado || 'borrador') === advancedFilters.estado);
@@ -87,7 +96,6 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
       filtered = filtered.filter(c => (c.datos?.tags || []).includes(advancedFilters.tag));
     }
 
-    // Ordenamiento
     filtered.sort((a, b) => {
       let valA, valB;
       switch (advancedFilters.sortBy) {
@@ -113,16 +121,9 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
       if (valA > valB) return advancedFilters.sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-    
-    setFilteredCases(filtered);
-  }, [searchTerm, cases, advancedFilters]);
 
-  const loadHistory = async () => {
-    const data = await getAllCases();
-    const sorted = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    setCases(sorted);
-    setFilteredCases(sorted);
-  };
+    return filtered;
+  }, [searchTerm, cases, advancedFilters]);
 
   const getRiskInfo = (evaluaciones) => {
     if (!evaluaciones || Object.keys(evaluaciones).length === 0) {
@@ -153,10 +154,9 @@ export const CaseManager = ({ currentCase, onLoadCase, onBatchAnalyze, batchProg
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await saveCase(currentCase);
+      await saveCurrentCase();
       await loadHistory();
-      toast.success('Caso guardado en la nube');
-    } catch (err) {
+    } catch {
       toast.error('Error al guardar el caso');
     } finally {
       setIsSaving(false);

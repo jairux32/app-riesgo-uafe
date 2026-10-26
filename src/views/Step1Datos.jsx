@@ -1,13 +1,15 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Upload, Loader, UserCheck, Shield, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Loader, UserCheck, Search, ExternalLink, AlertTriangle, CheckCircle, XCircle, Database } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { parseUAFEExcel } from '../utils/excelParser';
 import { saveCase, getAllCases } from '../utils/storage';
 import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { validarIdentificacion } from '../utils/validators';
-import { verificarListasRestrictivas, verificarDocumentoUAFE, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
+import { verificarListasRestrictivas, getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
 import { PROVINCIAS_ECUADOR, cargarCatalogo } from '../data/constants';
+import { searchClients as searchClientsDB } from '../utils/clientsDB';
+import { ClientSearchModal } from '../components/ClientSearchModal';
 
 export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval, onNext }) => {
   const { user } = useAuth();
@@ -23,13 +25,14 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
   const [cantones, setCantones] = useState([]);
   const [parroquias, setParroquias] = useState([]);
   const [nacionalidades, setNacionalidades] = useState([]);
-  const [actividades, setActividades] = useState([]);
-  const [catalogosCargados, setCatalogosCargados] = useState(false);
+  const [showClientSearch, setShowClientSearch] = useState(false);
+  const [dbSuggestions, setDbSuggestions] = useState([]);
+  const dbDebounceRef = useRef(null);
+  const [notaryAutoLoaded, setNotaryAutoLoaded] = useState(false);
 
-  // Cargar catálogos UAFE
   useEffect(() => {
     const loadCatalogs = async () => {
-      const [cant, parr, nac, act] = await Promise.all([
+      const [cant, parr, nac] = await Promise.all([
         cargarCatalogo('cantones'),
         cargarCatalogo('parroquias'),
         cargarCatalogo('nacionalidades'),
@@ -38,8 +41,6 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       setCantones(cant);
       setParroquias(parr);
       setNacionalidades(nac);
-      setActividades(act);
-      setCatalogosCargados(true);
     };
     loadCatalogs();
   }, []);
@@ -97,20 +98,30 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Cargar perfil de la notaría cuando los campos están vacíos
   useEffect(() => {
+    if (!user || datos.notaria || datos.notario) return;
+
+    let cancelled = false;
     const loadProfile = async () => {
-      if (!user || datos.notaria) return;
-      const profile = await getNotaryProfile(user.uid);
-      if (profile) {
-        setDatos(prev => ({
-          ...prev,
-          notaria: profile.notaria || '',
-          notario: profile.notario || ''
-        }));
+      try {
+        const profile = await getNotaryProfile(user.uid);
+        if (!cancelled && profile && profile.notaria) {
+          setNotaryAutoLoaded(true);
+          setDatos(prev => ({
+            ...prev,
+            notaria: profile.notaria,
+            notario: profile.notario || '',
+          }));
+          toast.success('Datos de la notaría cargados del perfil', { icon: '🏛️', duration: 3000 });
+        }
+      } catch (err) {
+        console.error('Error cargando perfil de notaría:', err);
       }
     };
     loadProfile();
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [user, setDatos, datos.notaria, datos.notario]);
   // Plantillas por tipo de acto
   const applyTemplate = (acto) => {
     const templates = {
@@ -151,17 +162,51 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       setValidacionCedula(resultado);
     }
 
-    // Autocompletar: buscar sugerencias al escribir en cliente o cédula
-    if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2 && clientHistory.length > 0) {
+    // Autocompletar: buscar en historial Y en base de datos de clientes
+    if ((name === 'cliente' || name === 'cedula') && value.trim().length >= 2) {
       const term = value.toLowerCase();
-      const matches = clientHistory.filter(c =>
+
+      // 1. Buscar en historial de casos
+      const historyMatches = clientHistory.filter(c =>
         (c.cliente || '').toLowerCase().includes(term) ||
         (c.cedula || '').toLowerCase().includes(term)
-      ).slice(0, 5);
-      setSuggestions(matches);
-      setShowSuggestions(matches.length > 0);
+      ).slice(0, 3).map(c => ({
+        ...c,
+        source: 'history'
+      }));
+
+      // 2. Buscar en base de datos de clientes (debounced)
+      if (dbDebounceRef.current) clearTimeout(dbDebounceRef.current);
+      dbDebounceRef.current = setTimeout(async () => {
+        try {
+          const dbMatches = await searchClientsDB(value, 5);
+          setDbSuggestions(dbMatches.map(c => ({
+            cliente: c.nombre,
+            cedula: c.identificacion,
+            email: c.email,
+            telefono: c.telefono,
+            direccion: c.direccion,
+            source: 'db'
+          })));
+        } catch (err) {
+          console.error('Error en autocompletar BD:', err);
+        }
+      }, 300);
+
+      // Combinar resultados: historial primero, luego BD (sin duplicados)
+      const combined = [...historyMatches];
+      const historyIds = new Set(historyMatches.map(c => c.cedula?.toLowerCase()));
+      dbSuggestions.forEach(db => {
+        if (!historyIds.has(db.cedula?.toLowerCase())) {
+          combined.push(db);
+        }
+      });
+
+      setSuggestions(combined.slice(0, 8));
+      setShowSuggestions(combined.length > 0);
     } else {
       setShowSuggestions(false);
+      setDbSuggestions([]);
     }
   };
 
@@ -177,9 +222,41 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
       reportesPrevios: clientData.reportesPrevios || false,
       origen: clientData.origen || prev.origen,
       medioPago: clientData.medioPago || prev.medioPago,
+      // Al cambiar de cliente se invalida cualquier verificación anterior:
+      // heredar el screening de otro cliente es un falso negativo grave.
+      ofac: false,
+      onu: false,
+      pepUafe: false,
+      verificaciones: {
+        ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
+      },
     }));
     setShowSuggestions(false);
-    toast.success(`Cliente ${clientData.cliente} cargado desde historial`, { icon: '👤' });
+    const source = clientData.source === 'db' ? 'base de datos' : 'historial';
+    toast.success(`Cliente cargado desde ${source}`, { icon: '👤' });
+  };
+
+  const handleSelectClientFromModal = (clientData) => {
+    setDatos(prev => ({
+      ...prev,
+      cliente: clientData.cliente || prev.cliente,
+      cedula: clientData.cedula || prev.cedula,
+      ofac: false,
+      onu: false,
+      pepUafe: false,
+      verificaciones: {
+        ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+        uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
+      },
+    }));
+    if (clientData.cedula) {
+      const resultado = validarIdentificacion(clientData.cedula);
+      setValidacionCedula(resultado);
+    }
+    toast.success(`Cliente ${clientData.cliente} cargado desde base de datos`, { icon: '👤' });
   };
 
   const handleVerificarListas = async () => {
@@ -190,7 +267,6 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     setVerificando(true);
     try {
       const resultados = await verificarListasRestrictivas(datos.cliente, 'todos');
-      const docResult = datos.cedula ? await verificarDocumentoUAFE(datos.cedula) : null;
 
       setDatos(prev => ({
         ...prev,
@@ -208,23 +284,27 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             coincidencias: resultados.onu?.coincidencias || []
           },
           uafe: {
-            estado: docResult ? docResult.estado : (resultados.uafe?.estado || 'error'),
-            fecha: docResult ? docResult.fecha : resultados.uafe?.fecha,
-            resultado: docResult ? docResult.mensaje : resultados.uafe?.mensaje,
+            estado: resultados.uafe?.estado || 'error',
+            fecha: resultados.uafe?.fecha,
+            resultado: resultados.uafe?.mensaje,
             coincidencias: resultados.uafe?.coincidencias || []
           }
         }
       }));
 
-      const hayAlerta = Object.values(resultados).some(r => r.estado === 'coincidencia' || r.estado === 'alerta');
-      const hayPosible = Object.values(resultados).some(r => r.estado === 'posible');
-      
-      if (hayAlerta) {
+      const estados = Object.values(resultados).map(r => r.estado);
+      const hayAlerta = estados.includes('coincidencia') || estados.includes('alerta');
+      const hayPosible = estados.includes('posible');
+      const sinFuentes = estados.length > 0 && estados.every(e => e === 'no_configurado');
+
+      if (sinFuentes) {
+        toast.error('No hay fuentes de listas configuradas: la verificación NO se realizó.', { duration: 6000 });
+      } else if (hayAlerta) {
         toast.error('¡ALERTA! Se encontraron coincidencias en listas restrictivas', { duration: 6000 });
       } else if (hayPosible) {
         toast('Se encontraron posibles coincidencias - Requiere revisión manual', { icon: '⚠️', duration: 5000 });
       } else {
-        toast.success('Verificación completada: Sin coincidencias encontradas');
+        toast.success('Verificación completada: sin coincidencias por encima del umbral');
       }
     } catch (err) {
       toast.error('Error en verificación: ' + err.message);
@@ -276,7 +356,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             controlesEval: caso.controlesEval
           });
           imported.push(caso);
-        } catch (err) {
+        } catch {
           skipped.error++;
         }
       }
@@ -338,23 +418,55 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
 
         <div className="grid-2">
           <div className="form-group">
-            <label>Notaría</label>
+            <label>
+              Notaría
+              {notaryAutoLoaded && datos.notaria && (
+                <span style={{
+                  marginLeft: '8px', fontSize: '0.7rem', padding: '2px 8px',
+                  borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)',
+                  color: 'var(--verde)', fontWeight: '500'
+                }}>
+                  Auto
+                </span>
+              )}
+            </label>
             <input type="text" className="input-field" name="notaria" value={datos.notaria} onChange={handleChange} placeholder="Ej: Notaría Primera de Quito" />
           </div>
           <div className="form-group">
-            <label>Notario/a</label>
+            <label>
+              Notario/a
+              {notaryAutoLoaded && datos.notario && (
+                <span style={{
+                  marginLeft: '8px', fontSize: '0.7rem', padding: '2px 8px',
+                  borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)',
+                  color: 'var(--verde)', fontWeight: '500'
+                }}>
+                  Auto
+                </span>
+              )}
+            </label>
             <input type="text" className="input-field" name="notario" value={datos.notario} onChange={handleChange} placeholder="Nombre del notario" />
           </div>
           
           <div className="form-group" style={{ position: 'relative' }} ref={suggestionsRef}>
             <label>Cliente / Razón Social</label>
-            <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} placeholder="Escriba para buscar en historial..." />
+            <div className="flex gap-2">
+              <input type="text" className="input-field" name="cliente" value={datos.cliente} onChange={handleChange} placeholder="Escriba para buscar..." style={{ flex: 1 }} />
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowClientSearch(true)}
+                title="Buscar en base de datos de 37,000 clientes"
+              >
+                <Database size={16} /> Buscar
+              </button>
+            </div>
             {showSuggestions && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
                 background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '8px', marginTop: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                maxHeight: '200px', overflowY: 'auto'
+                maxHeight: '250px', overflowY: 'auto'
               }}>
                 {suggestions.map((client, i) => (
                   <div
@@ -368,11 +480,22 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.15)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
-                    <UserCheck size={16} color="var(--accent)" />
-                    <div>
+                    <UserCheck size={16} color={client.source === 'db' ? 'var(--verde)' : 'var(--accent)'} />
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{client.cliente}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>{client.cedula} {client.actividad ? `• ${client.actividad}` : ''}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--txt2)' }}>
+                        {client.cedula}
+                        {client.actividad ? ` • ${client.actividad}` : ''}
+                        {client.direccion ? ` • ${client.direccion}` : ''}
+                      </div>
                     </div>
+                    <span style={{
+                      fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px',
+                      background: client.source === 'db' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                      color: client.source === 'db' ? 'var(--verde)' : 'var(--accent)',
+                    }}>
+                      {client.source === 'db' ? 'BD' : 'Historial'}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -739,6 +862,13 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           </button>
         </div>
       </div>
+
+      {showClientSearch && (
+        <ClientSearchModal
+          onSelect={handleSelectClientFromModal}
+          onClose={() => setShowClientSearch(false)}
+        />
+      )}
     </div>
   );
 };

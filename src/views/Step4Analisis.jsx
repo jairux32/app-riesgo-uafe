@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, Shield } from 'lucide-react';
 import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
@@ -9,28 +9,22 @@ import { useAuth } from '../context/AuthContext';
 import { getNotaryProfile } from '../firebase/profileStore';
 import { SignatureModal } from '../components/SignatureModal';
 import { transformAuditForDisplay, formatConfidence } from '../utils/auditTransformer';
+import { updateCaseAnalysis } from '../utils/storage';
+
+const safeFirstClass = (colorClass) =>
+  typeof colorClass === 'string' ? colorClass.split(' ')[0] : '';
 
 export const Step4Analisis = ({
   datos, setDatos, scores, controlesResult, factoresResult, evaluaciones,
-  onReset
+  caseId, analysisResult, setAnalysisResult, onReset
 }) => {
   const { user } = useAuth();
-  const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [signatureNotario, setSignatureNotario] = useState(null);
   const [signatureOficial, setSignatureOficial] = useState(null);
   const [sigModalOpen, setSigModalOpen] = useState(false);
   const [sigModalRole, setSigModalRole] = useState('');
-  const [apiKey, setApiKey] = useState(() => sessionStorage.getItem('gemini_api_key') || '');
-
-  useEffect(() => {
-    if (apiKey) {
-      sessionStorage.setItem('gemini_api_key', apiKey);
-    } else {
-      sessionStorage.removeItem('gemini_api_key');
-    }
-  }, [apiKey]);
 
   const handleGenerateIA = async () => {
     setIsLoading(true);
@@ -39,6 +33,17 @@ export const Step4Analisis = ({
       const promptText = buildPrompt(datos, scores, factoresResult, controlesResult);
       const res = await analizarConGemini(promptText);
       setAnalysisResult(res);
+
+      // El análisis debe quedar persistido: antes solo vivía en memoria y se
+      // perdía al recargar, mientras el PDF podía incluirlo igualmente.
+      if (caseId && !String(caseId).startsWith('pending_')) {
+        const guardado = await updateCaseAnalysis(caseId, res);
+        if (!guardado) {
+          toast.error('El análisis se generó pero no pudo guardarse en el caso');
+        }
+      } else {
+        toast('Análisis generado. Guarde el caso para conservarlo.', { icon: '💾' });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -127,16 +132,16 @@ export const Step4Analisis = ({
           <h2 style={{ marginBottom: '20px', color: 'var(--accent)' }}>Resumen de Riesgo</h2>
           
           <div className="grid-2">
-            <div style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `4px solid ${scores.colorClass.split(' ')[0] === 'text-rojo' ? 'var(--rojo)' : 'var(--accent)'}` }}>
+            <div style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `4px solid ${safeFirstClass(scores.colorClass) === 'text-rojo' ? 'var(--rojo)' : 'var(--accent)'}` }}>
               <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Riesgo Inherente</p>
               <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{scores.inherente}/25</p>
-              <p className={scores.colorClass.split(' ')[0]} style={{ fontWeight: '600' }}>{scores.nivel}</p>
+              <p className={safeFirstClass(scores.colorClass)} style={{ fontWeight: '600' }}>{scores.nivel}</p>
             </div>
             
-            <div style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `4px solid ${controlesResult.colorClass.split(' ')[0] === 'text-rojo' ? 'var(--rojo)' : 'var(--accent)'}` }}>
+            <div style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `4px solid ${safeFirstClass(controlesResult.colorClass) === 'text-rojo' ? 'var(--rojo)' : 'var(--accent)'}` }}>
               <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Riesgo Residual</p>
               <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{controlesResult.residual}/25</p>
-              <p className={controlesResult.colorClass.split(' ')[0]} style={{ fontWeight: '600' }}>{controlesResult.nivelResidual}</p>
+              <p className={safeFirstClass(controlesResult.colorClass)} style={{ fontWeight: '600' }}>{controlesResult.nivelResidual}</p>
             </div>
           </div>
 
@@ -214,25 +219,12 @@ export const Step4Analisis = ({
 
         {!analysisResult && !isLoading && (
           <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <p style={{ color: 'var(--txt2)', marginBottom: '20px' }}>Genera un dictamen jurídico y detección de señales de alerta automatizado.</p>
-            <div style={{ maxWidth: '400px', margin: '0 auto 16px' }}>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="API Key de Gemini (obligatorio)"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                style={{ textAlign: 'center' }}
-              />
-              <p style={{ fontSize: '0.7rem', color: 'var(--txt2)', marginTop: '4px' }}>
-                Obténgala en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style={{ color: 'var(--accent)' }}>Google AI Studio</a>
-              </p>
-            </div>
-            <button className="btn" onClick={handleGenerateIA} style={{ fontSize: '1.1rem', padding: '12px 24px' }} disabled={!apiKey}>
+            <p style={{ color: 'var(--txt2)', marginBottom: '20px' }}>Genera un dictamen jurídico y detección de señales de alerta automatizado mediante IA.</p>
+            <button className="btn" onClick={handleGenerateIA} style={{ fontSize: '1.1rem', padding: '12px 24px' }}>
               <Bot size={20} /> Generar Análisis con IA
             </button>
             <p style={{ fontSize: '0.75rem', color: 'var(--txt2)', marginTop: '10px' }}>
-              Modelo gratuito: gemini-2.5-flash | ~2000 tokens
+              Gemini 2.5 Flash · Procesamiento seguro en servidor
             </p>
           </div>
         )}

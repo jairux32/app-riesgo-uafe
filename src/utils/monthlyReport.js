@@ -1,3 +1,10 @@
+import { calculateInherentRisk } from './calculations';
+
+const scoreDeCaso = (caso) => {
+  if (!caso?.evaluaciones) return 0;
+  return calculateInherentRisk(caso.evaluaciones).inherente;
+};
+
 export const generateMonthlyReport = async (cases, profile) => {
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
@@ -24,11 +31,8 @@ export const generateMonthlyReport = async (cases, profile) => {
   y += 8;
 
   const totalCases = cases.length;
-  const highRisk = cases.filter(c => {
-    if (!c.evaluaciones) return false;
-    const score = Object.values(c.evaluaciones).reduce((sum, e) => sum + (e.prob * e.imp), 0);
-    return score >= 15;
-  }).length;
+  const scores = cases.map(scoreDeCaso);
+  const highRisk = scores.filter(score => score >= 15).length;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
@@ -38,10 +42,7 @@ export const generateMonthlyReport = async (cases, profile) => {
   y += 6;
 
   const avgScore = totalCases > 0
-    ? Math.round(cases.reduce((sum, c) => {
-        if (!c.evaluaciones) return sum;
-        return sum + Object.values(c.evaluaciones).reduce((s, e) => s + (e.prob * e.imp), 0);
-      }, 0) / totalCases)
+    ? Math.round(scores.reduce((sum, score) => sum + score, 0) / totalCases)
     : 0;
   doc.text(`Score promedio de riesgo: ${avgScore}/25`, 15, y);
   y += 15;
@@ -52,7 +53,7 @@ export const generateMonthlyReport = async (cases, profile) => {
   y += 10;
 
   const tableData = cases.slice(0, 50).map(c => {
-    const score = c.evaluaciones ? Object.values(c.evaluaciones).reduce((sum, e) => sum + (e.prob * e.imp), 0) : 0;
+    const score = scoreDeCaso(c);
     const nivel = score <= 8 ? 'BAJO' : score <= 14 ? 'MEDIO' : score <= 19 ? 'MEDIO-ALTO' : 'ALTO';
     return [
       c.datos?.cliente?.substring(0, 25) || '',
@@ -72,7 +73,13 @@ export const generateMonthlyReport = async (cases, profile) => {
     headStyles: { fillColor: [26, 46, 68] }
   });
 
-  const finalY = doc.lastAutoTable.finalY + 20;
+  const finalY = doc.lastAutoTable.finalY + (totalCases > 50 ? 28 : 20);
+
+  if (totalCases > 50) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Se muestran los primeros 50 de ${totalCases} casos del periodo.`, 15, doc.lastAutoTable.finalY + 8);
+  }
 
   if (finalY > 250) doc.addPage();
   doc.setFontSize(11);

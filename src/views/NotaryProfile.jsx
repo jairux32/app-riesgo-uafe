@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { saveNotaryProfile, getNotaryProfile } from '../firebase/profileStore';
@@ -26,15 +26,16 @@ export const NotaryProfile = ({ onClose }) => {
     reporteAutomatico: false,
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, [user]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
     const data = await getNotaryProfile(user.uid);
     if (data) setProfile(prev => ({ ...prev, ...data }));
-  };
+  }, [user]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadProfile();
+  }, [loadProfile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

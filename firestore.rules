@@ -1,16 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Solo usuarios autenticados pueden leer/escribir sus propios casos
+
+    // Los casos solo son visibles para su propietario.
+    // `list` exige el filtro userId en la consulta: sin él, Firestore la rechaza.
     match /cases/{documentId} {
-      allow read, write: if request.auth != null 
-        && (resource.data.userId == request.auth.uid 
-            || request.resource.data.userId == request.auth.uid);
-      allow create: if request.auth != null 
+      allow list: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow get: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
         && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
     }
+
     match /notary_profiles/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
     }
+
+    // El audit log es append-only. El cliente no puede modificarlo ni borrarlo.
+    // Nota: para no repudio real debe escribirse desde Cloud Functions; esta
+    // regla solo impide la alteración posterior.
+    match /audit_logs/{documentId} {
+      allow list: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow get: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['userId', 'action', 'timestamp'])
+        && request.resource.data.action is string
+        && request.resource.data.action.size() <= 80;
+      allow update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
   }
 }

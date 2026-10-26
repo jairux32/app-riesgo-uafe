@@ -1,6 +1,6 @@
 // Service Worker para modo offline - v2.4
 // El cache se invalida automáticamente con cada deploy nuevo
-const CACHE_VERSION = 'v2.4-' + new Date().toISOString().slice(0,10);
+const CACHE_VERSION = 'v2.5-build-2';
 const CACHE_NAME = 'app-riesgo-' + CACHE_VERSION;
 
 // Instalación: cachear recursos estáticos

@@ -1,8 +1,9 @@
 import * as XLSX from 'xlsx';
-import { FACTORES_RIESGO } from '../data/constants';
+import { FACTORES_SENALES_UAFE } from '../data/constants';
 
 /**
- * Asigna valores de riesgo basados en los datos del caso
+ * Asigna valores de riesgo basados en señales de alerta UAFE (sistema v2.4)
+ * En el nuevo sistema: prob = 0|1 (presente/no presente), imp = gravedad 1-5
  */
 const autoEvaluateRisk = (datos) => {
   const evaluaciones = {};
@@ -10,33 +11,86 @@ const autoEvaluateRisk = (datos) => {
   const actividad = (datos.actividad || '').toLowerCase();
   const acto = (datos.acto || '').toLowerCase();
 
-  FACTORES_RIESGO.forEach(factor => {
+  // Inicializar todas las señales como no detectadas (prob=0, gravedad=1)
+  FACTORES_SENALES_UAFE.forEach(factor => {
     factor.subcriterios.forEach(sub => {
-      let prob = 1;
-      let imp = 1;
-
-      // Reglas para Factor CLIENTE
-      if (sub.id === 'c1' && datos.esPep) { prob = 5; imp = 5; }
-      if (sub.id === 'c2' && (actividad.includes('offshore') || actividad.includes('paraíso'))) { prob = 5; imp = 4; }
-      if (sub.id === 'c3' && datos.apoderado) { prob = 4; imp = 3; }
-      if (sub.id === 'c4' && (actividad.includes('construcción') || actividad.includes('minería') || actividad.includes('exportación'))) { prob = 4; imp = 4; }
-
-      // Reglas para Factor PRODUCTO
-      if (sub.id === 'p1' && valor > 100000) { prob = 5; imp = 5; }
-      if (sub.id === 'p2' && (acto.includes('constitución') || acto.includes('fideicomiso') || acto.includes('poder'))) { prob = 4; imp = 4; }
-      if (sub.id === 'p3' && valor > 50000) { prob = 3; imp = 3; }
-
-      // Reglas para Factor CUMPLIMIENTO
-      if (sub.id === 'cu1' && datos.reportesPrevios) { prob = 5; imp = 5; }
-
-      // Valor neutro por defecto para el resto
-      if (prob === 1 && imp === 1) {
-        prob = 2; imp = 2;
-      }
-
-      evaluaciones[sub.id] = { prob, imp };
+      evaluaciones[sub.id] = { prob: 0, imp: 1 };
     });
   });
+
+  // Reglas heurísticas → activar señales específicas con gravedad apropiada
+
+  // SA07: Perfil económico no acorde a sus operaciones (PEP)
+  if (datos.esPep) {
+    evaluaciones.SA07 = { prob: 1, imp: 5 };
+  }
+
+  // SA08: Relación con antecedentes penales o notoriedad negativa (reportes previos)
+  if (datos.reportesPrevios) {
+    evaluaciones.SA08 = { prob: 1, imp: 5 };
+  }
+
+  // SA10: Uso frecuente de apoderados para operaciones simples
+  if (datos.apoderado) {
+    evaluaciones.SA10 = { prob: 1, imp: 3 };
+  }
+
+  // SA12: Empresa recién constituida con altos volúmenes de operación
+  if ((acto.includes('constitución') || acto.includes('constitucion')) && valor > 50000) {
+    evaluaciones.SA12 = { prob: 1, imp: 4 };
+  }
+
+  // SA13: Estructura accionaria compleja o poco transparente (fideicomiso)
+  if (acto.includes('fideicomiso')) {
+    evaluaciones.SA13 = { prob: 1, imp: 4 };
+  }
+
+  // SA21: Operaciones que no guardan relación con la actividad declarada
+  if (actividad.includes('construcción') || actividad.includes('construccion') ||
+      actividad.includes('minería') || actividad.includes('mineria') ||
+      actividad.includes('exportación') || actividad.includes('exportacion')) {
+    evaluaciones.SA21 = { prob: 1, imp: 4 };
+  }
+
+  // SA23: Fragmentación de operaciones para evitar reportes (valor mediano)
+  if (valor > 10000 && valor <= 50000) {
+    evaluaciones.SA23 = { prob: 1, imp: 2 };
+  }
+
+  // SA31: Depósitos significativos en efectivo sin causa aparente
+  if (datos.usoEfectivo && valor > 10000) {
+    evaluaciones.SA31 = { prob: 1, imp: 4 };
+  }
+
+  // SA42: Uso de paraísos fiscales sin razón comercial clara
+  if (actividad.includes('offshore') || actividad.includes('paraíso') || actividad.includes('paraiso')) {
+    evaluaciones.SA42 = { prob: 1, imp: 5 };
+  }
+
+  // SA71: Compra de inmuebles a nombre de terceros (apoderado + compraventa)
+  if (datos.apoderado && acto.includes('compraventa')) {
+    evaluaciones.SA71 = { prob: 1, imp: 4 };
+  }
+
+  // SA72: Pagos en efectivo significativos por bienes raíces
+  if (datos.usoEfectivo && acto.includes('compraventa') && valor > 50000) {
+    evaluaciones.SA72 = { prob: 1, imp: 5 };
+  }
+
+  // SA73: Precio de venta muy inferior o superior al de mercado (valor muy alto)
+  if (valor > 100000) {
+    evaluaciones.SA73 = { prob: 1, imp: 3 };
+  }
+
+  // SA75: Compras múltiples en un corto período de tiempo (reportes previos + valor alto)
+  if (datos.reportesPrevios && valor > 50000) {
+    evaluaciones.SA75 = { prob: 1, imp: 4 };
+  }
+
+  // SA91: Uso intensivo de criptomonedas sin justificación comercial
+  if (datos.usoActivosVirtuales) {
+    evaluaciones.SA91 = { prob: 1, imp: 4 };
+  }
 
   return evaluaciones;
 };
@@ -144,6 +198,8 @@ export const parseUAFEExcel = async (file) => {
               ofac: false, onu: false, pepUafe: /si|yes|true|1/i.test(String(row[colMap.esPep])),
               reportesPrevios: false,
               observaciones: String(row[colMap.observaciones] || '').trim(),
+              usoEfectivo: /efectivo|cash/i.test(String(row[colMap.medioPago])),
+              usoActivosVirtuales: /cripto|crypto|bitcoin|virtual/i.test(String(row[colMap.origen] || '')),
             };
 
             return {

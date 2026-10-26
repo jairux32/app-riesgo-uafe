@@ -1,6 +1,7 @@
 import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from 'firebase/firestore';
+import app from './config';
 
-const db = getFirestore();
+const db = getFirestore(app);
 const AUDIT_COLLECTION = 'audit_logs';
 
 /**

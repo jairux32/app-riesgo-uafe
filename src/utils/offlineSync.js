@@ -18,11 +18,11 @@ const getDB = async () => {
 // Verificar si hay conexión a internet
 export const isOnline = () => navigator.onLine;
 
-// Guardar operación pendiente
+// Guardar operación pendiente. Devuelve la clave generada por IndexedDB.
 export const savePendingCase = async (caseData) => {
   try {
     const db = await getDB();
-    await db.add(STORE_NAME, {
+    const id = await db.add(STORE_NAME, {
       ...caseData,
       timestamp: new Date().toISOString(),
       synced: false,
@@ -32,10 +32,10 @@ export const savePendingCase = async (caseData) => {
       const registration = await navigator.serviceWorker.ready;
       await registration.sync.register('sync-cases');
     }
-    return true;
+    return id;
   } catch (err) {
     console.error('Error guardando caso pendiente:', err);
-    return false;
+    return null;
   }
 };
 
@@ -47,6 +47,20 @@ export const getPendingCases = async () => {
   } catch (err) {
     console.error('Error obteniendo casos pendientes:', err);
     return [];
+  }
+};
+
+// Actualizar un caso pendiente ya guardado localmente
+export const updatePendingCase = async (id, caseData) => {
+  try {
+    const db = await getDB();
+    const existente = await db.get(STORE_NAME, id);
+    if (!existente) return false;
+    await db.put(STORE_NAME, { ...existente, ...caseData, id, synced: false });
+    return true;
+  } catch (err) {
+    console.error('Error actualizando caso pendiente:', err);
+    return false;
   }
 };
 

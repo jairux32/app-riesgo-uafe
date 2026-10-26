@@ -1,6 +1,9 @@
 import React from 'react';
 import { Activity, AlertTriangle } from 'lucide-react';
 
+const safeFirstClass = (colorClass) =>
+  typeof colorClass === 'string' ? colorClass.split(' ')[0] : '';
+
 export const ScoreSidebar = ({ scores }) => {
   // Función para determinar el color del anillo del gauge (aprox.)
   const getGaugeColor = () => {
@@ -15,7 +18,7 @@ export const ScoreSidebar = ({ scores }) => {
   return (
     <div className="card" style={{ position: 'sticky', top: '20px' }}>
       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-        <Activity size={20} className={scores.colorClass.split(' ')[0]} />
+        <Activity size={20} className={safeFirstClass(scores.colorClass)} />
         Score en Tiempo Real
       </h3>
 

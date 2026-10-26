@@ -100,7 +100,7 @@ Corte al 23-oct-2026.
 
 - **Supervisor:** el **Consejo de la Judicatura** (Ley art. 65), no la UAFE directamente. La UAFE recibe los reportes vía SISLAFT.
 - **Ley Notarial art. 19.m:** identificar el medio de pago en actos desde **USD 10.000**.
-- **Ley Notarial art. 20.8:** prohibido recibir efectivo por más de **100 SBU** (≈ USD 46.000 con SBU 2026).
+- **Ley Notarial art. 20.8:** prohibido recibir efectivo por más de **100 SBU** (USD 48.200 con SBU 2026 de USD 482).
 - **Art. 47:** sin debida diligencia completa no se inicia la relación ni la transacción; si ya inició, se termina y se reporta.
 - **Art. 92:** beneficiario final = quien posee directa o indirectamente **≥10%** del capital o derechos, quien ejerce control efectivo, o el gerente de mayor rango si no se identifica a nadie más.
 - **PEP:** condición por **2 años** tras el cese; familiares hasta 4.º grado de consanguinidad y 2.º de afinidad, y asociados cercanos. Exige EDD reforzada y aprobación de alta gerencia. **No es motivo para negar el servicio.**

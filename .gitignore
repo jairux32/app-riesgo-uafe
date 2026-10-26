@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -28,3 +30,7 @@ dist-ssr
 .agents/
 .claude/
 skills-lock.json
+
+# Datos locales con PII (nunca publicar ni commitear)
+data-local/
+public/data/clientes.json
