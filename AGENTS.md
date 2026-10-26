@@ -62,7 +62,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - `offlineSync.js` — Sincronización offline con IndexedDB
 - `observabilidad.js` — Redacción de PII, contexto permitido y envío opcional de errores a `logClientError`
 - `sincronizacion.js` — Atribución de borradores por usuario, reintentos idempotentes y detección de duplicados
-- `monthlyReport.js` — Reporte mensual PDF
+- `monthlyReport.js` — Reporte mensual PDF: filtra por mes local, respeta los cortes de nivel (ALTO ≥20), pagina la tabla completa y resume obligaciones RESU/ROS
 - `clientsDB.js` — Base local de clientes (IndexedDB), carga manual
 
 ### Data (src/data/)
@@ -119,9 +119,9 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - `tests/e2e/` se ejecuta solo con `npm run test:e2e` (Playwright + emuladores de Auth y Firestore); el CI tiene un job `e2e` independiente que bloquea el deploy.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport (297 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport, monthlyReport (311 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
-- Tests e2e en `tests/e2e/` (2 tests): login, wizard completo, exportación PDF y persistencia del caso
+- Tests e2e en `tests/e2e/` (3 tests): login, wizard completo, exportación PDF, persistencia del caso y reporte mensual
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom

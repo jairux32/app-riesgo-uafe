@@ -11,11 +11,12 @@ import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../ut
 import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
 import { CalidadModeloPanel } from '../components/CalidadModeloPanel';
 import { ESTADOS_CASO } from '../data/constants';
+import { claveMesLocal } from '../utils/monthlyReport';
 
 const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
 const RISK_LABELS = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
 
-export const Dashboard = ({ onGenerateReport }) => {
+export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
   const { user } = useAuth();
   const { loadCase, setStep } = useCase();
   const navigate = useNavigate();
@@ -153,10 +154,12 @@ export const Dashboard = ({ onGenerateReport }) => {
 
   const estadoCounts = getEstadoCounts();
 
-  // Verificar si ya se generó reporte este mes
-  const lastReportMonth = localStorage.getItem('app_last_report_month');
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const showReportReminder = cases.length > 0 && lastReportMonth !== currentMonth;
+  // Verificar si ya se generó reporte este mes. Se usa el mes local del
+  // navegador: `toISOString()` cambiaba de mes desde las 19:00 del último día.
+  const currentMonth = claveMesLocal(new Date());
+  const showReportReminder = allCases.length > 0 && ultimoReporte !== currentMonth;
+
+  const generarReporteMensual = () => onGenerateReport?.();
 
   if (loading) return <div className="card"><p style={{ textAlign: 'center' }}>Cargando estadísticas...</p></div>;
 
@@ -179,10 +182,7 @@ export const Dashboard = ({ onGenerateReport }) => {
           </div>
           <button
             className="btn"
-            onClick={() => {
-              localStorage.setItem('app_last_report_month', currentMonth);
-              onGenerateReport?.();
-            }}
+            onClick={generarReporteMensual}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
           >
             <FileCheck size={16} /> Generar ahora

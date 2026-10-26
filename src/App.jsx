@@ -26,7 +26,8 @@ import { getAllCases, updateCaseAnalysis, syncPendingCases } from './utils/stora
 import { onConnectivityChange } from './utils/offlineSync';
 import { getNotaryProfile } from './firebase/profileStore';
 import { requestNotificationPermission, onMessageReceived } from './firebase/messaging';
-import { generateMonthlyReport } from './utils/monthlyReport';
+import { generateMonthlyReport, claveMesLocal } from './utils/monthlyReport';
+import { registrarEvento } from './utils/observabilidad';
 
 function LoadingFallback() {
   return (
@@ -123,6 +124,7 @@ function AppContent() {
     return saved ? saved === 'dark' : true;
   });
   const [batchProgress, setBatchProgress] = useState({ active: false, current: 0, total: 0 });
+  const [ultimoReporte, setUltimoReporte] = useState(() => localStorage.getItem('app_last_report_month'));
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
@@ -207,13 +209,30 @@ function AppContent() {
   };
 
   const handleMonthlyReport = async () => {
-    const allCases = await getAllCases();
-    const profile = await getNotaryProfile(user.uid);
-    if (allCases.length === 0) {
-      toast.error('No hay casos para generar el reporte');
-      return;
+    try {
+      const allCases = await getAllCases();
+      const profile = await getNotaryProfile(user.uid).catch(() => null);
+      if (allCases.length === 0) {
+        toast.error('No hay casos para generar el reporte');
+        return false;
+      }
+      await generateMonthlyReport(allCases, profile);
+      // Solo se marca el mes cuando el archivo se generó correctamente.
+      const mes = claveMesLocal(new Date());
+      localStorage.setItem('app_last_report_month', mes);
+      setUltimoReporte(mes);
+      toast.success('Reporte mensual generado.');
+      return true;
+    } catch (err) {
+      registrarEvento({
+        nivel: 'error',
+        origen: 'exportacion',
+        error: err,
+        contexto: { etapa: 'reporte_mensual', recurso: 'pdf' }
+      });
+      toast.error('No se pudo generar el reporte mensual.');
+      return false;
     }
-    await generateMonthlyReport(allCases, profile);
   };
 
   const onLoadCase = (c) => {
@@ -236,7 +255,7 @@ function AppContent() {
                 <FileDown size={14} /> Reporte Mensual PDF
               </button>
             </div>
-            <Dashboard onGenerateReport={handleMonthlyReport} />
+            <Dashboard onGenerateReport={handleMonthlyReport} ultimoReporte={ultimoReporte} />
           </Suspense>
         } />
         <Route path="/profile" element={

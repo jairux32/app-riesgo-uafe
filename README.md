@@ -126,8 +126,9 @@ La Function no exige sesión —un error puede ocurrir antes del login— pero v
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (297 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (311 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
+- `src/test/monthlyReport.test.js` — Periodo mensual local, niveles, obligaciones y casos sin evaluar
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional
 - `src/test/listasDB.test.js` — Parseo de CSV/JSON de listas restrictivas
@@ -144,7 +145,7 @@ Tests con **vitest** + **@testing-library/react** (297 tests de unidad):
 - `src/test/excelExport.test.js` — Exportación del dictamen y del resumen, verificada releyendo el .xlsx
 
 ### Flujo e2e
-`npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, más guardar el caso y verlo reflejado en el Dashboard. La IA no se prueba: la Cloud Function no corre en local.
+`npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, guardar el caso y verlo reflejado en el Dashboard, y generar el reporte mensual ocultando el recordatorio. La IA no se prueba: la Cloud Function no corre en local.
 
 ### Reglas de Firestore
 `npm run test:rules` levanta el emulador con `firebase emulators:exec` (vía `npx`, requiere Java) y ejecuta 13 pruebas en `tests/rules/`: aislamiento de casos y perfiles por usuario, filtro obligatorio `userId` en listados, y prohibición de que el cliente escriba `audit_logs` o `audit_heads`.

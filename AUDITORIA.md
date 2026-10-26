@@ -347,7 +347,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Persistir el análisis de IA, validar con `AUDIT_RESPONSE_SCHEMA` y versionar prompt/modelo/contexto~~: implementado con `_meta`, validación previa y trazabilidad en PDF, Excel y audit trail.
 - ~~Audit trail server-side, append-only y con hash encadenado~~: `auditCaseChanges` escribe `audit_logs` y `audit_heads` con SHA-256; el cliente solo lee.
 - ~~Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse~~: panel en Step4 y cálculo de plazos en `obligaciones.js`.
-- ~~Corregir duplicados y offline~~: caché persistente de Firestore, borradores atribuidos a su usuario, sincronización idempotente por `clientCaseId` y alerta de posibles duplicados en el portfolio. El Dashboard y el filtro OFAC se corrigieron en los bloques anteriores; queda revisar el reporte mensual.
+- ~~Corregir duplicados y offline~~: caché persistente de Firestore, borradores atribuidos a su usuario, sincronización idempotente por `clientCaseId` y alerta de posibles duplicados en el portfolio. El Dashboard y el filtro OFAC se corrigieron en los bloques anteriores. El reporte mensual ahora filtra por el mes local del navegador, usa los cortes reales de nivel (ALTO ≥20), pagina la tabla completa y resume RESU/NO-RESU y ROS/NO-ROS; el recordatorio solo se marca si la generación tuvo éxito.
 - ~~Screening real OFAC + ONU + UK con snapshots versionados~~ y ficha de descarte de falsos positivos: implementado para OFAC, ONU, UK (Name 1..N) y lista PEP interna con hash, con revisión documentada y bloqueo de la DDC.
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
@@ -363,7 +363,7 @@ Scheduler diario → Cloud Function de ingesta
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
 - ~~Migrar `xlsx` a `exceljs`~~: la lectura y la escritura usan `exceljs` cargado bajo demanda; el CSV de listas restrictivas tiene parser propio. Solo se acepta `.xlsx`.
-- ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF y guardado del caso.
+- ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF, guardado del caso y generación del reporte mensual.
 - ~~Observabilidad de errores del cliente y trazas de Functions~~: `observabilidad.js` redacta PII y limita el contexto a claves técnicas; `logClientError` recibe los eventos sin exigir sesión, con validación, tamaño máximo y rate limit por IP; `analyzeCase` deja una traza JSON por llamada (resultado, código HTTP, modelo, versión y duración) sin registrar el prompt ni el dictamen. Sin `VITE_LOG_ENDPOINT` los eventos quedan solo en la consola.
 
 ---
@@ -423,7 +423,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits posteriores a `c1af54c`, de `e909d25` a `fba57c2`: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`), tests de reglas (`0f12c98`), purga de evidencias (`89d2b08`), offline y duplicados (`b8fe95e`), e2e con Playwright (`a7c0de5`) observabilidad y migración a `exceljs`. Verificación actual: `npm test` 297/297 + 13 de reglas + 2 e2e, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits posteriores a `c1af54c`, de `e909d25` a `fba57c2` y el commit del reporte mensual: scoring y residual (`e909d25`), seguridad y reglas (`9638a21`), DDC/BF (`995a9b5`), workflow RESU/ROS (`24584f6`), cumplimiento (`a23357a`), snapshots de listas (`abeba78`), parser de señales (`8485a88`), versionado IA (`1560ea5`), cadena de propiedad (`86f9284`), lista UK (`816ed84`), revisión de falsos positivos (`7aa89fa`), evidencias con hash (`361be9d`), CI (`78159f8`), perfil transaccional (`19604dd`), capacitación (`22aed50`), calidad del modelo (`6043cdb`), tests de reglas (`0f12c98`), purga de evidencias (`89d2b08`), offline y duplicados (`b8fe95e`), e2e con Playwright (`a7c0de5`), observabilidad, migración a `exceljs` y reporte mensual. Verificación actual: `npm test` 311/311 + 13 de reglas + 3 e2e, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -446,6 +446,7 @@ Aplicado en los commits posteriores a `c1af54c`, de `e909d25` a `fba57c2`: scori
 | DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante, BF con cadena de propiedad y participación efectiva, y evidencias documentales con hash SHA-256; todo se incluye en prompt, PDF, Excel, ROS y audit trail. Falta sello temporal de tercero |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
 | Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; la capacitación tiene registro detallado con evidencia y hash. No bloquea operaciones |
+| Reporte mensual incoherente | **Corregido** | Filtra por el mes local de `createdAt` (no el mes actual sobre todos los casos), usa los cortes reales de nivel (ALTO ≥20), distingue casos sin evaluar, pagina la tabla completa y resume RESU/NO-RESU y ROS/NO-ROS; el recordatorio se marca solo tras una generación exitosa |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
 

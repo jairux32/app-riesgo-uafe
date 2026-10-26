@@ -1,102 +1,343 @@
 import { calculateInherentRisk } from './calculations';
+import { calcularObligaciones, estadoVencimiento } from './obligaciones';
 
-const scoreDeCaso = (caso) => {
-  if (!caso?.evaluaciones) return 0;
-  return calculateInherentRisk(caso.evaluaciones).inherente;
+const MESES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+];
+
+const ESTADOS_COMPLETADOS = ['enviado', 'acuse_recibido'];
+
+/**
+ * Niveles del motor de scoring. El riesgo ALTO empieza en 20 puntos; el tramo
+ * 15-19 es MEDIO-ALTO. El reporte anterior usaba ≥15 como "Riesgo Alto".
+ */
+export const NIVELES_REPORTE = [
+  { id: 'bajo', etiqueta: 'BAJO', rango: '0-8' },
+  { id: 'medio', etiqueta: 'MEDIO', rango: '9-14' },
+  { id: 'medio_alto', etiqueta: 'MEDIO-ALTO', rango: '15-19' },
+  { id: 'alto', etiqueta: 'ALTO', rango: '20-25' }
+];
+
+const aFecha = (valor) => {
+  if (!valor) return null;
+  const fecha = valor instanceof Date ? valor : new Date(valor);
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
 };
 
-export const generateMonthlyReport = async (cases, profile) => {
+/**
+ * Clave `AAAA-MM` en hora local. Evita `toISOString()`, que en Ecuador cambia
+ * de mes desde las 19:00 del último día por el desfase UTC.
+ */
+export const claveMesLocal = (fecha) => {
+  const valor = aFecha(fecha);
+  if (!valor) return null;
+  const mes = String(valor.getMonth() + 1).padStart(2, '0');
+  return `${valor.getFullYear()}-${mes}`;
+};
+
+const etiquetaMes = (clave) => {
+  const [anio, mes] = String(clave || '').split('-').map(Number);
+  if (!anio || !mes || mes < 1 || mes > 12) return 'periodo sin fecha';
+  return `${MESES[mes - 1]} de ${anio}`;
+};
+
+const numeroValido = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return null;
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : null;
+};
+
+/**
+ * Score guardado en el caso o recalculado desde las evaluaciones. Devuelve
+ * `null` cuando el caso todavía no tiene evaluación: no es lo mismo "sin
+ * evaluar" que "riesgo 0".
+ */
+export const scoreDeCaso = (caso) => {
+  const guardado = numeroValido(caso?.inherentScore);
+  if (guardado !== null) return guardado;
+
+  if (caso?.evaluaciones && Object.keys(caso.evaluaciones).length > 0) {
+    return calculateInherentRisk(caso.evaluaciones).inherente;
+  }
+  return null;
+};
+
+export const nivelDeScore = (score) => {
+  if (score === null || score === undefined) return null;
+  if (score <= 8) return 'bajo';
+  if (score <= 14) return 'medio';
+  if (score <= 19) return 'medio_alto';
+  return 'alto';
+};
+
+const limiteEfectivo = (obligacion) => {
+  const limite = obligacion?.fechaLimite || '';
+  const prorroga = obligacion?.fechaLimiteProrroga || '';
+  return prorroga > limite ? prorroga : limite;
+};
+
+const esVencida = (obligacion, hoy) => {
+  if (!obligacion || ESTADOS_COMPLETADOS.includes(obligacion.estado)) return false;
+  return estadoVencimiento(limiteEfectivo(obligacion), hoy).estado === 'vencida';
+};
+
+const obligacionesDeCaso = (caso, score, hoy) => {
+  const datos = caso?.datos || {};
+  const guardados = datos.reportes || {};
+  const sugerencias = calcularObligaciones(datos, {
+    scoreInherente: score ?? 0,
+    analisis: caso?.analysis,
+    hoy
+  });
+
+  const unir = (clave) => {
+    const guardado = guardados[clave] || {};
+    const sugerida = sugerencias[clave] || {};
+    return {
+      tipo: guardado.tipo || sugerida.tipo,
+      estado: guardado.estado || 'pendiente',
+      fechaLimite: guardado.fechaLimite || sugerida.fechaLimite,
+      fechaLimiteProrroga: guardado.fechaLimiteProrroga || sugerida.fechaLimiteProrroga
+    };
+  };
+
+  return { resu: unir('resu'), ros: unir('ros') };
+};
+
+const vacioObligaciones = () => ({
+  reportar: 0,
+  noReportar: 0,
+  pendientes: 0,
+  enviados: 0,
+  noAplica: 0,
+  vencidos: 0
+});
+
+const resumirObligaciones = (obligaciones, hoy) => {
+  const resu = vacioObligaciones();
+  const ros = vacioObligaciones();
+
+  obligaciones.forEach(({ resu: r, ros: s }) => {
+    if (r.tipo === 'RESU') resu.reportar++;
+    else resu.noReportar++;
+
+    if (r.estado === 'no_aplica') resu.noAplica++;
+    else if (ESTADOS_COMPLETADOS.includes(r.estado)) resu.enviados++;
+    else resu.pendientes++;
+
+    if (s.tipo === 'ROS') ros.reportar++;
+    else ros.noReportar++;
+
+    if (s.estado === 'no_aplica') ros.noAplica++;
+    else if (ESTADOS_COMPLETADOS.includes(s.estado)) ros.enviados++;
+    else ros.pendientes++;
+
+    if (esVencida(r, hoy)) resu.vencidos++;
+    if (esVencida(s, hoy)) ros.vencidos++;
+  });
+
+  return { resu, ros };
+};
+
+/**
+ * Construye el resumen del reporte mensual. Es una función pura para poder
+ * probarla con un reloj fijo. Solo incluye los casos creados en el mes local de
+ * `ahora`; calcular el PDF y rotularlo con el mes actual era el error anterior.
+ */
+export const construirResumenMensual = (cases = [], { ahora = new Date() } = {}) => {
+  const hoy = aFecha(ahora) || new Date();
+  const clave = claveMesLocal(hoy);
+  const lista = Array.isArray(cases) ? cases : [];
+  const delMes = lista.filter(caso => claveMesLocal(caso?.createdAt) === clave);
+
+  const filas = delMes.map(caso => {
+    const score = scoreDeCaso(caso);
+    return {
+      id: caso?.id ?? null,
+      cliente: caso?.datos?.cliente || '',
+      acto: caso?.datos?.acto || '',
+      score,
+      nivel: nivelDeScore(score),
+      fecha: aFecha(caso?.createdAt),
+      obligaciones: obligacionesDeCaso(caso, score, hoy)
+    };
+  });
+
+  const evaluadas = filas.filter(fila => fila.score !== null);
+  const niveles = { bajo: 0, medio: 0, medio_alto: 0, alto: 0 };
+  evaluadas.forEach(fila => {
+    niveles[fila.nivel] += 1;
+  });
+
+  const promedioScore = evaluadas.length > 0
+    ? Math.round((evaluadas.reduce((total, fila) => total + fila.score, 0) / evaluadas.length) * 10) / 10
+    : 0;
+
+  return {
+    periodo: { clave, etiqueta: etiquetaMes(clave) },
+    total: filas.length,
+    evaluados: evaluadas.length,
+    sinEvaluar: filas.length - evaluadas.length,
+    promedioScore,
+    niveles,
+    obligaciones: resumirObligaciones(filas.map(fila => fila.obligaciones), hoy),
+    casos: filas.map(fila => ({
+      id: fila.id,
+      cliente: fila.cliente,
+      acto: fila.acto,
+      score: fila.score,
+      nivel: fila.nivel,
+      fecha: fila.fecha
+    }))
+  };
+};
+
+const etiquetaNivel = (id) => NIVELES_REPORTE.find(nivel => nivel.id === id)?.etiqueta || 'SIN EVALUAR';
+
+const textoCliente = (cliente) => (cliente ? String(cliente).substring(0, 28) : 'Sin nombre');
+const textoActo = (acto) => (acto ? String(acto).substring(0, 22) : '');
+
+export const generateMonthlyReport = async (cases, profile, opciones = {}) => {
+  const resumen = construirResumenMensual(cases, opciones);
   const { jsPDF } = await import('jspdf');
   const autoTable = (await import('jspdf-autotable')).default;
   const doc = new jsPDF();
+  const margen = 15;
+  const centro = doc.internal.pageSize.getWidth() / 2;
   let y = 20;
+
+  const asegurarEspacio = (alto) => {
+    if (y + alto > 265) {
+      doc.addPage();
+      y = 20;
+    }
+  };
 
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('REPORTE MENSUAL DE GESTIÓN DE RIESGO LA/FD', 105, y, { align: 'center' });
-  y += 12;
+  doc.text('REPORTE MENSUAL DE GESTIÓN DE RIESGO LA/FT', centro, y, { align: 'center' });
+  y += 10;
 
   doc.setFontSize(11);
-  doc.text(profile?.notaria || 'Notaría', 105, y, { align: 'center' });
+  doc.text(profile?.notaria || 'Notaría', centro, y, { align: 'center' });
   y += 8;
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Periodo: ${new Date().toLocaleDateString('es-EC', { month: 'long', year: 'numeric' })}`, 105, y, { align: 'center' });
+  doc.text(`Periodo: ${resumen.periodo.etiqueta}`, centro, y, { align: 'center' });
   y += 15;
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('RESUMEN EJECUTIVO', 15, y);
+  doc.text('RESUMEN EJECUTIVO', margen, y);
   y += 8;
 
-  const totalCases = cases.length;
-  const scores = cases.map(scoreDeCaso);
-  const highRisk = scores.filter(score => score >= 15).length;
+  const porcentajeAlto = resumen.evaluados > 0
+    ? Math.round((resumen.niveles.alto / resumen.evaluados) * 100)
+    : 0;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(`Total de casos procesados: ${totalCases}`, 15, y);
+  doc.text(`Total de casos del periodo: ${resumen.total}`, margen, y);
   y += 6;
-  doc.text(`Casos de Riesgo Alto (≥15 pts): ${highRisk} (${totalCases > 0 ? Math.round((highRisk / totalCases) * 100) : 0}%)`, 15, y);
+  doc.text(`Casos evaluados: ${resumen.evaluados} · Sin evaluar: ${resumen.sinEvaluar}`, margen, y);
   y += 6;
-
-  const avgScore = totalCases > 0
-    ? Math.round(scores.reduce((sum, score) => sum + score, 0) / totalCases)
-    : 0;
-  doc.text(`Score promedio de riesgo: ${avgScore}/25`, 15, y);
-  y += 15;
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.text('DETALLE DE CASOS', 15, y);
+  doc.text(`Casos de Riesgo Alto (≥20 pts): ${resumen.niveles.alto} (${porcentajeAlto}% de los evaluados)`, margen, y);
+  y += 6;
+  doc.text(`Score promedio de riesgo: ${resumen.promedioScore}/25`, margen, y);
   y += 10;
 
-  const tableData = cases.slice(0, 50).map(c => {
-    const score = scoreDeCaso(c);
-    const nivel = score <= 8 ? 'BAJO' : score <= 14 ? 'MEDIO' : score <= 19 ? 'MEDIO-ALTO' : 'ALTO';
-    return [
-      c.datos?.cliente?.substring(0, 25) || '',
-      c.datos?.acto?.substring(0, 20) || '',
-      String(score),
-      nivel,
-      new Date(c.createdAt).toLocaleDateString()
-    ];
+  doc.setFont('helvetica', 'bold');
+  doc.text('Distribución por nivel', margen, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  NIVELES_REPORTE.forEach(nivel => {
+    doc.text(`${nivel.etiqueta} (${nivel.rango}): ${resumen.niveles[nivel.id]} caso(s)`, margen + 3, y);
+    y += 5;
   });
+  y += 6;
 
-  autoTable(doc, {
-    startY: y,
-    head: [['Cliente', 'Acto', 'Score', 'Riesgo', 'Fecha']],
-    body: tableData,
-    theme: 'grid',
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [26, 46, 68] }
-  });
+  asegurarEspacio(30);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('DETALLE DE CASOS', margen, y);
+  y += 8;
 
-  const finalY = doc.lastAutoTable.finalY + (totalCases > 50 ? 28 : 20);
-
-  if (totalCases > 50) {
-    doc.setFontSize(8);
+  if (resumen.casos.length === 0) {
     doc.setFont('helvetica', 'italic');
-    doc.text(`Se muestran los primeros 50 de ${totalCases} casos del periodo.`, 15, doc.lastAutoTable.finalY + 8);
+    doc.setFontSize(9);
+    doc.text('Sin casos registrados en el periodo.', margen, y);
+    y += 12;
+  } else {
+    const tableData = resumen.casos.map(caso => [
+      textoCliente(caso.cliente),
+      textoActo(caso.acto),
+      caso.score === null ? '—' : String(caso.score),
+      caso.score === null ? 'SIN EVALUAR' : etiquetaNivel(caso.nivel),
+      caso.fecha ? caso.fecha.toLocaleDateString('es-EC') : ''
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Cliente', 'Acto', 'Score', 'Riesgo', 'Fecha']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 7 },
+      headStyles: { fillColor: [26, 46, 68] },
+      margin: { left: margen, right: margen, top: 20, bottom: 20 },
+      pageBreak: 'auto'
+    });
+    y = doc.lastAutoTable.finalY + 12;
   }
 
-  if (finalY > 250) doc.addPage();
+  const obligaciones = resumen.obligaciones;
+  asegurarEspacio(45);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('OBLIGACIONES DE REPORTE', margen, y);
+  y += 7;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`RESU / NO-RESU: ${obligaciones.resu.reportar} / ${obligaciones.resu.noReportar}`, margen, y);
+  y += 5;
+  doc.text(
+    `Pendientes: ${obligaciones.resu.pendientes} · Enviados: ${obligaciones.resu.enviados} · No aplica: ${obligaciones.resu.noAplica} · Vencidos: ${obligaciones.resu.vencidos}`,
+    margen, y
+  );
+  y += 8;
+  doc.text(`ROS / NO-ROS: ${obligaciones.ros.reportar} / ${obligaciones.ros.noReportar}`, margen, y);
+  y += 5;
+  doc.text(
+    `Pendientes: ${obligaciones.ros.pendientes} · Enviados: ${obligaciones.ros.enviados} · No aplica: ${obligaciones.ros.noAplica} · Vencidos: ${obligaciones.ros.vencidos}`,
+    margen, y
+  );
+  y += 5;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.text('Los conteos incluyen el seguimiento registrado y, si falta, el plazo sugerido por el sistema.', margen, y);
+  y += 12;
+
+  asegurarEspacio(30);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('RESPONSABLES', 15, finalY);
+  doc.text('RESPONSABLES', margen, y);
+  y += 8;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(`Notario/a: ${profile?.notario || ''}`, 15, finalY + 8);
-  doc.text(`Oficial de Cumplimiento: ${profile?.oficialCumplimiento || ''}`, 15, finalY + 16);
+  doc.text(`Notario/a: ${profile?.notario || ''}`, margen, y);
+  y += 8;
+  doc.text(`Oficial de Cumplimiento: ${profile?.oficialCumplimiento || ''}`, margen, y);
 
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(7);
     doc.setTextColor(150);
-    doc.text(`Página ${i} de ${pageCount} — Generado por Sistema de Gestión de Riesgo LA/FD`, 105, 290, { align: 'center' });
+    doc.text(`Página ${i} de ${pageCount} — Generado por Sistema de Gestión de Riesgo LA/FT`, centro, 290, { align: 'center' });
   }
 
-  doc.save(`Reporte_Mensual_${new Date().toISOString().slice(0, 7)}.pdf`);
+  doc.save(`Reporte_Mensual_${resumen.periodo.clave}.pdf`);
+  return resumen;
 };

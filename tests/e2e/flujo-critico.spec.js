@@ -38,12 +38,12 @@ const iniciarSesion = async (page) => {
   await expect(page.locator('input[name="notaria"]')).toBeVisible({ timeout: 30_000 });
 };
 
-const completarPaso1 = async (page) => {
+const completarPaso1 = async (page, { acto = 'Poder especial' } = {}) => {
   await page.locator('input[name="notaria"]').fill('Notaría E2E');
   await page.locator('input[name="notario"]').fill('Notario de Prueba');
   await page.locator('input[name="cliente"]').fill('Cliente de Prueba');
   await page.locator('input[name="cedula"]').fill(CEDULA);
-  await page.locator('select[name="acto"]').selectOption('Poder especial');
+  await page.locator('select[name="acto"]').selectOption(acto);
   await page.locator('input[name="valor"]').fill('5000');
   await page.locator('select[name="medioPago"]').selectOption('Transferencia');
 
@@ -60,10 +60,8 @@ const completarPaso1 = async (page) => {
   await page.getByRole('button', { name: 'Siguiente Paso' }).click();
 };
 
-test('flujo crítico: login, wizard completo y exportación en PDF', async ({ page, request }) => {
-  await asegurarUsuario(request);
-  await iniciarSesion(page);
-  await completarPaso1(page);
+const completarWizard = async (page, opciones = {}) => {
+  await completarPaso1(page, opciones);
 
   // Paso 2: la plantilla completa las 56 señales de una vez.
   await expect(page.getByRole('button', { name: 'Perfil Bajo' })).toBeVisible();
@@ -78,8 +76,22 @@ test('flujo crítico: login, wizard completo y exportación en PDF', async ({ pa
   }
   await page.getByRole('button', { name: 'Finalizar y Analizar' }).click();
 
-  // Paso 4: dictamen manual y exportación.
   await expect(page.getByRole('button', { name: 'Exportar PDF' })).toBeVisible();
+};
+
+const guardarCaso = async (page) => {
+  await page.getByRole('button', { name: 'Historial' }).click();
+  await page.getByRole('button', { name: 'Guardar Caso Actual' }).click();
+  await expect(page.getByText(/Caso guardado/i)).toBeVisible({ timeout: 20_000 });
+
+  // El historial queda abierto como modal y bloquea el resto de la interfaz.
+  await page.locator('button:has(svg.lucide-x)').first().click();
+};
+
+test('flujo crítico: login, wizard completo y exportación en PDF', async ({ page, request }) => {
+  await asegurarUsuario(request);
+  await iniciarSesion(page);
+  await completarWizard(page);
 
   const descarga = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Exportar PDF' }).click();
@@ -92,26 +104,30 @@ test('flujo crítico: login, wizard completo y exportación en PDF', async ({ pa
 test('guarda el caso y lo recupera desde el dashboard', async ({ page, request }) => {
   await asegurarUsuario(request);
   await iniciarSesion(page);
-  await completarPaso1(page);
-
-  await page.getByRole('button', { name: 'Perfil Bajo' }).click();
-  await page.getByRole('button', { name: 'Siguiente Paso' }).click();
-
-  const controles = page.locator('input[type="checkbox"]');
-  for (let i = 0; i < await controles.count(); i += 1) {
-    await controles.nth(i).check();
-  }
-  await page.getByRole('button', { name: 'Finalizar y Analizar' }).click();
-
-  await page.getByRole('button', { name: 'Historial' }).click();
-  await page.getByRole('button', { name: 'Guardar Caso Actual' }).click();
-  await expect(page.getByText(/Caso guardado/i)).toBeVisible({ timeout: 20_000 });
-
-  // El historial queda abierto como modal y bloquea el resto de la interfaz.
-  await page.locator('button:has(svg.lucide-x)').first().click();
+  await completarWizard(page);
+  await guardarCaso(page);
 
   await page.getByRole('button', { name: 'Dashboard' }).click();
   await expect(page.getByRole('heading', { name: /Dashboard de Riesgo/i })).toBeVisible();
   // El dashboard no lista clientes: el caso se refleja en el pipeline.
   await expect(page.getByText(/100% del total/)).toBeVisible();
+});
+
+test('genera el reporte mensual y oculta el recordatorio', async ({ page, request }) => {
+  await asegurarUsuario(request);
+  await iniciarSesion(page);
+  // Acto distinto para no chocar con el caso guardado por la prueba anterior.
+  await completarWizard(page, { acto: 'Compraventa inmueble' });
+  await guardarCaso(page);
+
+  await page.getByRole('button', { name: 'Dashboard' }).click();
+  await expect(page.getByText('Reporte mensual pendiente')).toBeVisible();
+
+  const descarga = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Reporte Mensual PDF' }).click();
+  const archivo = await descarga;
+
+  expect(archivo.suggestedFilename()).toMatch(/^Reporte_Mensual_\d{4}-\d{2}\.pdf$/);
+  expect(await archivo.path()).toBeTruthy();
+  await expect(page.getByText('Reporte mensual pendiente')).toBeHidden();
 });
