@@ -324,7 +324,7 @@ Scheduler diario → Cloud Function de ingesta
 | Código SISLAFT, OC, Manual, EBR anual | Panel en el perfil con fechas de designación, manual, EBR y capacitación, y alertas de vencimiento | **Bajo** | Confirmar requisitos en el portal UAFE |
 | Capacitación (Res. 2024-0621) | Inexistente | **Medio** | Registro con evidencias |
 | Prohibición de efectivo > 100 SBU | No implementada | **Alto** | Bloqueo en el flujo de protocolización |
-| Gobierno de IA y no repudio | Salida no validada ni persistida | **Alto** | JSON Schema, versionado de prompt/modelo |
+| Gobierno de IA y no repudio | Salida validada y versionada: `_meta` con modelo, prompt, contexto legal y fecha, visible en Step4, PDF/Excel y audit trail | **Bajo** | Mantener el versionado al cambiar prompt o contexto |
 
 ---
 
@@ -440,6 +440,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Dependencias sin declarar | **Corregido** | `react-router-dom` y `react-is` no figuraban en `package.json`; ahora son dependencias directas |
 | Audit trail server-side con hash | **Corregido** | `auditCaseChanges` registra cada escritura con SHA-256 encadenado; el cliente no puede crear ni alterar logs |
 | Salida de IA sin validar | **Corregido** | `auditValidator.js` valida el JSON contra `AUDIT_RESPONSE_SCHEMA` antes de mostrarlo o exportarlo |
+| Versionado del dictamen | **Corregido** | `_meta` con modelo, `promptVersion`, `contextoVersion` y fecha; se muestra en Step4, se exporta en PDF/Excel y queda en `audit_logs` |
 | DDC/BF (arts. 47, 92) | **Corregido (parcial)** | Checklist DDC bloqueante y campos de BF para personas jurídicas; se incluyen en prompt, PDF, Excel, ROS y audit trail. Faltan evidencias documentales |
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
 | Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; no bloquea operaciones |

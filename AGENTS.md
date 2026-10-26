@@ -79,7 +79,8 @@ npm run test:watch # Tests in watch mode
 - **Structured AI Output**: JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
 
 ## Important Constraints
-- **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen.
+- **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen. Al modificarlo, subir `LEGAL_CONTEXT_VERSION` en `functions/index.js`.
+- **Trazabilidad IA**: `analyzeCase` devuelve `meta` (modelo, `promptVersion`, `contextoVersion`, `generadoEn`); el cliente lo adjunta como `_meta` al dictamen, Step4 lo muestra y `auditCaseChanges` lo copia a `details` del audit trail. Al modificar el prompt o el schema, subir `PROMPT_VERSION` en `src/utils/geminiApi.js`.
 - **API Key**: `GROQ_API_KEY` es un secreto de Cloud Functions (`defineSecret`). NUNCA exponer en el cliente.
 - **Auth**: `analyzeCase` verifica el ID token de Firebase (incluida revocación) y aplica rate limit en memoria (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`); el cliente envía `Authorization: Bearer <token>`.
 - **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.

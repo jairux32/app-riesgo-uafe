@@ -14,6 +14,12 @@ const GROQ_API_KEY = defineSecret('GROQ_API_KEY');
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+// Versiones del contexto legal y del contrato de respuesta. Se devuelven con
+// cada análisis y quedan en el caso y en el audit trail para poder reproducir
+// el dictamen meses después.
+const LEGAL_CONTEXT_VERSION = '2026-10-23';
+const PROMPT_VERSION_POR_DEFECTO = 'desconocida';
+
 // Límites de entrada: evitan abuso de cuota y prompts desmesurados.
 const MAX_PROMPT_CHARS = 30000;
 const MAX_OUTPUT_TOKENS = 6000;
@@ -103,7 +109,7 @@ exports.analyzeCase = onRequest(
         return;
       }
 
-      const { prompt, generationConfig } = req.body || {};
+      const { prompt, generationConfig, promptVersion } = req.body || {};
 
       if (typeof prompt !== 'string' || prompt.trim().length === 0) {
         res.status(400).json({ error: 'Prompt is required' });
@@ -160,7 +166,17 @@ exports.analyzeCase = onRequest(
         return;
       }
 
-      res.json({ text });
+      res.json({
+        text,
+        meta: {
+          modelo: GROQ_MODEL,
+          contextoVersion: LEGAL_CONTEXT_VERSION,
+          promptVersion: typeof promptVersion === 'string' && promptVersion.length <= 50
+            ? promptVersion
+            : PROMPT_VERSION_POR_DEFECTO,
+          generadoEn: new Date().toISOString()
+        }
+      });
     } catch (error) {
       console.error('Error en analyzeCase:', error);
       res.status(500).json({ error: `Analysis failed: ${error.message}` });
@@ -257,6 +273,16 @@ exports.auditCaseChanges = onDocumentWritten(
     const reportes = data.datos?.reportes || {};
     detalles.reporteResu = reportes.resu?.estado || null;
     detalles.reporteRos = reportes.ros?.estado || null;
+
+    // Trazabilidad del dictamen: permite reproducir qué modelo, prompt y
+    // contexto legal se usaron cuando se generó el análisis.
+    const metaIA = data.analysis?._meta;
+    if (metaIA) {
+      detalles.modeloIA = metaIA.modelo || null;
+      detalles.promptVersion = metaIA.promptVersion || null;
+      detalles.contextoVersion = metaIA.contextoVersion || null;
+      detalles.analisisGeneradoEn = metaIA.generadoEn || null;
+    }
 
     const db = getFirestore();
     const headRef = db.collection('audit_heads').doc(caseId);

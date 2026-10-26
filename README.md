@@ -66,10 +66,10 @@ npm run test:watch # Tests en modo watch
 
 ### Backend
 - `functions/index.js`:
-  - `analyzeCase` (`onRequest`) — Proxy autenticado (Bearer token) hacia Groq, con rate limit por usuario y App Check opcional
+  - `analyzeCase` (`onRequest`) — Proxy autenticado (Bearer token) hacia Groq, con rate limit por usuario y App Check opcional; devuelve `meta` (modelo, versión de prompt y del contexto legal)
   - `notifyHighRiskCase` (`onDocumentCreated`) — Notificación push para riesgo ALTO
-  - `auditCaseChanges` (`onDocumentWritten`) — Audit trail server-side con cadena de hashes SHA-256
-- `functions/legalContext.js` — Copia del contexto legal inyectado como system prompt
+  - `auditCaseChanges` (`onDocumentWritten`) — Audit trail server-side con cadena de hashes SHA-256; registra la trazabilidad del dictamen (modelo, prompt y contexto)
+- `functions/legalContext.js` — Copia del contexto legal inyectado como system prompt (`LEGAL_CONTEXT_VERSION`)
 
 ### Persistencia
 - `src/utils/storage.js` — Fachada Firestore + IndexedDB (offline)
@@ -79,6 +79,9 @@ npm run test:watch # Tests en modo watch
 
 ### Datos personales
 La base de clientes **no se publica** en el hosting. `data-local/` está ignorado por git y la carga se hace manualmente desde la UI (archivo JSON local → IndexedDB).
+
+### Trazabilidad del dictamen
+Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt (`PROMPT_VERSION` en `src/utils/geminiApi.js`), la versión del contexto legal (`LEGAL_CONTEXT_VERSION` en `functions/index.js`) y la fecha de generación. La metadata se muestra en Step4, se incluye en el PDF/Excel y queda en el audit trail (`audit_logs`). Al cambiar el prompt o el contexto legal hay que subir la versión correspondiente.
 
 ## Testing
 Tests con **vitest** + **@testing-library/react** (111 tests):

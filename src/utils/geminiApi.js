@@ -7,6 +7,10 @@ import { validarRespuestaAuditoria } from './auditValidator';
 const CF_URL = import.meta.env.VITE_CF_ANALYZE_URL
   || 'https://us-central1-app-riesgo-uafe.cloudfunctions.net/analyzeCase';
 
+// Cambiar cuando se modifique el prompt o el schema de respuesta: la versión
+// queda persistida con el análisis para poder reproducirlo.
+export const PROMPT_VERSION = '2026-10-26.1';
+
 /**
  * Describe el estado real de una verificación de listas. Nunca convierte
  * "no configurado" en "verificado": eso producía dictámenes que afirmaban
@@ -184,6 +188,7 @@ export const analizarConGemini = async (promptText) => {
     },
     body: JSON.stringify({
       prompt: promptText,
+      promptVersion: PROMPT_VERSION,
       generationConfig: {
         temperature: 0.2,
         topP: 0.8,
@@ -211,6 +216,11 @@ export const analizarConGemini = async (promptText) => {
       throw new Error(
         `La IA devolvió un dictamen incompleto (${errores.length} error(es)): ${errores.slice(0, 5).join('; ')}`
       );
+    }
+
+    // Trazabilidad del modelo, del prompt y del contexto legal usado.
+    if (result.meta) {
+      return { ...data, _meta: result.meta };
     }
 
     return data;

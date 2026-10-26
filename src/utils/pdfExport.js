@@ -172,6 +172,27 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
   doc.setFont("helvetica", "normal");
 
   if (geminiAnalysis) {
+    const metaIA = typeof geminiAnalysis === 'object' ? geminiAnalysis?._meta : null;
+    if (metaIA) {
+      const metaTexto = [
+        `Modelo: ${metaIA.modelo || '—'}`,
+        `Prompt: ${metaIA.promptVersion || '—'}`,
+        `Contexto legal: ${metaIA.contextoVersion || '—'}`,
+        metaIA.generadoEn ? `Generado: ${new Date(metaIA.generadoEn).toLocaleString('es-EC')}` : null
+      ].filter(Boolean).join('  |  ');
+      doc.setFontSize(8);
+      doc.setTextColor(110);
+      const metaLines = doc.splitTextToSize(metaTexto, 180);
+      for (const line of metaLines) {
+        addPageIfNeeded(8);
+        doc.text(line, 15, y);
+        y += 4;
+      }
+      doc.setTextColor(0);
+      doc.setFontSize(10);
+      y += 2;
+    }
+
     const analysisText = typeof geminiAnalysis === 'string'
       ? geminiAnalysis.replace(/\*/g, '')
       : JSON.stringify(geminiAnalysis, null, 2);

@@ -205,6 +205,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
   const analysisText = typeof geminiAnalysis === 'string'
     ? geminiAnalysis
     : geminiAnalysis ? JSON.stringify(geminiAnalysis, null, 2) : '';
+  const metaIA = typeof geminiAnalysis === 'object' ? geminiAnalysis?._meta : null;
   const execLines = analysisText ? analysisText.split('\n') : ['No se genero analisis de IA.'];
   const ws7 = XLSX.utils.aoa_to_sheet([
     ['REPORTE EJECUTIVO Y ANALISIS DE IA'], [''],
@@ -216,6 +217,16 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Nivel Residual:', controlesResult.nivelResidual],
     ['Efectividad:', `${Math.round(controlesResult.efectividadPromedio * 100)}%`],
     [''],
+    ...(metaIA
+      ? [
+          ['TRAZABILIDAD DEL DICTAMEN'],
+          ['Modelo:', metaIA.modelo || '—'],
+          ['Version del prompt:', metaIA.promptVersion || '—'],
+          ['Version del contexto legal:', metaIA.contextoVersion || '—'],
+          ['Generado:', metaIA.generadoEn || '—'],
+          ['']
+        ]
+      : []),
     ['ANALISIS JURIDICO-NORMATIVO (GEMINI IA)'],
     ...execLines.map(line => [line])
   ]);
@@ -223,7 +234,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
   setCols(ws7, [80]);
   addStyle(ws7['A1'], headerStyle);
   addStyle(ws7['A3'], subheaderStyle);
-  addStyle(ws7['A11'], headerStyle);
+  addStyle(ws7[`A${metaIA ? 17 : 11}`], headerStyle);
 
   XLSX.utils.book_append_sheet(wb, ws7, "REPORTE EJECUTIVO");
 

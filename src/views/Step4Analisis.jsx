@@ -279,9 +279,15 @@ export const Step4Analisis = ({
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '0.85rem', color: '#666', fontFamily: 'sans-serif' }}>
                   <span>Fecha: {new Date(auditData.header.fecha).toLocaleDateString('es-EC')}</span>
-                  <span>Modelo: {auditData.header.modelo}</span>
+                  <span>Modelo: {analysisResult?._meta?.modelo || auditData.header.modelo}</span>
                   <span>Confianza: {formatConfidence(auditData.header.confianza)}</span>
                 </div>
+                {analysisResult?._meta && (
+                  <p style={{ fontSize: '0.72rem', color: '#888', marginBottom: '16px', fontFamily: 'sans-serif' }}>
+                    Prompt {analysisResult._meta.promptVersion} · Contexto legal {analysisResult._meta.contextoVersion}
+                    {analysisResult._meta.generadoEn ? ` · Generado ${new Date(analysisResult._meta.generadoEn).toLocaleString('es-EC')}` : ''}
+                  </p>
+                )}
 
                 <h3>I. DICTAMEN EJECUTIVO</h3>
                 <div style={{ fontFamily: 'sans-serif', fontSize: '0.9rem' }}>
