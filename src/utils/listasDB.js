@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 import { normalizarNombre } from './sanctionsCheck';
 
-// Almacén local de snapshots de listas restrictivas (OFAC, ONU y lista
+// Almacén local de snapshots de listas restrictivas (OFAC, ONU, UK y lista
 // interna de PEP). No se incluyen listas en el bundle: el usuario importa el
 // archivo oficial, se guarda su versión, fecha y hash, y el screening usa
 // exactamente ese snapshot. Todo queda en IndexedDB (sin PII de clientes).
@@ -11,17 +11,19 @@ const DB_VERSION = 1;
 const STORE_ENTRADAS = 'entradas';
 const STORE_META = 'meta';
 
-export const TIPOS_LISTA = ['ofac', 'onu', 'uafe'];
+export const TIPOS_LISTA = ['ofac', 'onu', 'uk', 'uafe'];
 
 export const ETIQUETAS_LISTA = {
   ofac: 'OFAC (EE. UU.)',
   onu: 'Consejo de Seguridad ONU',
+  uk: 'UK Sanctions List (Reino Unido)',
   uafe: 'PEP / UAFE (lista interna)'
 };
 
 const FUENTES_OFICIALES = {
   ofac: 'https://sanctionssearch.ofac.treas.gov/',
   onu: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list',
+  uk: 'https://www.gov.uk/government/publications/the-uk-sanctions-list',
   uafe: 'https://www.uafe.gob.ec/'
 };
 

@@ -61,7 +61,7 @@ npm run test:watch # Tests en modo watch
 - `src/utils/validators.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/utils/obligaciones.js` — Plazos y seguimiento de RESU/NO-RESU y ROS/NO-ROS
 - `src/utils/cumplimiento.js` — Código SISLAFT, OC, manual, EBR y capacitación con alertas
-- `src/utils/listasDB.js` — Snapshots de OFAC/ONU/PEP con versión, fecha y hash
+- `src/utils/listasDB.js` — Snapshots de OFAC/ONU/UK/PEP con versión, fecha y hash
 - `src/utils/beneficiarioFinal.js` — Cadena de propiedad y participación efectiva (art. 92)
 - `src/data/constants.js` — Contexto legal, catálogos UAFE, factores de riesgo
 
@@ -85,7 +85,7 @@ La base de clientes **no se publica** en el hosting. `data-local/` está ignorad
 Cada análisis de IA guarda `_meta` con el modelo usado, la versión del prompt (`PROMPT_VERSION` en `src/utils/geminiApi.js`), la versión del contexto legal (`LEGAL_CONTEXT_VERSION` en `functions/index.js`) y la fecha de generación. La metadata se muestra en Step4, se incluye en el PDF/Excel y queda en el audit trail (`audit_logs`). Al cambiar el prompt o el contexto legal hay que subir la versión correspondiente.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (127 tests):
+Tests con **vitest** + **@testing-library/react** (128 tests):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
 - `src/test/cumplimiento.test.js` — Vigencia del cumplimiento institucional

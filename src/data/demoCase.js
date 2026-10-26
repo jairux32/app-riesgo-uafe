@@ -14,6 +14,7 @@ export const DEMO_CASE = {
   apoderado: true,
   ofac: false,
   onu: false,
+  uk: false,
   pepUafe: true,
   reportesPrevios: false,
   observaciones: "El valor comercial del inmueble parece ser superior al declarado. Los fondos provienen parcialmente de una cuenta en Panamá."

@@ -315,7 +315,7 @@ Scheduler diario → Cloud Function de ingesta
 |---|---|---|---|
 | Enfoque basado en riesgos calibrado (Reglamento art. 29) | Score colapsado | **Alto** | Corregir fórmula y documentar metodología |
 | DDC y beneficiario final (arts. 47, 92) | Campos de BF y checklist DDC bloqueante; faltan evidencias documentales | **Medio** | Carga de evidencias y hash (P2) |
-| PEP y listas restrictivas | Snapshots locales de OFAC/ONU/PEP con versión, fecha y hash; estados `no_configurado`/`no_encontrado`/`posible`/`coincidencia` | **Medio** | Carga periódica de listas y revisión humana documentada |
+| PEP y listas restrictivas | Snapshots locales de OFAC/ONU/UK/PEP con versión, fecha y hash; estados `no_configurado`/`no_encontrado`/`posible`/`coincidencia` | **Medio** | Carga periódica de listas y revisión humana documentada |
 | Señales no deducibles del reporte | 20 señales marcadas como manuales en Step2 | **Bajo** | Entrevista y documentación soporte |
 | RESU/NO-RESU (USD 10.000; 15/10 días) | Calculadora de plazos y seguimiento (estado, responsable, envío, acuse) | **Medio** | Integración real con SISLAFT (P2) |
 | ROS/NO-ROS (5+3 días; reserva art. 62) | Panel de seguimiento con plazo, prórroga, estado y acuse; el PDF ROS sigue siendo el documento a presentar | **Medio** | Firma electrónica y acuse automatizado (P2) |
@@ -348,7 +348,7 @@ Scheduler diario → Cloud Function de ingesta
 - Audit trail server-side, append-only y con hash encadenado.
 - Workflow ROS/NO-ROS/RESU/NO-RESU con estados, responsable, plazo y acuse.
 - Corregir duplicados, offline, Dashboard, filtro OFAC y reporte mensual.
-- ~~Screening real OFAC + ONU + UK con snapshots versionados~~: implementado para OFAC, ONU y lista PEP interna con hash; falta UK y la ficha de descarte de falsos positivos.
+- ~~Screening real OFAC + ONU + UK con snapshots versionados~~: implementado para OFAC, ONU, UK (Name 1..N) y lista PEP interna con hash; falta la ficha de descarte de falsos positivos.
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
 - Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento.
@@ -421,7 +421,7 @@ cd functions && npm audit   # 17 vulnerabilidades
 
 ## 16. Estado de las correcciones (actualización posterior)
 
-Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 127/127, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
+Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y los de workflow de reportes. Verificación actual: `npm test` 128/128, `npm run lint` 0 errores (4 warnings preexistentes), `npm run build` OK y `npm audit` **0 vulnerabilidades** (frontend y `functions/`).
 
 | Hallazgo | Estado | Nota |
 |---|---|---|
@@ -429,7 +429,7 @@ Aplicado en los commits `c1af54c`, `e909d25`, `b922139`, `9638a21`, `995a9b5` y 
 | Residual mal calculado | **Corregido** | Denominador fijo de 10 controles y reducción máxima del 50% |
 | Contexto legal desactualizado | **Corregido** | Ley LA/FT 2024, Reglamento D.E. 298, COIP 317/318 derogado, sanciones 1–10/11–20/21–40 SBU, retención 10 años, efectivo 100 SBU = USD 48.200 |
 | Deriva cliente/servidor del contexto legal | **Corregido** | `functions/legalContext.js` replicado y test anti-deriva |
-| Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio”. Ahora se importan snapshots oficiales con versión, fecha y SHA-256 |
+| Screening con listas ficticias y verificación por cédula | **Corregido** | Sin fuente configurada el estado es `no_configurado`; nunca “limpio”. Ahora se importan snapshots oficiales de OFAC, ONU, UK y PEP con versión, fecha y SHA-256 |
 | PII pública (`clientes.json`) | **Corregido** | Retirado de `public/`; carga manual desde archivo local; `data-local/` ignorado |
 | Reglas Firestore demasiado abiertas | **Corregido** | `list/get` exigen `userId`; `audit_logs`/`audit_heads` solo los escribe la Function. Falta probar con emulador |
 | `analyzeCase` abierta a Internet | **Corregido** | Bearer token con revocación, POST, CORS, límites y rate limit por usuario. App Check opcional disponible (`ENFORCE_APP_CHECK=true`) |

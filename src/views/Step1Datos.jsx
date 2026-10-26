@@ -25,6 +25,7 @@ import { NIVEL_PROPIEDAD_INICIAL } from '../utils/beneficiarioFinal';
 const verificacionesPendientes = () => ({
   ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
   onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+  uk: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
   uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
 });
 
@@ -34,6 +35,7 @@ const aplicarResetVerificaciones = (prev) => ({
   ...prev,
   ofac: false,
   onu: false,
+  uk: false,
   pepUafe: false,
   beneficiarioFinal: { ...BENEFICIARIO_FINAL_INICIAL },
   cadenaPropiedad: [],
@@ -380,6 +382,13 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             resultado: resultados.onu?.mensaje,
             coincidencias: resultados.onu?.coincidencias || [],
             versionLista: resultados.onu?.versionLista || null
+          },
+          uk: {
+            estado: resultados.uk?.estado || 'error',
+            fecha: resultados.uk?.fecha,
+            resultado: resultados.uk?.mensaje,
+            coincidencias: resultados.uk?.coincidencias || [],
+            versionLista: resultados.uk?.versionLista || null
           },
           uafe: {
             estado: resultados.uafe?.estado || 'error',
@@ -1011,9 +1020,9 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             <button
               className="btn btn-secondary btn-sm"
               onClick={() => setShowListasModal(true)}
-              title="Importar snapshots oficiales de OFAC, ONU y PEP"
+              title="Importar snapshots oficiales de OFAC, ONU, UK y PEP"
             >
-              <Database size={12} /> Listas ({Object.values(estadoListas).filter(Boolean).length}/3)
+              <Database size={12} /> Listas ({Object.values(estadoListas).filter(Boolean).length}/4)
             </button>
             <button
               className="btn btn-secondary btn-sm"
@@ -1038,6 +1047,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
           {[
             { key: 'ofac', label: 'OFAC', url: 'https://sanctionssearch.ofac.treas.gov/' },
             { key: 'onu', label: 'ONU', url: 'https://www.un.org/securitycouncil/content/un-sc-consolidated-list' },
+            { key: 'uk', label: 'UK', url: 'https://www.gov.uk/government/publications/the-uk-sanctions-list' },
             { key: 'uafe', label: 'UAFE Ecuador', url: 'https://www.uafe.gob.ec' },
           ].map(({ key, label, url }) => {
             const verif = datos.verificaciones?.[key] || { estado: 'pendiente' };

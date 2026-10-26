@@ -49,8 +49,9 @@ describe('parsearArchivoLista', () => {
 
 describe('metadatos de listas', () => {
   it('expone los tres tipos soportados con su fuente oficial', () => {
-    expect(TIPOS_LISTA).toEqual(['ofac', 'onu', 'uafe']);
+    expect(TIPOS_LISTA).toEqual(['ofac', 'onu', 'uk', 'uafe']);
     expect(getFuenteOficial('ofac')).toMatch(/ofac/i);
+    expect(getFuenteOficial('uk')).toMatch(/gov\.uk/i);
     expect(getFuenteOficial('desconocida')).toBeNull();
   });
 });

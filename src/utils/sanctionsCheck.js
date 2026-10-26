@@ -10,7 +10,7 @@
 const UMBRAL_REVISION = 70;
 const UMBRAL_ALERTA = 90;
 
-const TIPOS_LISTA = ['ofac', 'onu', 'uafe'];
+const TIPOS_LISTA = ['ofac', 'onu', 'uk', 'uafe'];
 
 /**
  * Normaliza un nombre para comparación: mayúsculas, sin tildes, sin
@@ -121,7 +121,7 @@ const resultadoNoConfigurado = (tipo) => ({
  * Verifica un nombre contra las listas restrictivas suministradas.
  *
  * @param {string} nombre - Nombre del cliente
- * @param {'ofac'|'onu'|'uafe'|'todos'} tipo
+ * @param {'ofac'|'onu'|'uk'|'uafe'|'todos'} tipo
  * @param {Record<string, Array<{nombre: string}>>} fuentes - Listas cargadas
  * @returns {Promise<Record<string, object>>}
  */

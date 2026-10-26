@@ -181,7 +181,7 @@ export const Step4Analisis = ({
             <Shield size={22} /> Estado de Verificaciones
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-            {['ofac', 'onu', 'uafe'].map(key => {
+            {['ofac', 'onu', 'uk', 'uafe'].map(key => {
               const verif = datos.verificaciones[key] || { estado: 'pendiente' };
               const style = getEstadoVerificacionStyle(verif.estado);
               return (

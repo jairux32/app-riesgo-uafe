@@ -69,7 +69,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['Debida Diligencia Requerida:', scores.diligencia],
     ['Beneficiario Final:', beneficiarioTexto],
     ['Debida Diligencia (art. 47):', ddcTexto],
-    ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UAFE: ${estadoVerificacion('uafe')}`],
+    ['Verificación en listas:', `OFAC: ${estadoVerificacion('ofac')} | ONU: ${estadoVerificacion('onu')} | UK: ${estadoVerificacion('uk')} | UAFE: ${estadoVerificacion('uafe')}`],
     ['Reporte SISLAFT - RESU/NO-RESU:', `${reporteResu.tipo} — ${reporteResu.fechaLimite} — ${reporteResu.estado}`],
     ['Reporte SISLAFT - ROS/NO-ROS:', `${reporteRos.tipo} — ${reporteRos.fechaLimite} — ${reporteRos.estado}`]
   ]);
@@ -112,6 +112,7 @@ export const exportToExcel = async (datos, scores, factoresResult, controlesResu
     ['VERIFICACIONES'],
     ['OFAC', estadoVerificacion('ofac')],
     ['ONU', estadoVerificacion('onu')],
+    ['UK', estadoVerificacion('uk')],
     ['PEP UAFE', estadoVerificacion('uafe')],
     [''],
     ['OBSERVACIONES', datos.observaciones || 'Ninguna'],

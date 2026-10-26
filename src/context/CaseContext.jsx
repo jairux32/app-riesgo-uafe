@@ -9,12 +9,13 @@ const initialState = {
   datos: {
     notaria: '', notario: '', cliente: '', cedula: '', acto: '', valor: '',
     origen: '', medioPago: '', actividad: '', esPep: false, detallePep: '',
-    apoderado: false, ofac: false, onu: false, pepUafe: false,
+    apoderado: false, ofac: false, onu: false, uk: false, pepUafe: false,
     reportesPrevios: false, observaciones: '',
     estado: 'borrador', tags: [], notasInternas: '',
     verificaciones: {
       ofac: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
       onu: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
+      uk: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] },
       uafe: { estado: 'pendiente', fecha: null, resultado: null, coincidencias: [] }
     },
     tipoPersona: 'natural',

@@ -91,6 +91,7 @@ describe('verificarListasRestrictivas', () => {
     const resultado = await verificarListasRestrictivas('JUAN PEREZ', 'todos');
     expect(resultado.ofac.estado).toBe('no_configurado');
     expect(resultado.onu.estado).toBe('no_configurado');
+    expect(resultado.uk.estado).toBe('no_configurado');
     expect(resultado.uafe.estado).toBe('no_configurado');
     expect(resultado.ofac.mensaje).toMatch(/No se realizó verificación/);
   });
@@ -104,5 +105,15 @@ describe('verificarListasRestrictivas', () => {
     const resultado = await verificarListasRestrictivas('JUAN PEREZ', 'ofac', fuentes);
     expect(resultado.ofac.estado).toBe('coincidencia');
     expect(resultado.ofac.coincidencias[0].confianza).toBe(100);
+  });
+
+  it('verifica contra la lista del Reino Unido y registra su versión', async () => {
+    const fuentes = {
+      uk: [{ nombre: 'JUAN PEREZ' }],
+      ukVersion: 'UK Sanctions List 2026-10'
+    };
+    const resultado = await verificarListasRestrictivas('JUAN PEREZ', 'uk', fuentes);
+    expect(resultado.uk.estado).toBe('coincidencia');
+    expect(resultado.uk.versionLista).toBe('UK Sanctions List 2026-10');
   });
 });

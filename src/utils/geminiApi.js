@@ -145,7 +145,7 @@ DATOS DEL ACTO NOTARIAL:
     : `INCOMPLETA — falta: ${ddc.faltantes.join(', ')}`}${evaluacionCadena.alcanzaUmbral ? '' : (datos.tipoPersona === 'juridica' && datos.cadenaPropiedad?.length ? ' — ningún propietario alcanza el 10%, verifique el control efectivo' : '')}
 - ¿Es PEP?: ${datos.esPep ? 'Sí' : 'No'} ${datos.detallePep ? `(${datos.detallePep})` : ''}
 - ¿Actúa mediante apoderado?: ${datos.apoderado ? 'Sí' : 'No'}
-- Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
+- Verificación OFAC: ${describirVerificacion(datos, 'ofac')} | ONU: ${describirVerificacion(datos, 'onu')} | UK: ${describirVerificacion(datos, 'uk')} | PEP/UAFE: ${describirVerificacion(datos, 'uafe')}
 - Reportes previos UAFE: ${datos.reportesPrevios ? 'Sí' : 'No'}
 - Observaciones: ${datos.observaciones || 'Ninguna'}
 

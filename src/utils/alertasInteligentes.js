@@ -92,7 +92,7 @@ export function generarAlertas(cases) {
   cases.forEach(c => {
     const verifs = c.datos?.verificaciones;
     if (!verifs) return;
-    const algunPendiente = ['ofac', 'onu', 'uafe'].some(k => verifs[k]?.estado === 'pendiente');
+    const algunPendiente = ['ofac', 'onu', 'uk', 'uafe'].some(k => verifs[k]?.estado === 'pendiente');
     if (algunPendiente) {
       const risk = calculateInherentRisk(c.evaluaciones || {});
       if (risk.inherente >= SCORE_ALTO_RIESGO) {
@@ -102,7 +102,7 @@ export function generarAlertas(cases) {
           casoId: c.id,
           cliente: c.datos?.cliente || 'Sin nombre',
           mensaje: 'Verificación en listas restrictivas incompleta para caso de riesgo alto',
-          accion: 'Completar verificación OFAC/ONU/UAFE',
+          accion: 'Completar verificación OFAC/ONU/UK/UAFE',
           score: risk.inherente
         });
       }

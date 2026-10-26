@@ -547,8 +547,8 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
                              {(() => {
                                const verifs = c.datos?.verificaciones;
                                if (!verifs) return <span style={{ fontSize: '0.75rem', color: 'var(--txt2)' }}>—</span>;
-                               const allDone = ['ofac', 'onu', 'uafe'].every(k => verifs[k]?.estado && verifs[k]?.estado !== 'pendiente');
-                               const anyAlert = ['ofac', 'onu', 'uafe'].some(k => verifs[k]?.estado === 'coincidencia' || verifs[k]?.estado === 'alerta');
+                               const allDone = ['ofac', 'onu', 'uk', 'uafe'].every(k => verifs[k]?.estado && verifs[k]?.estado !== 'pendiente');
+                               const anyAlert = ['ofac', 'onu', 'uk', 'uafe'].some(k => verifs[k]?.estado === 'coincidencia' || verifs[k]?.estado === 'alerta');
                                if (anyAlert) return <span style={{ color: 'var(--rojo)', fontSize: '0.9rem' }} title="Coincidencia encontrada">🚫</span>;
                                if (allDone) return <span style={{ color: 'var(--verde)', fontSize: '0.9rem' }} title="Verificado">✅</span>;
                                return <span style={{ color: 'var(--amarillo)', fontSize: '0.9rem' }} title="Pendiente">⏳</span>;

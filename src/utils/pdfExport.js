@@ -129,7 +129,7 @@ export const exportToPDF = async (datos, scores, factoresResult, controlesResult
     doc.text(linea, 15, y);
     y += 5;
   }
-  doc.text(`Listas: OFAC ${estadoVerificacion('ofac')} | ONU ${estadoVerificacion('onu')} | UAFE ${estadoVerificacion('uafe')}`, 15, y);
+  doc.text(`Listas: OFAC ${estadoVerificacion('ofac')} | ONU ${estadoVerificacion('onu')} | UK ${estadoVerificacion('uk')} | UAFE ${estadoVerificacion('uafe')}`, 15, y);
   y += 5;
 
   const obligaciones = calcularObligaciones(datos, {
