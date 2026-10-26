@@ -1,4 +1,8 @@
-import { calculateInherentRisk } from './calculations';
+import {
+  NIVELES_RIESGO,
+  nivelDeScore as nivelDeScoreCalidad,
+  scoreDeCaso as scoreDeCasoCalidad
+} from './calidadModelo';
 import { calcularObligaciones, estadoVencimiento } from './obligaciones';
 
 const MESES = [
@@ -9,15 +13,15 @@ const MESES = [
 const ESTADOS_COMPLETADOS = ['enviado', 'acuse_recibido'];
 
 /**
- * Niveles del motor de scoring. El riesgo ALTO empieza en 20 puntos; el tramo
- * 15-19 es MEDIO-ALTO. El reporte anterior usaba ≥15 como "Riesgo Alto".
+ * Niveles del motor de scoring. Se derivan del tablero de calidad para que el
+ * reporte y la calibración usen los mismos cortes: ALTO empieza en 20 puntos y
+ * el tramo 15-19 es MEDIO-ALTO. El reporte anterior usaba ≥15 como "Riesgo Alto".
  */
-export const NIVELES_REPORTE = [
-  { id: 'bajo', etiqueta: 'BAJO', rango: '0-8' },
-  { id: 'medio', etiqueta: 'MEDIO', rango: '9-14' },
-  { id: 'medio_alto', etiqueta: 'MEDIO-ALTO', rango: '15-19' },
-  { id: 'alto', etiqueta: 'ALTO', rango: '20-25' }
-];
+export const NIVELES_REPORTE = NIVELES_RIESGO.map(nivel => ({
+  id: nivel.id,
+  etiqueta: nivel.etiqueta.toUpperCase(),
+  rango: `${nivel.min}-${nivel.max}`
+}));
 
 const aFecha = (valor) => {
   if (!valor) return null;
@@ -42,34 +46,14 @@ const etiquetaMes = (clave) => {
   return `${MESES[mes - 1]} de ${anio}`;
 };
 
-const numeroValido = (valor) => {
-  if (valor === null || valor === undefined || valor === '') return null;
-  const numero = Number(valor);
-  return Number.isFinite(numero) ? numero : null;
-};
-
 /**
  * Score guardado en el caso o recalculado desde las evaluaciones. Devuelve
  * `null` cuando el caso todavía no tiene evaluación: no es lo mismo "sin
- * evaluar" que "riesgo 0".
+ * evaluar" que "riesgo 0". Se reutiliza el criterio del tablero de calidad.
  */
-export const scoreDeCaso = (caso) => {
-  const guardado = numeroValido(caso?.inherentScore);
-  if (guardado !== null) return guardado;
+export const scoreDeCaso = scoreDeCasoCalidad;
 
-  if (caso?.evaluaciones && Object.keys(caso.evaluaciones).length > 0) {
-    return calculateInherentRisk(caso.evaluaciones).inherente;
-  }
-  return null;
-};
-
-export const nivelDeScore = (score) => {
-  if (score === null || score === undefined) return null;
-  if (score <= 8) return 'bajo';
-  if (score <= 14) return 'medio';
-  if (score <= 19) return 'medio_alto';
-  return 'alto';
-};
+export const nivelDeScore = (score) => nivelDeScoreCalidad(score)?.id ?? null;
 
 const limiteEfectivo = (obligacion) => {
   const limite = obligacion?.fechaLimite || '';
