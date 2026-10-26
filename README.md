@@ -24,6 +24,8 @@ npm run lint       # ESLint check
 npm run preview    # Preview dist/ build
 npm test           # Ejecutar tests (vitest)
 npm run test:watch # Tests en modo watch
+npm run test:rules # Tests de reglas con el emulador (requiere Java)
+npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 ```
 
 > **Instalación:** `npm ci` usa `.npmrc` con `legacy-peer-deps=true` por un fallo de npm 10 al resolver el peer opcional `canvas` de jsdom. SheetJS se instala desde el tarball oficial `cdn.sheetjs.com` (la versión npm está congelada en 0.18.5 con CVEs). `npm audit` debe quedar en 0; verificar tras cualquier actualización.
@@ -107,7 +109,7 @@ Cada archivo adjunto se identifica con su hash SHA-256. El archivo se guarda sol
 El perfil incluye un mantenimiento del almacenamiento local: compara los archivos guardados con las referencias de los casos, los borradores pendientes y las capacitaciones, y muestra qué quedó huérfano. No borra nada sin confirmación y respeta un periodo de gracia de 7 días, porque un archivo recién cargado puede pertenecer a un caso que todavía no se guardó. Al borrar el archivo, el caso conserva el hash pero ya no se puede verificar el documento.
 
 ## CI
-Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, `npm audit` (frontend y `functions/`) y `npm run build`. El deploy a Firebase Hosting espera a que pase el job `quality`.
+Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
 Tests con **vitest** + **@testing-library/react** (262 tests de unidad):
@@ -124,6 +126,9 @@ Tests con **vitest** + **@testing-library/react** (262 tests de unidad):
 - `src/test/perfilTransaccional.test.js` — Perfil del cliente y desviaciones
 - `src/test/capacitacion.test.js` — Registros, vigencia y evidencia de capacitación
 - `src/test/calidadModelo.test.js` — Distribución, calibración, versiones y tiempos
+
+### Flujo e2e
+`npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, más guardar el caso y verlo reflejado en el Dashboard. La IA no se prueba: la Cloud Function no corre en local.
 
 ### Reglas de Firestore
 `npm run test:rules` levanta el emulador con `firebase emulators:exec` (vía `npx`, requiere Java) y ejecuta 13 pruebas en `tests/rules/`: aislamiento de casos y perfiles por usuario, filtro obligatorio `userId` en listados, y prohibición de que el cliente escriba `audit_logs` o `audit_heads`.

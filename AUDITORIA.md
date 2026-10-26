@@ -363,7 +363,7 @@ Scheduler diario → Cloud Function de ingesta
 - Alinear `README.md` y `AGENTS.md` con el código; unificar el contexto legal.
 - ~~Purga de archivos de evidencia huérfanos en IndexedDB~~: análisis con vista previa, confirmación explícita y periodo de gracia de 7 días; conserva los borradores pendientes como referencia. Falta la política formal de retención y la evaluación de impacto en protección de datos.
 - Migrar `xlsx` a `exceljs` o a SheetJS actualizado.
-- Cobertura e2e del flujo crítico (login, wizard y exportación) y observabilidad de errores del cliente y de Functions.
+- ~~Cobertura e2e del flujo crítico~~: Playwright contra los emuladores de Auth y Firestore, con job propio en CI; cubre login, wizard, exportación PDF y guardado del caso. Falta observabilidad de errores del cliente y de Functions.
 
 ---
 

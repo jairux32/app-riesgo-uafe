@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import {
   initializeFirestore,
   getFirestore,
+  connectFirestoreEmulator,
   persistentLocalCache,
   persistentMultipleTabManager
 } from 'firebase/firestore';
@@ -53,5 +54,15 @@ export const db = (() => {
     return getFirestore(app);
   }
 })();
+
+// Los tests e2e usan los emuladores locales de Firebase: así no se toca el
+// proyecto real ni se necesitan credenciales. Solo se activa con la variable
+// VITE_USE_FIREBASE_EMULATOR=true, que nunca se define en producción.
+const usarEmuladores = import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true';
+
+if (usarEmuladores) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+}
 
 export default app;
