@@ -6,6 +6,7 @@ import { getNotaryProfile } from '../firebase/profileStore';
 import { useAuth } from '../context/AuthContext';
 import { useCase } from '../context/CaseContext';
 import { calculateInherentRisk } from '../utils/calculations';
+import { nivelDeScore, NIVELES_RIESGO } from '../utils/calidadModelo';
 import { TrendingUp, AlertTriangle, FileCheck, Activity, Calendar, GitBranch, FileText, Bot, Download, Bell } from 'lucide-react';
 import { generarAlertas, getAlertaStyle, contarAlertasPorPrioridad } from '../utils/alertasInteligentes';
 import { CumplimientoInstitucional } from '../components/CumplimientoInstitucional';
@@ -13,8 +14,14 @@ import { CalidadModeloPanel } from '../components/CalidadModeloPanel';
 import { ESTADOS_CASO } from '../data/constants';
 import { claveMesLocal } from '../utils/monthlyReport';
 
-const COLORS = ['#10b981', '#f59e0b', '#f97316', '#ef4444'];
-const RISK_LABELS = ['Bajo', 'Medio', 'Medio-Alto', 'Alto'];
+// Colores hex por id de nivel: Recharts necesita un valor literal para pintar
+// las sectors del gráfico (las variables CSS no funcionan en `fill`).
+const COLORES_GRAFICO = {
+  bajo: '#10b981',
+  medio: '#f59e0b',
+  medio_alto: '#f97316',
+  alto: '#ef4444'
+};
 
 export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
   const { user } = useAuth();
@@ -61,11 +68,8 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
       if (riskFilter !== 'all') {
         filtered = filtered.filter(c => {
           const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
-          if (riskFilter === 'bajo') return score <= 8;
-          if (riskFilter === 'medio') return score > 8 && score <= 14;
-          if (riskFilter === 'medio-alto') return score > 14 && score <= 19;
-          if (riskFilter === 'alto') return score > 19;
-          return true;
+          // El corte de nivel sale de la fuente única (calidadModelo).
+          return nivelDeScore(score).id === riskFilter;
         });
       }
 
@@ -95,15 +99,21 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
   };
 
   const getRiskDistribution = () => {
-    const dist = [0, 0, 0, 0];
+    // El conteo y las etiquetas salen de la fuente única de niveles
+    // (calidadModelo); aquí solo se cuenta.
+    const conteo = Object.fromEntries(NIVELES_RIESGO.map(nivel => [nivel.id, 0]));
     cases.forEach(c => {
       const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
-      if (score <= 8) dist[0]++;
-      else if (score <= 14) dist[1]++;
-      else if (score <= 19) dist[2]++;
-      else dist[3]++;
+      conteo[nivelDeScore(score).id] += 1;
     });
-    return RISK_LABELS.map((label, i) => ({ name: label, value: dist[i] })).filter(d => d.value > 0);
+
+    return NIVELES_RIESGO
+      .map(nivel => ({
+        name: nivel.etiqueta,
+        value: conteo[nivel.id],
+        color: COLORES_GRAFICO[nivel.id]
+      }))
+      .filter(d => d.value > 0);
   };
 
   const getFactorAnalysis = () => {
@@ -199,11 +209,14 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
         </div>
       )}
 
-      {/* Pipeline de Estados */}
+      {/* Estado de los casos */}
       <div className="card" style={{ marginBottom: '20px' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-          <GitBranch size={20} color="var(--accent)" /> Pipeline de Casos
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <GitBranch size={20} color="var(--accent)" /> Casos por estado
         </h3>
+        <p className="text-sm text-muted" style={{ marginTop: 0, marginBottom: '15px' }}>
+          En qué punto del trámite está cada caso. Pase el cursor sobre un estado para ver solo esos casos.
+        </p>
         <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px' }}>
           {estadoCounts.map(est => (
             <div
@@ -267,12 +280,12 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
           <div style={{ padding: '20px', background: 'var(--bg-input)', borderRadius: '8px', textAlign: 'center', borderLeft: '4px solid var(--accent)' }}>
             <TrendingUp size={32} color="var(--accent)" style={{ marginBottom: '10px' }} />
             <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{cases.length}</p>
-            <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Casos Procesados</p>
+            <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Casos registrados</p>
           </div>
           <div style={{ padding: '20px', background: 'var(--bg-input)', borderRadius: '8px', textAlign: 'center', borderLeft: '4px solid var(--verde)' }}>
             <FileCheck size={32} color="var(--verde)" style={{ marginBottom: '10px' }} />
             <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{avgScore}/25 {avgScore >= umbralAlto ? '(Riesgo Alto)' : ''}</p>
-            <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Score Promedio</p>
+            <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Puntaje de riesgo promedio</p>
           </div>
         </div>
 
@@ -284,7 +297,7 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
                 <PieChart>
                   <Pie data={riskDist} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
                     {riskDist.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -356,16 +369,16 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
                       <span style={{
                         fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px',
                         background: alerta.prioridad === 'alta' ? 'var(--rojo)' : 'var(--amarillo)',
-                        color: 'white', textTransform: 'uppercase', fontWeight: 'bold'
+                        color: 'white', fontWeight: 'bold'
                       }}>
-                        {alerta.prioridad}
+                        {alerta.prioridad === 'alta' ? 'Urgente' : 'Atención'}
                       </span>
                     </div>
                     <p style={{ fontSize: '0.85rem', color: 'var(--txt2)', lineHeight: '1.4' }}>
                       {alerta.mensaje}
                     </p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--accent)', marginTop: '4px' }}>
-                      💡 Acción: {alerta.accion}
+                      Qué hacer: {alerta.accion}
                     </p>
                   </div>
                 </div>
@@ -394,23 +407,23 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontWeight: 'bold', color: 'var(--rojo)', marginRight: '8px' }}>
-                    {calculateInherentRisk(c.evaluaciones).inherente}/25
+                    Riesgo {calculateInherentRisk(c.evaluaciones).inherente}/25
                   </span>
                   <button
                     className="btn btn-secondary"
-                    style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                    style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '5px' }}
                     onClick={() => abrirCaso(c, 1)}
-                    title="Abrir caso"
+                    title="Abrir el caso para revisarlo"
                   >
-                    <FileText size={14} />
+                    <FileText size={14} /> Abrir
                   </button>
                   <button
                     className="btn btn-secondary"
-                    style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+                    style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '5px' }}
                     onClick={() => abrirCaso(c, 4)}
-                    title="Generar análisis IA"
+                    title="Ir al paso de análisis con IA"
                   >
-                    <Bot size={14} />
+                    <Bot size={14} /> Analizar
                   </button>
                   <button
                     className="btn btn-secondary"

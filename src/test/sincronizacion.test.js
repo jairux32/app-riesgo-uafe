@@ -158,7 +158,7 @@ describe('alerta de posibles duplicados', () => {
     const duplicado = alertas.find(a => a.tipo === 'posible_duplicado');
 
     expect(duplicado).toBeTruthy();
-    expect(duplicado.mensaje).toMatch(/2 casos de "Compraventa"/);
+    expect(duplicado.mensaje).toMatch(/El mismo cliente tiene 2 operaciones de "Compraventa"/);
     expect(duplicado.casos).toHaveLength(2);
     expect(getAlertaStyle('posible_duplicado').icon).toBe('📑');
   });

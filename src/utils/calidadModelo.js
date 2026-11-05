@@ -24,6 +24,20 @@ export const NIVELES_RIESGO = [
   { id: 'alto', etiqueta: 'Alto', min: 20, max: 25 }
 ];
 
+// Color de cada nivel, para que todas las pantallas usen la misma paleta.
+export const COLORES_NIVEL_RIESGO = {
+  bajo: 'var(--verde)',
+  medio: 'var(--amarillo, #f59e0b)',
+  medio_alto: 'var(--naranja, #f97316)',
+  alto: 'var(--rojo)'
+};
+
+/**
+ * Color asociado al nivel de un puntaje de riesgo.
+ */
+export const colorDeNivel = (score) =>
+  COLORES_NIVEL_RIESGO[nivelDeScore(score).id] || 'var(--txt2)';
+
 const MS_DIA = 24 * 60 * 60 * 1000;
 const ESTADOS_CERRADOS = ['aprobado', 'reportado_uafe'];
 const ESTADOS_ENVIADOS = ['enviado', 'acuse_recibido'];
@@ -162,7 +176,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
       posiblesSubestimaciones.push({
         ...resumen,
         severidad: score <= 14 ? 'alta' : 'media',
-        motivo: `Score ${score}/25 (por debajo de ${umbralRos}) pero el caso tiene ROS enviado.`
+        motivo: `Puntaje de riesgo ${score} de 25 (menos de ${umbralRos}) pero el caso tiene ROS enviado.`
       });
     }
 
@@ -170,7 +184,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
       posiblesSobreestimaciones.push({
         ...resumen,
         severidad: 'media',
-        motivo: `Score ${score}/25 (≥ ${umbralRos}) pero se registró un NO-ROS.`
+        motivo: `Puntaje de riesgo ${score} de 25 (${umbralRos} o más) pero se registró un NO-ROS.`
       });
     }
 
@@ -184,7 +198,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
       riesgoAltoSinDecision.push({
         ...resumen,
         severidad: 'alta',
-        motivo: `Score ${score}/25 sin decisión de ROS/NO-ROS registrada.`
+        motivo: `Puntaje de riesgo ${score} de 25 sin decisión de ROS/NO-ROS registrada.`
       });
     }
 
@@ -204,13 +218,13 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
     alertas.push({
       tipo: 'sin_datos',
       severidad: 'baja',
-      mensaje: 'Aún no hay casos evaluados: el tablero necesita al menos un score para mostrar métricas.'
+      mensaje: 'Aún no hay casos evaluados: el tablero necesita al menos un puntaje de riesgo para mostrar información.'
     });
   } else if (conScore.length < muestraMinima) {
     alertas.push({
       tipo: 'muestra_insuficiente',
       severidad: 'baja',
-      mensaje: `Solo hay ${conScore.length} caso(s) evaluado(s); con menos de ${muestraMinima} las tasas son indicativas.`
+      mensaje: `Solo hay ${conScore.length} caso(s) evaluado(s); con menos de ${muestraMinima} los resultados son solo orientativos.`
     });
   }
 
@@ -218,7 +232,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
     alertas.push({
       tipo: 'posible_subestimacion',
       severidad: posiblesSubestimaciones.some(item => item.severidad === 'alta') ? 'alta' : 'media',
-      mensaje: `${posiblesSubestimaciones.length} caso(s) con score bajo tienen ROS enviado: revise señales no capturadas o justificaciones cualitativas.`
+      mensaje: `${posiblesSubestimaciones.length} caso(s) con puntaje de riesgo bajo tienen ROS enviado: revise si faltó capturar alguna señal o debe justificarse el caso.`
     });
   }
 
@@ -226,7 +240,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
     alertas.push({
       tipo: 'posible_sobreestimacion',
       severidad: 'media',
-      mensaje: `${posiblesSobreestimaciones.length} caso(s) con score alto registran NO-ROS: documente la justificación o recalibre los pesos.`
+      mensaje: `${posiblesSobreestimaciones.length} caso(s) con puntaje de riesgo alto registran NO-ROS: documente la razón por la que no se reportó.`
     });
   }
 
@@ -234,7 +248,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
     alertas.push({
       tipo: 'riesgo_alto_sin_decision',
       severidad: 'alta',
-      mensaje: `${riesgoAltoSinDecision.length} caso(s) de riesgo alto no tienen decisión de ROS/NO-ROS.`
+      mensaje: `${riesgoAltoSinDecision.length} caso(s) de riesgo alto no tienen decisión de ROS/NO-ROS: defina si corresponde reportar.`
     });
   }
 
@@ -242,7 +256,7 @@ export const calcularCalidadModelo = (casos = [], opciones = {}) => {
     alertas.push({
       tipo: 'ros_vencido',
       severidad: 'alta',
-      mensaje: `${rosVencidos} caso(s) de riesgo alto tienen el ROS vencido o vence hoy.`
+      mensaje: `${rosVencidos} caso(s) de riesgo alto tienen el ROS vencido o vence hoy: envíe o regularice el reporte.`
     });
   }
 
@@ -320,15 +334,17 @@ export const casosParaRevisar = (metricas = {}) => {
 };
 
 /**
- * Resumen legible para la UI o un reporte.
+ * Resumen legible para la UI o un reporte, en lenguaje de negocio: el
+ * puntaje de riesgo va de 0 a 25 y no son tasas de error, sino casos que
+ * conviene revisar a mano.
  */
 export const describirCalidad = (metricas = {}) => {
   if (!metricas.casosEvaluados) {
-    return 'Sin casos evaluados: no hay métricas de calidad todavía.';
+    return 'Sin casos evaluados: todavía no hay información de calidad que mostrar.';
   }
 
-  const base = `${metricas.casosEvaluados} caso(s) evaluado(s); score promedio ${metricas.promedioScore}/25; `
-    + `cobertura de IA ${metricas.coberturaIA}%`;
+  const base = `${metricas.casosEvaluados} caso(s) evaluado(s); puntaje de riesgo promedio ${metricas.promedioScore} de 25; `
+    + `${metricas.coberturaIA}% con dictamen de IA`;
 
   if (!metricas.muestraSuficiente) {
     return `${base}; la muestra es demasiado pequeña para sacar conclusiones.`;

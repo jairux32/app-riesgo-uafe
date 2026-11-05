@@ -139,8 +139,17 @@ La interfaz está pensada para personal con baja alfabetización digital: textos
 | Panel de obligaciones (Step4) | Solo siglas y plazos | Glosario de RESU/NO-RESU/ROS/NO-ROS en lenguaje de negocio, la norma que sustenta cada reporte y la prórroga explicada |
 | Análisis de IA (Step4) | "Gemini 2.5 Flash" | El modelo real (`llama-3.3-70b-versatile`, Groq), mensaje de espera con el tiempo aproximado y error con detalle técnico plegable |
 | Encabezado del wizard | Círculos sin contexto | "Paso X de 4", qué hacer en el paso actual y aviso cuando se salta un paso intermedio |
+| Alertas del portfolio | "Score", "snapshot", "pipeline", "Acción:" | "Puntaje de riesgo", "versión cargada", "Casos por estado" y "Qué hacer:", con el estado en su etiqueta real ("En Revisión") y no su identificador interno |
+| Panel de revisión del modelo | "Calidad del modelo y calibración", "subestimaciones" | "Revisión del modelo de riesgo" con tarjetas explicadas ("Riesgo bajo pero reportado (ROS)") y aviso de que no son tasas de error |
+| Riesgo inherente y residual | Solo el número | Cada tarjeta explica qué es: el riesgo antes y después de aplicar los controles internos |
+| Análisis por lotes | El modal se cerraba y ocultaba el progreso | El modal permanece abierto con "Analizando el caso 2 de 3"; un caso con datos incompletos no detiene el lote y se informa cuántos se completaron y cuáles fallaron |
+| Listas restrictivas | "snapshot", "hash" | "versión cargada" y "huella digital", con botón "Quitar" visible en vez de un icono |
 
 Las confirmaciones de borrado nunca incluyen datos del cliente en la observabilidad: el evento solo registra la etapa (`eliminar_caso` / `eliminar_casos_lote`).
+
+### Una sola fuente de verdad para los niveles de riesgo
+
+Los cortes (Bajo 0-8, Medio 9-14, Medio-Alto 15-19, Alto 20-25) viven únicamente en `src/utils/calidadModelo.js` (`NIVELES_RIESGO`, `nivelDeScore`, `colorDeNivel`). Las pantallas los consumen con esas funciones y `src/test/calidadModelo.test.js` falla si algún componente vuelve a escribir los cortes a mano.
 
 El modelo de IA se define una sola vez en `src/data/constants.js` (`MODELO_IA`, `PROVEEDOR_IA`) y `src/test/modeloIA.test.js` falla si deja de coincidir con `GROQ_MODEL` en `functions/index.js`: el nombre del modelo queda en el dictamen, el PDF, el Excel y el audit trail.
 
@@ -148,7 +157,7 @@ El modelo de IA se define una sola vez en `src/data/constants.js` (`MODELO_IA`, 
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (315 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (318 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/monthlyReport.test.js` — Periodo mensual local, niveles, obligaciones y casos sin evaluar
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS

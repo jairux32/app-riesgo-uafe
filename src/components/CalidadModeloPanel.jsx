@@ -3,15 +3,11 @@ import {
   calcularCalidadModelo,
   casosParaRevisar,
   describirCalidad,
-  NIVELES_RIESGO
+  NIVELES_RIESGO,
+  COLORES_NIVEL_RIESGO
 } from '../utils/calidadModelo';
 
-const COLORES_NIVEL = {
-  bajo: 'var(--verde)',
-  medio: 'var(--amarillo, #f59e0b)',
-  medio_alto: 'var(--naranja, #f97316)',
-  alto: 'var(--rojo)'
-};
+const COLORES_NIVEL = COLORES_NIVEL_RIESGO;
 
 const Tarjeta = ({ valor, etiqueta, icono: Icono, color }) => (
   <div style={{ padding: '14px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `3px solid ${color}` }}>
@@ -34,25 +30,25 @@ export const CalidadModeloPanel = ({ casos = [], onAbrirCaso }) => {
   return (
     <div className="card">
       <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', color: 'var(--accent)' }}>
-        <Gauge size={20} /> Calidad del modelo y calibración
+        <Gauge size={20} /> Revisión del modelo de riesgo
       </h3>
       <p className="text-sm text-muted" style={{ marginTop: 0 }}>
-        El tablero cruza el score con la decisión de reporte. No calcula falsos positivos ni negativos
-        reales porque no hay una verdad de referencia etiquetada: señala casos para revisión humana.
+        Compara el puntaje de riesgo (de 0 a 25) con la decisión de reporte y señala los casos que conviene
+        revisar a mano. No presenta tasas de error porque no hay una verdad de referencia etiquetada.
       </p>
 
       <div className="grid-2" style={{ marginBottom: '18px' }}>
         <Tarjeta valor={metricas.casosEvaluados} etiqueta="Casos evaluados" icono={TrendingUp} color="var(--accent)" />
-        <Tarjeta valor={`${metricas.promedioScore}/25`} etiqueta="Score promedio" icono={Gauge} color="var(--verde)" />
+        <Tarjeta valor={`${metricas.promedioScore}/25`} etiqueta="Puntaje de riesgo promedio" icono={Gauge} color="var(--verde)" />
         <Tarjeta
           valor={metricas.calibracion.posiblesSubestimaciones.length}
-          etiqueta="Posibles subestimaciones"
+          etiqueta="Riesgo bajo pero reportado (ROS)"
           icono={AlertTriangle}
           color="var(--rojo)"
         />
         <Tarjeta
           valor={metricas.calibracion.posiblesSobreestimaciones.length}
-          etiqueta="Posibles sobreestimaciones"
+          etiqueta="Riesgo alto pero no reportado (NO-ROS)"
           icono={AlertTriangle}
           color="var(--naranja, #f97316)"
         />
@@ -64,7 +60,7 @@ export const CalidadModeloPanel = ({ casos = [], onAbrirCaso }) => {
         />
         <Tarjeta
           valor={`${metricas.coberturaIA}%`}
-          etiqueta={`Cobertura de dictamen IA (${metricas.conAnalisisIA})`}
+          etiqueta={`Casos con dictamen de IA (${metricas.conAnalisisIA})`}
           icono={Bot}
           color="var(--azul, #3b82f6)"
         />
@@ -163,7 +159,7 @@ export const CalidadModeloPanel = ({ casos = [], onAbrirCaso }) => {
               >
                 <div style={{ flex: 1 }}>
                   <p className="text-sm" style={{ margin: 0, fontWeight: 600 }}>
-                    {item.cliente} · {item.score}/25
+                    {item.cliente} · puntaje de riesgo {item.score} de 25
                   </p>
                   <p className="text-xs text-muted" style={{ margin: '3px 0 0' }}>
                     {item.motivo}

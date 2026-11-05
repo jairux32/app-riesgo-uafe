@@ -1143,7 +1143,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
             <button
               className="btn btn-secondary btn-sm"
               onClick={() => setShowListasModal(true)}
-              title="Importar snapshots oficiales de OFAC, ONU, UK y PEP"
+              title="Importar las listas oficiales de OFAC, ONU, UK y PEP"
             >
               <Database size={12} /> Listas ({Object.values(estadoListas).filter(Boolean).length}/4)
             </button>

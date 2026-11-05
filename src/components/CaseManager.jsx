@@ -4,6 +4,7 @@ import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldC
 import { getAllCases, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
+import { nivelDeScore, colorDeNivel } from '../utils/calidadModelo';
 import { registrarEvento } from '../utils/observabilidad';
 import { useCase } from '../context/CaseContext';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
@@ -132,10 +133,21 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
     }
     const result = calculateInherentRisk(evaluaciones);
     const score = result.inherente;
-    if (score <= 8) return { score, label: 'Bajo', color: 'var(--verde)', bg: 'rgba(16, 185, 129, 0.15)' };
-    if (score <= 14) return { score, label: 'Medio', color: 'var(--amarillo)', bg: 'rgba(245, 158, 11, 0.15)' };
-    if (score <= 19) return { score, label: 'Medio-Alto', color: 'var(--naranja)', bg: 'rgba(249, 115, 22, 0.15)' };
-    return { score, label: 'Alto', color: 'var(--rojo)', bg: 'rgba(239, 68, 68, 0.15)' };
+    // El corte de nivel y su color salen de la fuente única (calidadModelo);
+    // aquí solo se añade el fondo con el que se pinta la etiqueta.
+    const nivel = nivelDeScore(score);
+    const fondos = {
+      bajo: 'rgba(16, 185, 129, 0.15)',
+      medio: 'rgba(245, 158, 11, 0.15)',
+      medio_alto: 'rgba(249, 115, 22, 0.15)',
+      alto: 'rgba(239, 68, 68, 0.15)'
+    };
+    return {
+      score,
+      label: nivel.etiqueta,
+      color: colorDeNivel(score),
+      bg: fondos[nivel.id] || 'var(--bg-panel)'
+    };
   };
 
   const toggleSelection = (id) => {
@@ -293,7 +305,7 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
               </button>
               <button
                 className="btn"
-                onClick={() => { onBatchAnalyze(selectedIds); setIsOpen(false); }}
+                onClick={() => onBatchAnalyze(selectedIds)}
                 disabled={selectedIds.length === 0 || batchProgress.active}
                 style={{ background: 'var(--verde)', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
               >
@@ -369,7 +381,7 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
                     onChange={(e) => setAdvancedFilters(prev => ({ ...prev, sortBy: e.target.value }))}
                   >
                     <option value="fecha">Fecha</option>
-                    <option value="score">Score de riesgo</option>
+                    <option value="score">Puntaje de riesgo</option>
                     <option value="cliente">Cliente</option>
                     <option value="acto">Tipo de acto</option>
                   </select>
@@ -456,7 +468,7 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
             {batchProgress.active && (
               <div style={{ marginBottom: '15px', flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '5px' }}>
-                  <span>Progreso del análisis por lotes:</span>
+                  <span>Analizando el caso {batchProgress.current} de {batchProgress.total}...</span>
                   <span>{batchProgress.current} / {batchProgress.total}</span>
                 </div>
                 <div style={{ width: '100%', height: '8px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
@@ -465,6 +477,9 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
                     height: '100%', background: 'var(--accent)', transition: 'width 0.3s ease'
                   }} />
                 </div>
+                <p className="text-xs text-muted" style={{ margin: '6px 0 0' }}>
+                  Cada caso puede tardar algunos segundos. No cierre la ventana mientras avanza.
+                </p>
               </div>
             )}
 

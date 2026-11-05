@@ -142,7 +142,8 @@ export const Step4Analisis = ({
               CASO DE RIESGO ALTO — Requiere evaluación inmediata de ROS
             </p>
             <p style={{ color: 'var(--rojo)', fontSize: '0.9rem', marginTop: '4px' }}>
-              Score: {scores.inherente}/25 | Este caso amerita análisis para reporte de operación sospechosa a la UAFE
+              Puntaje de riesgo: {scores.inherente} de 25. Este caso requiere evaluar si corresponde
+              enviar un reporte de operación sospechosa (ROS) a la UAFE.
             </p>
           </div>
         </div>
@@ -156,12 +157,18 @@ export const Step4Analisis = ({
               <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Riesgo Inherente</p>
               <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{scores.inherente}/25</p>
               <p className={safeFirstClass(scores.colorClass)} style={{ fontWeight: '600' }}>{scores.nivel}</p>
+              <p className="text-xs text-muted" style={{ margin: '4px 0 0' }}>
+                El riesgo de la operación antes de aplicar los controles internos.
+              </p>
             </div>
-            
+
             <div style={{ padding: '15px', background: 'var(--bg-input)', borderRadius: '8px', borderLeft: `4px solid ${safeFirstClass(controlesResult.colorClass) === 'text-rojo' ? 'var(--rojo)' : 'var(--accent)'}` }}>
               <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Riesgo Residual</p>
               <p style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{controlesResult.residual}/25</p>
               <p className={safeFirstClass(controlesResult.colorClass)} style={{ fontWeight: '600' }}>{controlesResult.nivelResidual}</p>
+              <p className="text-xs text-muted" style={{ margin: '4px 0 0' }}>
+                El riesgo que queda después de aplicar los controles internos de la notaría.
+              </p>
             </div>
           </div>
 

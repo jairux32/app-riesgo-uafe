@@ -190,19 +190,45 @@ function AppContent() {
     const allCases = await getAllCases();
     const targets = allCases.filter(c => selectedIds.includes(c.id));
     setBatchProgress({ active: true, current: 0, total: targets.length });
+
+    // Un caso con datos incompletos no debe impedir que los demás se
+    // analicen: se registra el fallo y el lote continúa.
+    const fallidos = [];
+    let completados = 0;
+
     try {
       for (let i = 0; i < targets.length; i++) {
         const c = targets[i];
         setBatchProgress(prev => ({ ...prev, current: i + 1 }));
-        const ri = calculateInherentRisk(c.evaluaciones || {});
-        const rr = calculateResidualRisk(ri.inherente, c.controlesEval || {});
-        const prompt = buildPrompt(c.datos, ri, ri.factores, rr);
-        const analysis = await analizarConGemini(prompt);
-        await updateCaseAnalysis(c.id, analysis);
+        try {
+          const ri = calculateInherentRisk(c.evaluaciones || {});
+          const rr = calculateResidualRisk(ri.inherente, c.controlesEval || {});
+          const prompt = buildPrompt(c.datos, ri, ri.factores, rr);
+          const analysis = await analizarConGemini(prompt);
+          await updateCaseAnalysis(c.id, analysis);
+          completados += 1;
+        } catch (err) {
+          fallidos.push(c.datos?.cliente || 'caso sin nombre');
+          registrarEvento({
+            nivel: 'error',
+            origen: 'ia',
+            error: err,
+            contexto: { etapa: 'analisis_lote', posicion: i + 1, total: targets.length }
+          });
+        }
       }
-      toast.success(`Análisis completado para ${targets.length} casos.`);
-    } catch (err) {
-      toast.error('Error: ' + err.message);
+
+      if (fallidos.length === 0) {
+        toast.success(`Análisis completado para ${completados} caso(s).`);
+      } else if (completados === 0) {
+        toast.error('No se pudo analizar ningún caso. Verifique su conexión e inténtelo de nuevo.');
+      } else {
+        toast(
+          `Análisis completado para ${completados} caso(s). No se pudieron analizar ${fallidos.length}: ` +
+          `${fallidos.slice(0, 3).join(', ')}${fallidos.length > 3 ? '…' : ''}.`,
+          { icon: '⚠️', duration: 7000 }
+        );
+      }
     } finally {
       setBatchProgress({ active: false, current: 0, total: 0 });
     }

@@ -1,16 +1,28 @@
 /**
  * Sistema de Alertas Inteligentes
  * Detecta situaciones de riesgo operativo y genera alertas accionables
+ *
+ * Los mensajes se redactan en lenguaje de negocio: quien los lee es un
+ * notario, no un analista de datos. El puntaje de riesgo va de 0 a 25.
  */
 
 import { calculateInherentRisk } from './calculations';
 import { construirPerfilTransaccional, evaluarDesviaciones } from './perfilTransaccional';
 import { detectarDuplicados } from './sincronizacion';
+import { ESTADOS_CASO } from '../data/constants';
 
 const DIAS_ESTANCAMIENTO = 7;
 const DIAS_VENCIMIENTO_UAFE = 10; // Plazo para reportar desde aprobación (simulado)
 const SCORE_ALTO_RIESGO = 15;
 const SCORE_CRITICO = 20;
+
+/**
+ * Traduce el identificador interno del estado a la etiqueta que ve el usuario
+ * ("en_revision" -> "En Revisión"). Si el estado no existe, se muestra el
+ * identificador tal cual para no perder información.
+ */
+const etiquetaEstado = (id) =>
+  ESTADOS_CASO.find(estado => estado.id === id)?.label || id;
 
 /**
  * Genera alertas inteligentes basadas en el portfolio de casos
@@ -31,8 +43,8 @@ export function generarAlertas(cases) {
         prioridad: diasSinCambio >= 14 ? 'alta' : 'media',
         casoId: c.id,
         cliente: c.datos?.cliente || 'Sin nombre',
-        mensaje: `Caso en estado "${estado}" sin movimiento por ${diasSinCambio} días`,
-        accion: 'Revisar y avanzar estado',
+        mensaje: `No se mueve desde hace ${diasSinCambio} días y sigue en estado "${etiquetaEstado(estado)}"`,
+        accion: 'Revise el caso y actualice su estado',
         dias: diasSinCambio,
         fecha: updatedAt.toISOString()
       });
@@ -60,8 +72,8 @@ export function generarAlertas(cases) {
         tipo: 'recurrente_alto_riesgo',
         prioridad: maxScore >= SCORE_CRITICO ? 'alta' : 'media',
         cliente: data.nombre,
-        mensaje: `Cliente con ${casosAltos} casos de riesgo alto (máx: ${maxScore}/25)`,
-        accion: 'Revisar historial completo del cliente',
+        mensaje: `Este cliente tiene ${casosAltos} operaciones de riesgo alto (puntaje más alto: ${maxScore} de 25)`,
+        accion: 'Revise todo el historial del cliente',
         totalCasos: data.casos.length,
         casosAltos
       });
@@ -81,8 +93,8 @@ export function generarAlertas(cases) {
           prioridad: 'alta',
           casoId: c.id,
           cliente: c.datos?.cliente || 'Sin nombre',
-          mensaje: `Caso crítico (${risk.inherente}/25) sin reportar a UAFE hace ${diasDesdeCreacion} días`,
-          accion: 'Evaluar reporte ROS inmediato',
+          mensaje: `Operación de riesgo alto sin reportar a la UAFE desde hace ${diasDesdeCreacion} días (puntaje ${risk.inherente} de 25)`,
+          accion: 'Evalúe si corresponde enviar el reporte ROS',
           dias: diasDesdeCreacion,
           score: risk.inherente
         });
@@ -103,8 +115,8 @@ export function generarAlertas(cases) {
           prioridad: 'media',
           casoId: c.id,
           cliente: c.datos?.cliente || 'Sin nombre',
-          mensaje: 'Verificación en listas restrictivas incompleta para caso de riesgo alto',
-          accion: 'Completar verificación OFAC/ONU/UK/UAFE',
+          mensaje: 'Falta verificar este caso de riesgo alto en las listas restrictivas (OFAC, ONU, UK y UAFE)',
+          accion: 'Complete la verificación en las listas',
           score: risk.inherente
         });
       }
@@ -139,7 +151,7 @@ export function generarAlertas(cases) {
         casoId: caso.id,
         cliente: caso.datos?.cliente || 'Sin nombre',
         mensaje: evaluacion.alertas.map(a => a.mensaje).join(' '),
-        accion: 'Documentar el origen de la desviación o evaluar el ROS',
+        accion: 'Documente el motivo de la diferencia o evalúe el reporte ROS',
         desviaciones: evaluacion.alertas
       });
     });
@@ -152,8 +164,8 @@ export function generarAlertas(cases) {
       prioridad: 'media',
       casoId: grupo.casos[0]?.id,
       cliente: grupo.casos[0]?.cliente || 'Sin nombre',
-      mensaje: `${grupo.total} casos de "${grupo.acto}" para el mismo cliente en ${grupo.mes}`,
-      accion: 'Revisar si es un registro repetido y consolidar el expediente',
+      mensaje: `El mismo cliente tiene ${grupo.total} operaciones de "${grupo.acto}" en ${grupo.mes}`,
+      accion: 'Revise si es un registro repetido y consolide el expediente',
       casos: grupo.casos
     });
   });

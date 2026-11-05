@@ -81,9 +81,10 @@ export const GestionListasModal = ({ onClose, onCambio }) => {
         </div>
 
         <p className="text-sm text-muted" style={{ marginBottom: '16px' }}>
-          Importe el archivo oficial (CSV o JSON) de cada lista. El screening usa exactamente el
-          snapshot cargado y registra su versión, fecha y hash en la verificación.
-          Sin snapshot, el resultado es <strong>sin verificar</strong>, nunca &ldquo;limpio&rdquo;.
+          Importe el archivo oficial (CSV o JSON) de cada lista. La búsqueda de nombres usa exactamente
+          la versión que haya cargado y deja constancia de su versión, fecha y huella digital en cada
+          verificación. Si no hay ninguna versión cargada, el resultado es <strong>sin verificar</strong>,
+          nunca &ldquo;limpio&rdquo;.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -112,18 +113,18 @@ export const GestionListasModal = ({ onClose, onCambio }) => {
 
                 {meta ? (
                   <p className="text-xs text-muted" style={{ margin: '6px 0 10px' }}>
-                    {meta.total.toLocaleString('es-EC')} nombres · {meta.version} · {formatoFecha(meta.fecha)}
-                    {meta.hash ? ` · hash ${meta.hash.slice(0, 16)}` : ''}
+                    {meta.total.toLocaleString('es-EC')} nombres · versión {meta.version} · {formatoFecha(meta.fecha)}
+                    {meta.hash ? ` · huella digital ${meta.hash.slice(0, 16)}` : ''}
                   </p>
                 ) : (
                   <p className="text-xs" style={{ margin: '6px 0 10px', color: 'var(--txt2)' }}>
-                    Sin snapshot cargado.
+                    No hay ninguna versión de esta lista cargada.
                   </p>
                 )}
 
                 <div className="grid-2">
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label>Versión / nombre del archivo</label>
+                    <label>Versión o nombre del archivo</label>
                     <input
                       type="text"
                       className="input-field"
@@ -147,9 +148,10 @@ export const GestionListasModal = ({ onClose, onCambio }) => {
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => handleEliminar(tipo)}
-                          title="Eliminar snapshot"
+                          title="Quitar la versión cargada de esta lista"
+                          style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={14} /> Quitar
                         </button>
                       )}
                     </div>
@@ -166,7 +168,7 @@ export const GestionListasModal = ({ onClose, onCambio }) => {
         </div>
 
         <p className="text-xs text-muted" style={{ marginTop: '14px', marginBottom: 0 }}>
-          Los snapshots se guardan solo en este navegador (IndexedDB). Actualícelos periódicamente
+          Las listas se guardan solo en este navegador (IndexedDB). Actualícelas periódicamente
           y deje constancia de la versión usada en cada verificación.
         </p>
       </div>

@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import {
   UMBRAL_ROS,
   NIVELES_RIESGO,
+  COLORES_NIVEL_RIESGO,
+  colorDeNivel,
   scoreDeCaso,
   nivelDeScore,
   estadoReporteRos,
@@ -262,12 +266,54 @@ describe('describirCalidad', () => {
 
     const texto = describirCalidad(metricas);
     expect(texto).toContain('5 caso(s) evaluado(s)');
-    expect(texto).toContain('score promedio 15/25');
+    expect(texto).toContain('puntaje de riesgo promedio 15 de 25');
     expect(texto).toContain('posible(s) subestimación(es)');
+  });
+
+  it('no usa jerga técnica en el resumen', () => {
+    const metricas = calcularCalidadModelo([
+      caso('1', { inherentScore: 5 }),
+      caso('2', { inherentScore: 10 })
+    ], { hoy: '2026-10-26' });
+
+    const texto = describirCalidad(metricas);
+    expect(texto).not.toMatch(/score promedio/);
+    expect(texto).not.toMatch(/cobertura de IA/);
   });
 
   it('advierte cuando la muestra es pequeña', () => {
     const metricas = calcularCalidadModelo([caso('1', { inherentScore: 10 })], { hoy: '2026-10-26' });
     expect(describirCalidad(metricas)).toMatch(/demasiado pequeña/);
+  });
+});
+
+describe('fuente única de los niveles de riesgo', () => {
+  it('devuelve el color de cada nivel', () => {
+    expect(colorDeNivel(5)).toBe(COLORES_NIVEL_RIESGO.bajo);
+    expect(colorDeNivel(12)).toBe(COLORES_NIVEL_RIESGO.medio);
+    expect(colorDeNivel(17)).toBe(COLORES_NIVEL_RIESGO.medio_alto);
+    expect(colorDeNivel(22)).toBe(COLORES_NIVEL_RIESGO.alto);
+  });
+
+  it('ninguna pantalla reimplements los cortes de nivel a mano', () => {
+    const raiz = resolve(process.cwd(), 'src');
+    const carpetas = ['components', 'views'];
+    const archivos = [];
+
+    const recorrer = (dir) => {
+      readdirSync(dir).forEach(nombre => {
+        const ruta = join(dir, nombre);
+        if (statSync(ruta).isDirectory()) recorrer(ruta);
+        else if (ruta.endsWith('.jsx')) archivos.push(ruta);
+      });
+    };
+
+    carpetas.forEach(carpeta => recorrer(join(raiz, carpeta)));
+
+    // Patrones que copian los cortes de riesgo del motor en una pantalla.
+    const copias = /score\s*(<=|<|>=|>)\s*(8|14|19|20)\b/i;
+
+    const reincidentes = archivos.filter((ruta) => copias.test(readFileSync(ruta, 'utf8')));
+    expect(reincidentes).toEqual([]);
   });
 });

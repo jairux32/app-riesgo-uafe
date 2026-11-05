@@ -3,6 +3,7 @@ import { Search, X, User, MapPin, Mail, FileText, History } from 'lucide-react';
 import { searchClients } from '../utils/clientsDB';
 import { getAllCases } from '../utils/storage';
 import { calculateInherentRisk } from '../utils/calculations';
+import { nivelDeScore, colorDeNivel } from '../utils/calidadModelo';
 
 export const ClientSearchModal = ({ onSelect, onClose }) => {
   const [query, setQuery] = useState('');
@@ -222,8 +223,10 @@ export const ClientSearchModal = ({ onSelect, onClose }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {clientHistory.map((c) => {
                     const score = c.evaluaciones ? calculateInherentRisk(c.evaluaciones).inherente : 0;
-                    const nivel = score <= 8 ? 'BAJO' : score <= 14 ? 'MEDIO' : score <= 19 ? 'MEDIO-ALTO' : 'ALTO';
-                    const color = score <= 8 ? 'var(--verde)' : score <= 14 ? 'var(--amarillo)' : score <= 19 ? 'var(--naranja)' : 'var(--rojo)';
+                    // Los cortes de nivel vienen de la fuente única de verdad
+                    // (calidadModelo), no de una copia local.
+                    const nivel = nivelDeScore(score);
+                    const color = colorDeNivel(score);
                     return (
                       <div key={c.id} style={{
                         padding: '8px 10px', background: 'var(--bg-input)',
@@ -231,7 +234,9 @@ export const ClientSearchModal = ({ onSelect, onClose }) => {
                       }}>
                         <div className="flex justify-between">
                           <span>{c.datos?.acto || 'N/A'}</span>
-                          <span style={{ color, fontWeight: 'bold' }}>{score}/25 {nivel}</span>
+                          <span style={{ color, fontWeight: 'bold' }}>
+                            Riesgo {score} de 25 · {nivel.etiqueta}
+                          </span>
                         </div>
                         {c.createdAt && (
                           <p style={{ fontSize: '0.7rem', color: 'var(--txt2)', marginTop: '2px' }}>

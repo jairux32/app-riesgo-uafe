@@ -101,6 +101,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **Audit Trail**: `audit_logs` y `audit_heads` son server-only (`firestore.rules`). Se escriben desde `auditCaseChanges`; el cliente solo lee y debe filtrar por `userId`.
 - **Env Vars**: Configuración Firebase vía `import.meta.env.VITE_*` (ver `.env.example`). `VITE_LOG_ENDPOINT` habilita el envío de errores a `logClientError`.
 - **Risk Weights**: Los pesos de `FACTORES_SENALES_UAFE` suman 0,999; se normalizan por su suma real en el motor.
+- **Niveles de riesgo**: una sola fuente de verdad en `src/utils/calidadModelo.js` (`NIVELES_RIESGO`, `nivelDeScore`, `colorDeNivel`). Los cortes son Bajo 0-8, Medio 9-14, Medio-Alto 15-19, Alto 20-25. Las pantallas no deben reimplementarlos: `src/test/calidadModelo.test.js` falla si un `.jsx` de `src/components` o `src/views` vuelve a escribir los cortes a mano
 - **DDC/BF**: Checklist de debida diligencia (art. 47) bloqueante y beneficiario final (art. 92) para personas jurídicas, con cadena de propiedad editable y participación efectiva calculada; se incluye en el prompt, PDF, Excel, ROS y audit trail
 - **Workflow de reportes**: Panel en Step4 con plazos RESU/NO-RESU y ROS/NO-ROS, estados, responsable, fecha de envío y acuse
 - **Screening con snapshots**: Importación de listas OFAC/ONU/UK/PEP (CSV/JSON) con versión, fecha y SHA-256; sin snapshot el estado es `no_configurado`
@@ -121,7 +122,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - `tests/e2e/` se ejecuta solo con `npm run test:e2e` (Playwright + emuladores de Auth y Firestore); el CI tiene un job `e2e` independiente que bloquea el deploy.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, modeloIA, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport, monthlyReport (315 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, modeloIA, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport, monthlyReport (318 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
 - Tests e2e en `tests/e2e/` (4 tests): login, wizard completo, exportación PDF, persistencia del caso, reporte mensual y navegación del encabezado del wizard
 
