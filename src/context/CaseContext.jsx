@@ -202,18 +202,20 @@ export const CaseProvider = ({ children }) => {
       if (caseId && String(caseId).startsWith('pending_')) {
         const key = Number.parseInt(String(caseId).replace('pending_', ''), 10);
         const ok = await updatePendingCase(key, payload);
-        if (ok) toast.success('Caso actualizado localmente');
-        else toast.error('No se encontró el borrador local');
+        if (ok) toast.success('Caso guardado en localStorage. Se sincronizará cuando tengas conexión.');
+        else toast.error('No se encontró el borrador local; los cambios no se guardaron.');
       } else if (caseId) {
         const ok = await updateCase(caseId, payload);
-        if (ok) toast.success('Caso actualizado');
+        if (ok) toast.success('Caso actualizado en la nube.');
+        else toast.error('No se pudo actualizar el caso; inténtelo de nuevo.');
       } else {
         const saved = await saveCase(payload);
         if (saved?.id) setCaseId(saved.id);
-        if (saved) toast.success('Caso guardado');
+        if (saved) toast.success('Caso guardado localmente. Regresará a la nube al reconectarse.');
+        else toast.error('No se pudo guardar el caso; verifique su sesión e inténtelo de nuevo.');
       }
-    } catch (err) {
-      toast.error('Error al guardar: ' + err.message);
+    } catch {
+      toast.error('Error inesperado al guardar. Inténtelo de nuevo más tarde.');
     }
   }, [datos, evaluaciones, controlesEval, analysis, scores.inherente, caseId]);
 

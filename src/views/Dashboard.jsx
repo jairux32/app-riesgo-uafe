@@ -142,6 +142,9 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
   const factorData = getFactorAnalysis();
   const alertCases = getAlertCases();
 
+  // Umbral de riesgo Alto según motor: ≥20 sobre 25
+  const umbralAlto = 20;
+
   const getEstadoCounts = () => {
     const counts = {};
     ESTADOS_CASO.forEach(e => counts[e.id] = 0);
@@ -268,7 +271,7 @@ export const Dashboard = ({ onGenerateReport, ultimoReporte }) => {
           </div>
           <div style={{ padding: '20px', background: 'var(--bg-input)', borderRadius: '8px', textAlign: 'center', borderLeft: '4px solid var(--verde)' }}>
             <FileCheck size={32} color="var(--verde)" style={{ marginBottom: '10px' }} />
-            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{avgScore}/25</p>
+            <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{avgScore}/25 {avgScore >= umbralAlto ? '(Riesgo Alto)' : ''}</p>
             <p style={{ color: 'var(--txt2)', fontSize: '0.9rem' }}>Score Promedio</p>
           </div>
         </div>

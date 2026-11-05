@@ -150,10 +150,10 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
                         {SENALES_SIN_AUTOEVALUACION.includes(sub.id) && (
                           <span
                             className="text-xs"
-                            title="No se deduce del reporte importado: requiere revisión manual"
+                            title="Requiere revisión manual: entrevista con cliente o documento físico"
                             style={{
                               padding: '1px 6px', borderRadius: '8px', whiteSpace: 'nowrap',
-                              background: 'rgba(148,163,184,0.12)', color: 'var(--txt2)'
+                              background: 'rgba(148,163,184,0.12)', color: 'var(--txt2)', fontWeight: 'bold'
                             }}
                           >
                             manual
@@ -232,7 +232,7 @@ export const Step2Senales = ({ evaluaciones, setEvaluaciones, onNext, onPrev }) 
         <h3 className="text-sm text-muted mb-2">Plantillas rápidas</h3>
         <div className="flex gap-2 flex-wrap">
           <button className="btn btn-secondary btn-sm" onClick={() => applyTemplate('bajo')}>
-            Perfil Bajo
+            Casos bajo riesgo
           </button>
           <button className="btn btn-secondary btn-sm" onClick={() => applyTemplate('estandar')}>
             Perfil Estándar

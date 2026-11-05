@@ -90,6 +90,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **Legal Export**: PDF con dictamen formal, bloques de firma, ROS estructurado
 - **Offline**: caché persistente de Firestore (las escrituras se encolan y se envían al reconectar) más IndexedDB para los borradores creados sin conexión; la sincronización se atribuye al usuario que creó el borrador y es idempotente por `clientCaseId`
 - **Structured AI Output**: JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
+- **Usabilidad (lote inicial)**: textos de negocio sin jerga técnica (límite de efectivo, guardado, borrado), ayudas contextuales en los select de acto y medio de pago, "Casos bajo riesgo" en lugar de "Perfil Bajo", tooltip entendible en las señales manuales, "(Riesgo Alto)" junto al score del Dashboard y confirmaciones de borrado que nombran al cliente y advierten irreversibilidad. No altera reglas de negocio: el umbral de "Riesgo Alto" sigue siendo ≥20 (`calidadModelo.NIVELES_RIESGO`)
 
 ## Important Constraints
 - **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen. Al modificarlo, subir `LEGAL_CONTEXT_VERSION` en `functions/index.js`.
@@ -111,7 +112,7 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **Cash Limit**: Efectivo > 100 SBU (USD 48.200 con SBU 2026) bloquea el avance en `Step1Datos`.
 - **PII**: `data-local/` y `public/data/clientes.json` están en `.gitignore`. No publicar bases de clientes en Hosting.
 - **Build Output**: `dist/` se despliega en Firebase Hosting.
-- **Dependencias**: Excel se lee y se escribe con `exceljs`, importado dinámicamente para no cargarlo en el bundle inicial; solo admite `.xlsx` (el formato antiguo `.xls` debe convertirse antes). `.npmrc` fija `legacy-peer-deps=true` por el peer opcional `canvas` de jsdom. `overrides` en `package.json` (incluido `uuid`) mantiene `npm audit` en 0 (frontend y `functions/`). `react-router-dom` y `react-is` son dependencias directas: no quitarlas.
+- **Dependencias**: Excel se lee y se escribe con `exceljs`, importado dinámicamente para no cargarlo en el bundle inicial; solo admite `.xlsx` (el formato antiguo `.xls` debe convertirse antes). `.npmrc` fija `legacy-peer-deps=true` por el peer opcional `canvas` de jsdom. `overrides` en `package.json` (incluido `uuid`) mantiene `npm audit` en 0 (frontend y `functions/`). Además `minimatch@^11.0.4` (frontend y `functions/`) y `glob@^14.0.3` (`functions/`) parchean las advisories GHSA-g3hv-75wg-m249 y GHSA-3g3m-2fjr-6pw4; son transitivas de eslint y de google-gax, no de código propio. `react-router-dom` y `react-is` son dependencias directas: no quitarlas.
 
 ## Lint & Quality
 - Run `npm run lint` before commits. Config in `eslint.config.js`.

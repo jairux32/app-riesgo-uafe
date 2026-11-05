@@ -187,7 +187,7 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
     loadProfile();
     return () => { cancelled = true; };
   }, [user, setDatos, datos.notaria, datos.notario]);
-  // Plantillas por tipo de acto
+  // Plantillas por tipo de acto (ordenadas por frecuencia y categoría principal)
   const applyTemplate = (acto) => {
     const templates = {
       'Compraventa inmueble': { valor: 50000, medioPago: 'Transferencia', origen: 'Venta de bienes / Ahorro', actividad: 'Comerciante / Profesional' },
@@ -734,6 +734,9 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
               <option value="Declaración juramentada">Declaración juramentada</option>
               <option value="Otro">Otro</option>
             </select>
+            <p className="text-xs text-muted mt-1">
+              Principales tipos: Compraventa (bienes raíces), Constitución (empresas), Poder (representación), Fideicomiso (patrimonio), Declaración (formalidades). Use «Otro» para los casos no clasificados.
+            </p>
           </div>
           <div className="form-group">
             <label>Valor de la operación (USD)</label>
@@ -759,6 +762,9 @@ export const Step1Datos = ({ datos, setDatos, setEvaluaciones, setControlesEval,
               <option value="Mixto">Mixto</option>
               <option value="N/A">N/A</option>
             </select>
+            <p className="text-xs text-muted mt-1">
+              Efectivo: dinero en efectivo (máximo $48.200, 100 SBU 2026). Transferencia: por sistema bancario. Cheque: documento escrito. Mixto: combinación de efectivo y electrónico. N/A: no aplica.
+            </p>
             {!validacionMedioPago.valido && (
               <p className="text-sm mt-2" style={{ color: 'var(--rojo)', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
                 <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />

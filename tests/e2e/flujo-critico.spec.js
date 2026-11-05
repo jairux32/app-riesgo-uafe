@@ -64,8 +64,8 @@ const completarWizard = async (page, opciones = {}) => {
   await completarPaso1(page, opciones);
 
   // Paso 2: la plantilla completa las 56 señales de una vez.
-  await expect(page.getByRole('button', { name: 'Perfil Bajo' })).toBeVisible();
-  await page.getByRole('button', { name: 'Perfil Bajo' }).click();
+  await expect(page.getByRole('button', { name: 'Casos bajo riesgo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Casos bajo riesgo' }).click();
   await page.getByRole('button', { name: 'Siguiente Paso' }).click();
 
   // Paso 3: se evalúan los 10 controles internos.

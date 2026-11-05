@@ -122,6 +122,23 @@ La Function no exige sesión —un error puede ocurrir antes del login— pero v
 
 `analyzeCase` registra además una traza por llamada: resultado (`ok`, `rechazado`, `error_proveedor`, `sin_contenido`, `excepcion`), motivo, código HTTP, modelo, versión del prompt y duración. No registra el contenido del prompt ni del dictamen.
 
+## Usabilidad
+
+La interfaz está pensada para personal con baja alfabetización digital: textos de negocio, sin jerga técnica, y mensajes que explican qué hacer en lugar de solo qué falló. Cambios aplicados:
+
+| Área | Antes | Ahora |
+|---|---|---|
+| Límite de efectivo (Step1) | "No se puede elevar la escritura con ese medio de pago" | "El efectivo supera los $48.200 (100 SBU 2026). Use transferencia o tarjeta para operaciones mayores." |
+| Select "acto" (Step1) | Sin explicación | Ayuda con los tipos principales y qué elegir en "Otro" |
+| Select "medio de pago" (Step1) | Solo las opciones | Explicación de efectivo, transferencia, cheque, mixto y N/A, con el tope de $48.200 |
+| Plantillas de señales (Step2) | "Perfil Bajo" | "Casos bajo riesgo" (cambia la redacción de los tres botones: "Casos bajo riesgo", "Perfil estándar", "Perfil alto") |
+| Señales manuales (Step2) | Tooltip técnico | "Requiere revisión manual: entrevista con cliente o documento físico", en negrita |
+| Score promedio (Dashboard) | "12/25" | Añade "(Riesgo Alto)" cuando el promedio alcanza el corte de 20 |
+| Guardado del caso | "Caso guardado" | Distingue nube, local sin conexión y error, con la acción sugerida |
+| Borrado de casos | "¿Eliminar este caso?" | Muestra el nombre del cliente, advierte que es irreversible y aclara que el registro de auditoría se conserva; el borrado por lote usa el mismo lenguaje |
+
+Las confirmaciones de borrado nunca incluyen datos del cliente en la observabilidad: el evento solo registra la etapa (`eliminar_caso` / `eliminar_casos_lote`).
+
 ## CI
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 

@@ -352,6 +352,7 @@ Scheduler diario → Cloud Function de ingesta
 - ~~Ampliar el parser a las 56 señales o declarar explícitamente las no soportadas~~: 36 auto-evaluadas con motivo y 20 declaradas manuales.
 - ~~Módulo de beneficiario final con cadena de propiedad~~: implementado con participación efectiva, umbral del 10% y fallback al gerente de mayor rango.
 - ~~Módulo de cumplimiento: código SISLAFT, OC, Manual y EBR anual con alertas de vencimiento~~: implementado en el perfil y el Dashboard; solo alerta, no bloquea.
+- ~~Usabilidad para personal con baja alfabetización digital (lote inicial)~~: textos de negocio sin jerga técnica, ayudas contextuales en los select de acto y medio de pago, "Casos bajo riesgo", tooltip entendible en las señales manuales, "(Riesgo Alto)" junto al score, mensajes de guardado que distinguen nube/local/error y confirmaciones de borrado que nombran al cliente y advierten irreversibilidad. Queda pendiente la validación con usuarios reales (fase 4 del plan UX).
 
 ### P2 — 3–12 meses
 
@@ -447,6 +448,8 @@ Aplicado en los commits posteriores a `c1af54c`, de `e909d25` a `fba57c2` y el c
 | RESU/NO-RESU y ROS/NO-ROS como workflow | **Corregido (parcial)** | Panel en Step4 con plazo calculado, estados, responsable, fecha de envío y acuse; falta integración con SISLAFT |
 | Código SISLAFT, OC, Manual, EBR y capacitación | **Corregido** | `cumplimiento.js` evalúa vigencia anual y alerta vencimientos en el perfil y el Dashboard; la capacitación tiene registro detallado con evidencia y hash. No bloquea operaciones |
 | Reporte mensual incoherente | **Corregido** | Filtra por el mes local de `createdAt` (no el mes actual sobre todos los casos), usa los cortes reales de nivel (ALTO ≥20), distingue casos sin evaluar, pagina la tabla completa y resume RESU/NO-RESU y ROS/NO-ROS; el recordatorio se marca solo tras una generación exitosa |
+| Interfaz con jerga y acciones ambiguas | **Corregido (lote inicial)** | Mensajes de negocio sin tecnicismos (límite de efectivo, guardado, borrado), ayudas contextuales en los select de acto y medio de pago, "Perfil Bajo" → "Casos bajo riesgo", tooltip entendible en las señales manuales, indicador "(Riesgo Alto)" junto al score promedio del Dashboard y confirmación de borrado que nombra al cliente y aclara que el audit trail se conserva. No se alteró ninguna regla de negocio |
+| Dependencias transitivas con advisories nuevas | **Corregido** | `minimatch` (GHSA-g3hv-75wg-m249) y `glob` (GHSA-3g3m-2fjr-6pw4) parcheados vía `overrides`: `minimatch@^11.0.4` en el frontend y en `functions/`, `glob@^14.0.3` en `functions/`. `npm audit` en 0 en ambos |
 
 **Acciones inmediatas recomendadas tras el despliegue de estas correcciones:**
 

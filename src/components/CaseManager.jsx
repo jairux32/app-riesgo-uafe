@@ -4,6 +4,7 @@ import { Save, FolderOpen, Trash2, X, PlayCircle, Search, AlertTriangle, ShieldC
 import { getAllCases, deleteCase } from '../utils/storage';
 import { exportMultipleToExcel } from '../utils/exportUtils';
 import { calculateInherentRisk } from '../utils/calculations';
+import { registrarEvento } from '../utils/observabilidad';
 import { useCase } from '../context/CaseContext';
 import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
 
@@ -165,10 +166,27 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
-    if (window.confirm('¿Eliminar este caso del historial?')) {
+    const caso = cases.find(c => c.id === id);
+    const nombre = caso?.datos?.cliente || 'este caso';
+    const confirmado = window.confirm(
+      `¿Eliminar "${nombre}" del historial?\n\n` +
+      'Se borrará de forma permanente y no podrá recuperarse. ' +
+      'El registro de auditoría del sistema se conserva.'
+    );
+    if (!confirmado) return;
+
+    try {
       await deleteCase(id);
       await loadHistory();
-      toast.success('Caso eliminado');
+      toast.success(`Caso de "${nombre}" eliminado.`);
+    } catch (err) {
+      registrarEvento({
+        nivel: 'error',
+        origen: 'historial',
+        error: err,
+        contexto: { etapa: 'eliminar_caso' }
+      });
+      toast.error('No se pudo eliminar el caso. Inténtelo de nuevo en un momento.');
     }
   };
 
@@ -187,16 +205,32 @@ export const CaseManager = ({ onLoadCase, onBatchAnalyze, batchProgress }) => {
   };
 
   const handleBatchDelete = async () => {
-    if (!window.confirm(`¿Eliminar ${selectedIds.length} casos seleccionados? Esta acción no se puede deshacer.`)) return;
+    if (selectedIds.length === 0) return;
+
+    const confirmado = window.confirm(
+      `¿Eliminar ${selectedIds.length} caso(s) seleccionado(s)?\n\n` +
+      'Se borrarán de forma permanente y no podrán recuperarse. ' +
+      'El registro de auditoría del sistema se conserva.'
+    );
+    if (!confirmado) return;
+
+    const total = selectedIds.length;
     try {
       for (const id of selectedIds) {
         await deleteCase(id);
       }
       setSelectedIds([]);
       await loadHistory();
-      toast.success(`${selectedIds.length} casos eliminados`);
+      toast.success(`${total} caso(s) eliminado(s).`);
     } catch (err) {
-      toast.error('Error al eliminar casos: ' + err.message);
+      registrarEvento({
+        nivel: 'error',
+        origen: 'historial',
+        error: err,
+        contexto: { etapa: 'eliminar_casos_lote' }
+      });
+      toast.error('No se pudieron eliminar todos los casos. Inténtelo de nuevo en un momento.');
+      await loadHistory();
     }
   };
 

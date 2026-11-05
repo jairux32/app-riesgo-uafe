@@ -24,7 +24,7 @@ export const validarMedioPago = (valor, medioPago, opciones = {}) => {
     return {
       valido: false,
       motivo: 'excede_efectivo',
-      mensaje: `El efectivo supera el límite legal de 100 SBU (USD ${limiteEfectivo.toLocaleString('es-EC')}). No se puede elevar la escritura con ese medio de pago.`
+      mensaje: `El efectivo supera los $${limiteEfectivo.toLocaleString('es-EC')} (100 SBU 2026). Use transferencia o tarjeta para operaciones mayores.`
     };
   }
 
