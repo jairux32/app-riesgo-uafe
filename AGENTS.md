@@ -90,7 +90,8 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - **Legal Export**: PDF con dictamen formal, bloques de firma, ROS estructurado
 - **Offline**: caché persistente de Firestore (las escrituras se encolan y se envían al reconectar) más IndexedDB para los borradores creados sin conexión; la sincronización se atribuye al usuario que creó el borrador y es idempotente por `clientCaseId`
 - **Structured AI Output**: JSON con schema de 11 secciones (dictamen, señales, fundamento legal, obligaciones, etc.)
-- **Usabilidad (lote inicial)**: textos de negocio sin jerga técnica (límite de efectivo, guardado, borrado), ayudas contextuales en los select de acto y medio de pago, "Casos bajo riesgo" en lugar de "Perfil Bajo", tooltip entendible en las señales manuales, "(Riesgo Alto)" junto al score del Dashboard y confirmaciones de borrado que nombran al cliente y advierten irreversibilidad. No altera reglas de negocio: el umbral de "Riesgo Alto" sigue siendo ≥20 (`calidadModelo.NIVELES_RIESGO`)
+- **Usabilidad (lote inicial)**: textos de negocio sin jerga técnica (límite de efectivo, guardado, borrado), ayudas contextuales en los select de acto y medio de pago, "Casos bajo riesgo" en lugar de "Perfil Bajo", tooltip entendible en las señales manuales, "(Riesgo Alto)" junto al score del Dashboard, confirmaciones de borrado que nombran al cliente y advierten irreversibilidad, glosario RESU/NO-RESU/ROS/NO-ROS con el fundamento legal visible, y un encabezado de wizard que dice "Paso X de 4" con la ayuda del paso y avisa cuando se salta un paso intermedio. No altera reglas de negocio: el umbral de "Riesgo Alto" sigue siendo ≥20 (`calidadModelo.NIVELES_RIESGO`)
+- **Trazabilidad del modelo de IA**: el proveedor real es Groq (`llama-3.3-70b-versatile`), no Gemini. `MODELO_IA` y `PROVEEDOR_IA` viven en `src/data/constants.js` y el test `src/test/modeloIA.test.js` falla si divergen de `GROQ_MODEL` en `functions/index.js`, porque el nombre del modelo queda en el PDF, el Excel y el audit trail
 
 ## Important Constraints
 - **Legal Context**: `CONTEXTO_LEGAL_COMPLETO_ECUADOR` vive en `src/data/constants.js` y se replica en `functions/legalContext.js`. Se inyecta server-side como system prompt; el test `src/test/legalContext.test.js` falla si divergen. Al modificarlo, subir `LEGAL_CONTEXT_VERSION` en `functions/index.js`.
@@ -120,9 +121,9 @@ npm run test:e2e   # Flujo e2e con Playwright y emuladores (requiere Java)
 - CI (`.github/workflows/`): Node 22, `npm ci`, lint, tests, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y build; el deploy de Hosting espera a que pase el job `quality`.
 - `tests/rules/firestore.rules.test.js` se ejecuta solo con `npm run test:rules` (emulador de Firestore y Java); no forma parte de `npm test`.
 - `tests/e2e/` se ejecuta solo con `npm run test:e2e` (Playwright + emuladores de Auth y Firestore); el CI tiene un job `e2e` independiente que bloquea el deploy.
-- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport, monthlyReport (311 tests)
+- Tests en `src/test/`: validators, calculations, sanctionsCheck, legalContext, modeloIA, auditValidator, obligaciones, cumplimiento, listasDB, excelParser, beneficiarioFinal, revisionCoincidencias, evidencias, perfilTransaccional, capacitacion, calidadModelo, purgaEvidencias, sincronizacion, observabilidad, excelExport, monthlyReport (315 tests)
 - Tests de reglas en `tests/rules/` (13 tests): aislamiento por usuario, filtro `userId` y audit trail server-only
-- Tests e2e en `tests/e2e/` (3 tests): login, wizard completo, exportación PDF, persistencia del caso y reporte mensual
+- Tests e2e en `tests/e2e/` (4 tests): login, wizard completo, exportación PDF, persistencia del caso, reporte mensual y navegación del encabezado del wizard
 
 ## Testing
 - `src/test/setup.js` — Setup de vitest + jest-dom

@@ -266,6 +266,12 @@ export const SBU_POR_ANIO = {
 
 export const SBU_VIGENTE = SBU_POR_ANIO[2026];
 
+// Modelo de IA que produce el dictamen. Debe coincidir con GROQ_MODEL en
+// `functions/index.js`: el test `src/test/modeloIA.test.js` falla si divergen,
+// porque el nombre del modelo queda en el PDF, el Excel y el audit trail.
+export const MODELO_IA = 'llama-3.3-70b-versatile';
+export const PROVEEDOR_IA = 'Groq';
+
 // Ley Notarial art. 20.8: prohibido recibir efectivo por más de 100 SBU.
 export const LIMITE_EFECTIVO_SBU = 100;
 export const LIMITE_EFECTIVO_USD = LIMITE_EFECTIVO_SBU * SBU_VIGENTE; // 48.200
@@ -549,12 +555,6 @@ export async function cargarCatalogo(nombre) {
     return [];
   }
 }
-
-// JSON Schema constants for Gemini API structured responses
-export const GEMINI_JSON_CONFIG = {
-  responseMimeType: "application/json",
-  maxOutputTokens: 8192
-};
 
 // Decision enum values for recommendation
 export const RECOMMENDATION_DECISIONS = {

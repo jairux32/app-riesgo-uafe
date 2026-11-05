@@ -23,6 +23,30 @@ const ETIQUETAS_TONO = {
 const ESTADOS_COMPLETADOS = ['enviado', 'acuse_recibido', 'no_aplica'];
 
 /**
+ * Guía rápida de las siglas. Describe la función de cada reporte tal como la
+ * calcula el sistema (plazos y umbrales de `obligaciones.js`), sin inventar
+ * expansiones de las siglas: RESU y ROS son los nombres oficiales.
+ */
+const GUIA_REPORTES = [
+  {
+    sigla: 'RESU',
+    texto: 'Reporte de las operaciones de la notaría ante la UAFE. Corresponde cuando la operación es de USD 10.000 o más; se presenta dentro de los primeros 15 días del mes siguiente.'
+  },
+  {
+    sigla: 'NO-RESU',
+    texto: 'Constancia de que en el mes no hubo operaciones de USD 10.000 o más; se presenta dentro de los 10 días siguientes al cierre del mes.'
+  },
+  {
+    sigla: 'ROS',
+    texto: 'Reporte de operación sospechosa ante la UAFE. Corresponde cuando el caso amerita revisión por señales de alerta; se presenta dentro de los 5 días desde que se tuvo conocimiento, con 3 días de prórroga.'
+  },
+  {
+    sigla: 'NO-ROS',
+    texto: 'Constancia de que en el mes no hubo operaciones sospechosas; se presenta dentro de los 10 días siguientes al cierre del mes.'
+  }
+];
+
+/**
  * Seguimiento de las obligaciones de reporte ante SISLAFT (ROS/NO-ROS y
  * RESU/NO-RESU). Calcula plazos sugeridos y permite registrar estado,
  * responsable, fecha de envío y acuse. El usuario puede ajustar las fechas.
@@ -71,10 +95,16 @@ export const ObligacionesPanel = ({ datos, setDatos, scores, analysisResult, cas
           || new Date().toISOString().slice(0, 10)
       }
     };
-    const ok = await updateCase(caseId, { reportes: reportesAGuardar });
-    setGuardando(false);
 
-    if (ok) toast.success('Seguimiento de reportes guardado');
+    try {
+      const ok = await updateCase(caseId, { reportes: reportesAGuardar });
+      if (ok) toast.success('Seguimiento de reportes guardado.');
+      else toast.error('No se pudo guardar el seguimiento. Inténtelo de nuevo en un momento.');
+    } catch {
+      toast.error('No se pudo guardar el seguimiento. Inténtelo de nuevo en un momento.');
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
@@ -85,6 +115,19 @@ export const ObligacionesPanel = ({ datos, setDatos, scores, analysisResult, cas
       <p className="text-sm text-muted" style={{ marginBottom: '14px' }}>
         Plazos calculados según la operación y el dictamen. Ajuste las fechas si el conocimiento del caso ocurrió en otra fecha.
       </p>
+
+      <details style={{ marginBottom: '16px' }}>
+        <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--txt2)' }}>
+          ¿Qué es RESU, NO-RESU, ROS y NO-ROS?
+        </summary>
+        <ul style={{ margin: '10px 0 0', paddingLeft: '18px', fontSize: '0.85rem', color: 'var(--txt2)', lineHeight: '1.6' }}>
+          {GUIA_REPORTES.map(item => (
+            <li key={item.sigla}>
+              <strong style={{ color: 'var(--txt)' }}>{item.sigla}</strong>: {item.texto}
+            </li>
+          ))}
+        </ul>
+      </details>
 
       <div className="grid-2">
         {['resu', 'ros'].map((clave) => {
@@ -116,6 +159,12 @@ export const ObligacionesPanel = ({ datos, setDatos, scores, analysisResult, cas
               <p className="text-xs text-muted" style={{ margin: 0 }}>
                 {reporte.descripcion}
               </p>
+
+              {reporte.fundamento && (
+                <p className="text-xs text-muted" style={{ margin: 0 }}>
+                  Norma: {reporte.fundamento}
+                </p>
+              )}
 
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>Estado</label>
@@ -166,7 +215,7 @@ export const ObligacionesPanel = ({ datos, setDatos, scores, analysisResult, cas
 
               {reporte.fechaLimiteProrroga && (
                 <p className="text-xs text-muted" style={{ margin: 0 }}>
-                  Prórroga máxima: {reporte.fechaLimiteProrroga}
+                  Puede pedir prórroga hasta el {reporte.fechaLimiteProrroga} (3 días adicionales).
                 </p>
               )}
 
@@ -177,8 +226,11 @@ export const ObligacionesPanel = ({ datos, setDatos, scores, analysisResult, cas
                   className="input-field"
                   value={reporte.acuse || ''}
                   onChange={(e) => actualizar(clave, { acuse: e.target.value })}
-                  placeholder="Opcional"
+                  placeholder="Opcional. Ej.: SISLAFT-2026-00123"
                 />
+                <p className="text-xs text-muted" style={{ margin: '4px 0 0' }}>
+                  Escriba el número de oficio o el acuse que SISLAFT devolvió al presentar el reporte.
+                </p>
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>

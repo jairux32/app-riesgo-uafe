@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Bot, FileText, Download, Printer, RefreshCw, AlertTriangle, Pen, Tag, Shield } from 'lucide-react';
 import { getEstadoVerificacionStyle } from '../utils/sanctionsCheck';
-import { ESTADOS_CASO, TAGS_PREDEFINIDOS } from '../data/constants';
+import { ESTADOS_CASO, TAGS_PREDEFINIDOS, MODELO_IA, PROVEEDOR_IA } from '../data/constants';
 import { exportToPDF, exportToExcel, exportROSPDF } from '../utils/exportUtils';
 import { buildPrompt, analizarConGemini } from '../utils/geminiApi';
 import { useAuth } from '../context/AuthContext';
@@ -234,7 +234,7 @@ export const Step4Analisis = ({
 
       <div className="card">
         <h2 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)' }}>
-          <Bot size={24} /> Análisis de IA (Gemini)
+          <Bot size={24} /> Análisis de IA
         </h2>
 
         {!analysisResult && !isLoading && (
@@ -244,29 +244,40 @@ export const Step4Analisis = ({
               <Bot size={20} /> Generar Análisis con IA
             </button>
             <p style={{ fontSize: '0.75rem', color: 'var(--txt2)', marginTop: '10px' }}>
-              Gemini 2.5 Flash · Procesamiento seguro en servidor
+              {MODELO_IA} ({PROVEEDOR_IA}) · Procesamiento seguro en servidor
             </p>
           </div>
         )}
 
         {isLoading && (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
-            <div style={{ 
-              width: '40px', height: '40px', border: '4px solid var(--bg-input)', 
-              borderTop: '4px solid var(--accent)', borderRadius: '50%', 
+            <div style={{
+              width: '40px', height: '40px', border: '4px solid var(--bg-input)',
+              borderTop: '4px solid var(--accent)', borderRadius: '50%',
               animation: 'spin 1s linear infinite', margin: '0 auto 20px'
             }}></div>
-            <p>Gemini está analizando el caso bajo la normativa ecuatoriana...</p>
-
+            <p style={{ fontWeight: '600' }}>La IA está analizando el caso según la normativa ecuatoriana...</p>
+            <p className="text-sm text-muted" style={{ marginTop: '8px' }}>
+              Revisa las señales de alerta, los controles internos y los plazos. Suele tardar entre 10 y 30 segundos.
+            </p>
+            <p className="text-xs text-muted" style={{ marginTop: '12px' }}>
+              No cierre ni recargue la página mientras se genera el dictamen.
+            </p>
           </div>
         )}
 
         {error && (
-          <div style={{ padding: '15px', background: 'var(--rojo)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertTriangle size={20} />
+          <div role="alert" style={{ padding: '15px', background: 'var(--rojo)', color: 'white', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+            <AlertTriangle size={20} style={{ flexShrink: 0 }} />
             <div>
-              <p style={{ fontWeight: 'bold' }}>Error al conectar con Gemini</p>
-              <p style={{ fontSize: '0.9rem' }}>{error}</p>
+              <p style={{ fontWeight: 'bold' }}>No se pudo completar el análisis de IA</p>
+              <p style={{ fontSize: '0.9rem' }}>
+                Verifique su conexión a internet e inténtelo de nuevo. Si el problema continúa, copie el detalle técnico para reportarlo.
+              </p>
+              <details style={{ marginTop: '8px' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '0.8rem' }}>Detalle técnico</summary>
+                <p style={{ fontSize: '0.8rem', marginTop: '6px', wordBreak: 'break-word' }}>{error}</p>
+              </details>
             </div>
           </div>
         )}

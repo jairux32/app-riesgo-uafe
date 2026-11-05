@@ -1,6 +1,8 @@
 /**
  * Transform structured JSON audit response into display-ready format
  */
+import { MODELO_IA } from '../data/constants';
+
 export const transformAuditForDisplay = (auditData) => {
   if (!auditData) return null;
 
@@ -9,7 +11,8 @@ export const transformAuditForDisplay = (auditData) => {
     header: {
       fecha: auditData.meta?.fecha_analisis || new Date().toISOString(),
       confianza: auditData.meta?.confianza_global || 0,
-      modelo: auditData.meta?.modelo_ia || 'gemini-2.5-flash'
+      // Sin el dato del modelo, se registra el que realmente usa la Function.
+      modelo: auditData.meta?.modelo_ia || MODELO_IA
     },
 
     // Risk levels for display

@@ -136,14 +136,19 @@ La interfaz está pensada para personal con baja alfabetización digital: textos
 | Score promedio (Dashboard) | "12/25" | Añade "(Riesgo Alto)" cuando el promedio alcanza el corte de 20 |
 | Guardado del caso | "Caso guardado" | Distingue nube, local sin conexión y error, con la acción sugerida |
 | Borrado de casos | "¿Eliminar este caso?" | Muestra el nombre del cliente, advierte que es irreversible y aclara que el registro de auditoría se conserva; el borrado por lote usa el mismo lenguaje |
+| Panel de obligaciones (Step4) | Solo siglas y plazos | Glosario de RESU/NO-RESU/ROS/NO-ROS en lenguaje de negocio, la norma que sustenta cada reporte y la prórroga explicada |
+| Análisis de IA (Step4) | "Gemini 2.5 Flash" | El modelo real (`llama-3.3-70b-versatile`, Groq), mensaje de espera con el tiempo aproximado y error con detalle técnico plegable |
+| Encabezado del wizard | Círculos sin contexto | "Paso X de 4", qué hacer en el paso actual y aviso cuando se salta un paso intermedio |
 
 Las confirmaciones de borrado nunca incluyen datos del cliente en la observabilidad: el evento solo registra la etapa (`eliminar_caso` / `eliminar_casos_lote`).
+
+El modelo de IA se define una sola vez en `src/data/constants.js` (`MODELO_IA`, `PROVEEDOR_IA`) y `src/test/modeloIA.test.js` falla si deja de coincidir con `GROQ_MODEL` en `functions/index.js`: el nombre del modelo queda en el dictamen, el PDF, el Excel y el audit trail.
 
 ## CI
 Los workflows de `.github/workflows/` ejecutan con Node 22: `npm ci`, `npm run lint`, `npm test`, tests de reglas con el emulador, `npm audit` (frontend y `functions/`) y `npm run build`. Un job aparte (`e2e`) instala Chromium, levanta los emuladores de Auth y Firestore y corre Playwright. El deploy a Firebase Hosting espera a que pasen `quality` y `e2e`.
 
 ## Testing
-Tests con **vitest** + **@testing-library/react** (311 tests de unidad):
+Tests con **vitest** + **@testing-library/react** (315 tests de unidad):
 - `src/test/validators.test.js` — Cédula/RUC/pasaporte, límite de efectivo y DDC/BF
 - `src/test/monthlyReport.test.js` — Periodo mensual local, niveles, obligaciones y casos sin evaluar
 - `src/test/obligaciones.test.js` — Plazos RESU/NO-RESU y ROS/NO-ROS
@@ -162,13 +167,14 @@ Tests con **vitest** + **@testing-library/react** (311 tests de unidad):
 - `src/test/excelExport.test.js` — Exportación del dictamen y del resumen, verificada releyendo el .xlsx
 
 ### Flujo e2e
-`npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, guardar el caso y verlo reflejado en el Dashboard, y generar el reporte mensual ocultando el recordatorio. La IA no se prueba: la Cloud Function no corre en local.
+`npm run test:e2e` compila la app, la sirve con `vite preview` y ejecuta Playwright contra los emuladores de Firebase (Auth y Firestore), sin tocar el proyecto real. Cubre el flujo crítico: iniciar sesión, completar los cuatro pasos del wizard y exportar el dictamen en PDF, guardar el caso y verlo reflejado en el Dashboard, generar el reporte mensual ocultando el recordatorio, y la navegación del encabezado del wizard (paso actual, aviso al saltarse un paso y marca de los pasos recorridos). La IA no se prueba: la Cloud Function no corre en local.
 
 ### Reglas de Firestore
 `npm run test:rules` levanta el emulador con `firebase emulators:exec` (vía `npx`, requiere Java) y ejecuta 13 pruebas en `tests/rules/`: aislamiento de casos y perfiles por usuario, filtro obligatorio `userId` en listados, y prohibición de que el cliente escriba `audit_logs` o `audit_heads`.
 - `src/test/calculations.test.js` — Cálculos de riesgo inherente/residual
 - `src/test/sanctionsCheck.test.js` — Búsqueda fuzzy en listas restrictivas
 - `src/test/legalContext.test.js` — Consistencia del contexto legal cliente/servidor
+- `src/test/modeloIA.test.js` — El modelo de IA del cliente coincide con el de la Cloud Function
 - `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA
 
 ## Despliegue

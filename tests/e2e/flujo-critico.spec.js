@@ -131,3 +131,23 @@ test('genera el reporte mensual y oculta el recordatorio', async ({ page, reques
   expect(await archivo.path()).toBeTruthy();
   await expect(page.getByText('Reporte mensual pendiente')).toBeHidden();
 });
+
+test('el encabezado del wizard indica el paso actual y avisa al saltarse pasos', async ({ page, request }) => {
+  await asegurarUsuario(request);
+  await iniciarSesion(page);
+
+  // El encabezado dice en qué paso está el usuario y qué debe hacer.
+  await expect(page.getByText('Paso 1 de 4')).toBeVisible();
+  await expect(page.getByText('Capture los datos del cliente y de la operación.')).toBeVisible();
+
+  const encabezado = page.locator('.card').filter({ has: page.getByText(/Paso \d de 4/) }).first();
+  await expect(encabezado.locator('svg.lucide-check')).toHaveCount(0);
+
+  // Saltar al paso 3 sin pasar por el 2 no se bloquea, pero se advierte.
+  await page.getByRole('button', { name: /Controles Internos/i }).click();
+  await expect(page.getByText(/Va al paso 3 sin pasar por/)).toBeVisible();
+  await expect(page.getByText('Paso 3 de 4')).toBeVisible();
+
+  // Solo el paso 1 quedó marcado como recorrido: el 2 se saltó.
+  await expect(encabezado.locator('svg.lucide-check')).toHaveCount(1);
+});
