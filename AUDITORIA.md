@@ -460,6 +460,8 @@ Aplicado en los commits posteriores a `c1af54c`, de `e909d25` a `fba57c2` y el c
 2. Desplegar `firestore.rules` y las Functions juntas: el cliente ya envía el token, pero una Function vieja seguiría aceptando llamadas sin él.
 3. Configurar `ALLOWED_ORIGINS` con el dominio real de la notaría.
 
+**Estado del despliegue (2026-11-05):** Hosting y reglas de Firestore publicados en `app-riesgo-uafe` (la app sirve con el lote de usabilidad completo). Las **Cloud Functions no se pudieron desplegar**: el proyecto no tiene billing (plan Blaze) activo y Secret Manager responde `403 requires billing to be enabled`. Como consecuencia, `analyzeCase` está publicada pero no se ejecuta (responde 500/503) y `logClientError` no existe. Requiere: activar Blaze, confirmar el secreto `GROQ_API_KEY` y ejecutar `firebase deploy --only functions`.
+
 ---
 
 *Este informe es técnico y no constituye asesoría legal. Los umbrales, plazos y requisitos deben validarse con el oficial de cumplimiento y un abogado ecuatoriano antes de convertirlos en reglas duras del sistema.*

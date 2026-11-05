@@ -178,4 +178,34 @@ Tests con **vitest** + **@testing-library/react** (315 tests de unidad):
 - `src/test/auditValidator.test.js` — Validación del JSON del dictamen de IA
 
 ## Despliegue
-La carpeta `dist/` se despliega en **Firebase Hosting**. CI/CD vía GitHub Actions (`.github/workflows/`).
+
+La carpeta `dist/` se despliega en **Firebase Hosting**. CI/CD vía GitHub Actions (`.github/workflows/`): el workflow `firebase-hosting-merge.yml` corre lint, tests, tests de reglas, auditorías y e2e, y **solo publica Hosting**. Las reglas de Firestore y las Cloud Functions se despliegan a mano.
+
+### Requisitos del proyecto
+
+- **Plan Blaze (billing) activo.** Las Functions de 2ª generación y Secret Manager no funcionan sin billing: sin él, `firebase deploy --only functions` falla con `403 ... requires billing to be enabled` y las funciones ya desplegadas responden 500/503 en vez de ejecutarse.
+- **Secreto `GROQ_API_KEY`** en Secret Manager (`functions/`, clave `GROQ_API_KEY`). Nunca se expone en el cliente.
+
+### Orden de despliegue
+
+Las reglas y las Functions van juntas: el cliente ya envía el ID token, pero una Function vieja seguiría aceptando llamadas sin él.
+
+```bash
+npm run build                                  # genera dist/
+npx firebase-tools deploy --only firestore --project app-riesgo-uafe
+npx firebase-tools deploy --only functions --project app-riesgo-uafe
+npx firebase-tools deploy --only hosting --project app-riesgo-uafe
+```
+
+### Configuración opcional
+
+| Dónde | Variable | Para qué |
+|---|---|---|
+| Functions | `ALLOWED_ORIGINS` | Orígenes CORS separados por coma. Por defecto ya se aceptan `localhost` y los dominios de Firebase Hosting |
+| Functions | `ENFORCE_APP_CHECK=true` | Exige App Check en `analyzeCase`. Requiere registrar reCAPTCHA v3 en el proyecto |
+| Functions | `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS` | Límite de llamadas por usuario (20 por 10 min por defecto) |
+| Functions | `LOG_RATE_LIMIT_MAX`, `LOG_RATE_LIMIT_WINDOW_MS` | Límite de `logClientError` por IP (60/min por defecto) |
+| Cliente | `VITE_LOG_ENDPOINT` | URL de `logClientError`. Sin ella los errores del navegador solo quedan en la consola |
+| Cliente | `VITE_APPCHECK_SITE_KEY` | Site key de reCAPTCHA v3 para App Check |
+
+El cliente no necesita `.env`: `src/firebase/config.js` tiene los valores del proyecto `app-riesgo-uafe` por defecto. Un `.env` solo hace falta para cambiar de proyecto o activar App Check.
